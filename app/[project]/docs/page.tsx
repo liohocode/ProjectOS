@@ -18,7 +18,7 @@ export default async function DocsPage(props: PageProps<"/[project]/docs">) {
       <KnowledgeStrip stats={stats} />
       <div className="docs-shell">
         <DocTree projectId={projectId} groups={groups} activeDocId={docId} />
-        {body ? <DocBodyView body={body} /> : <div className="screen-placeholder">Chưa có tài liệu nào.</div>}
+        {body ? <DocBodyView body={body} projectId={projectId} /> : <div className="screen-placeholder">Chưa có tài liệu nào.</div>}
       </div>
     </div>
   );

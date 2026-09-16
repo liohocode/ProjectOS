@@ -21,8 +21,8 @@ Lead điều phối công việc giữa người và agent: xem feature/task the
 - [x] Task drawer: `TaskDrawer` + `lib/data/taskDrawer.ts` (context docs từ doc group của feature, session log sinh theo template dựa trên trạng thái task).
 
 ## Còn thiếu / cần làm tiếp
-- [ ] Nút "Chuyển stage" / "Giao cho agent" trong drawer chưa có hành vi (chỉ là UI).
-- [ ] Nút "Xem tất cả" ở banner block chưa điều hướng đi đâu.
+- [x] Nút "Chuyển stage" (cycle qua BA→TA→Dev→Review→Done) và "Giao cho agent" (chọn từ danh sách agent của project) — đổi state client trong `WorkScreen` (`updateTask`), chưa gọi API vì chưa có backend.
+- [x] Nút "Xem tất cả" ở banner block → mở drawer của task block đầu tiên.
 - [ ] `lib/data/timeline.ts` cho rv-app/crm là dữ liệu tự soạn thêm (bản gốc design chỉ có timeline mẫu cho rv-web) — điều chỉnh lại nếu có yêu cầu cụ thể hơn.
 
 ## Ghi chú

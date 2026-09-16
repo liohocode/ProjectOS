@@ -2,16 +2,19 @@ import { getFeaturesByProject } from "@/lib/data/features";
 import { getTimelineByProject } from "@/lib/data/timeline";
 import { getActivityFeed } from "@/lib/data/activity";
 import { getTaskDrawerInfo } from "@/lib/data/taskDrawer";
+import { getTeamByProject } from "@/lib/data/team";
 import { WorkScreen } from "@/components/work/WorkScreen";
 
 export default async function WorkPage(props: PageProps<"/[project]/work">) {
   const { project: projectId } = await props.params;
 
-  const [features, timeline, activity] = await Promise.all([
+  const [features, timeline, activity, projectTeam] = await Promise.all([
     getFeaturesByProject(projectId),
     getTimelineByProject(projectId),
     getActivityFeed(projectId),
+    getTeamByProject(projectId),
   ]);
+  const projectAgents = projectTeam.filter((m) => m.kind === "agent");
 
   const taskIds = features.flatMap((f) => f.tasks.map((t) => t.id));
   const drawerEntries = await Promise.all(
@@ -22,6 +25,12 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
   );
 
   return (
-    <WorkScreen features={features} timeline={timeline} activity={activity} taskDrawerInfo={taskDrawerInfo} />
+    <WorkScreen
+      features={features}
+      timeline={timeline}
+      activity={activity}
+      taskDrawerInfo={taskDrawerInfo}
+      projectAgents={projectAgents}
+    />
   );
 }

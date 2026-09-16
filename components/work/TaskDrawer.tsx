@@ -1,17 +1,25 @@
-import type { Feature, Task, TaskDrawerInfo } from "@/lib/types";
+import { useState } from "react";
+import type { Feature, Member, Task, TaskDrawerInfo } from "@/lib/types";
 import { initials, stageTagClass } from "./taskStyle";
 
 export function TaskDrawer({
   task,
   feature,
   info,
+  agents,
   onClose,
+  onCycleStage,
+  onAssignAgent,
 }: {
   task: Task;
   feature: Feature;
   info: TaskDrawerInfo | undefined;
+  agents: Member[];
   onClose: () => void;
+  onCycleStage: () => void;
+  onAssignAgent: (agent: Member) => void;
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false);
   return (
     <div className="drawer-backdrop" onClick={onClose}>
       <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
@@ -83,13 +91,34 @@ export function TaskDrawer({
           </div>
         )}
 
-        <div className="drawer-footer">
-          <button type="button" className="btn btn-secondary">
+        <div className="drawer-footer" style={{ position: "relative", flexWrap: "wrap" }}>
+          <button type="button" className="btn btn-secondary" onClick={onCycleStage}>
             Chuyển stage
           </button>
-          <button type="button" className="btn btn-primary">
+          <button type="button" className="btn btn-primary" onClick={() => setPickerOpen((v) => !v)}>
             Giao cho agent
           </button>
+          {pickerOpen && (
+            <div className="switcher-dropdown" style={{ top: "100%", left: 0, right: "auto", width: 220, marginTop: 4 }}>
+              {agents.length === 0 && <div className="switcher-item">Không có agent nào trong dự án</div>}
+              {agents.map((agent) => (
+                <button
+                  key={agent.id}
+                  type="button"
+                  className="switcher-item"
+                  onClick={() => {
+                    onAssignAgent(agent);
+                    setPickerOpen(false);
+                  }}
+                >
+                  <span className="avatar avatar-agent" style={{ width: 20, height: 20, fontSize: 8.5 }}>
+                    {initials(agent.name)}
+                  </span>
+                  {agent.name} · {agent.role}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

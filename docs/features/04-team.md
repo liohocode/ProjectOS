@@ -19,7 +19,7 @@ Xem ai (người hay agent) đang làm gì, cấu hình agent (model, MCP server
 - [x] Panel chi tiết phải (`MemberPanel`, container `team-shell` khai báo ở `.team-shell`): cấu hình agent (chỉ khi có `config`), skills bar, hoạt động gần đây, footer 2 nút.
 
 ## Còn thiếu / cần làm tiếp
-- [ ] Nút "Xem log" / "Giao task" ở footer panel chưa có hành vi.
+- [ ] Nút "Xem log" / "Giao task" ở footer panel chưa có hành vi — khác với "Giao cho agent" trong task drawer (mục tiêu rõ: 1 task cụ thể), "Giao task" ở đây cần chọn task nào trong số nhiều feature/task của project, chưa rõ UX (danh sách task nào hiện ra?) nên để ngỏ chờ làm rõ thay vì bịa flow.
 - [ ] Khi đổi filter sang "org", state `selectedId` có thể trỏ tới member đã bị lọc khỏi `shown` — panel vẫn hiển thị đúng member đó (dùng `orgTeam.find` để tra cứu) nhưng danh sách bên trái không còn highlight hàng nào tương ứng nếu member đó không thuộc `shown`; chấp nhận được cho v1, cân nhắc auto-select lại nếu cần UX chặt hơn.
 
 ## Ghi chú

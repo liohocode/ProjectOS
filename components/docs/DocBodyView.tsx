@@ -1,7 +1,7 @@
 import type { DocBody } from "@/lib/types";
 import { ApproveButton } from "./ApproveButton";
 
-export function DocBodyView({ body }: { body: DocBody }) {
+export function DocBodyView({ body, projectId }: { body: DocBody; projectId: string }) {
   return (
     <div className="doc-body-area">
       <div className="doc-body-inner">
@@ -43,12 +43,12 @@ export function DocBodyView({ body }: { body: DocBody }) {
 
         <div className="revision-block">
           <h6 style={{ marginBottom: "var(--space-2)" }}>Revision chờ duyệt và lịch sử</h6>
-          {body.history.map((rev, i) => (
-            <div className="revision-row" key={i}>
+          {body.history.map((rev) => (
+            <div className="revision-row" key={rev.id}>
               <span className={`tag ${rev.agent ? "tag-accent" : "tag-neutral"} nowrap revision-tag`}>{rev.who}</span>
               <span className="revision-what">{rev.what}</span>
               <span className="revision-when">{rev.when}</span>
-              {rev.pending && <ApproveButton />}
+              {rev.pending && <ApproveButton revisionId={rev.id} projectId={projectId} />}
             </div>
           ))}
         </div>

@@ -1,0 +1,246 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MemberKind {
+  human
+  agent
+}
+
+enum TaskStage {
+  BA
+  TA
+  Dev
+  Review
+  Done
+}
+
+enum McpServerStatus {
+  online
+  limited
+}
+
+enum SessionResult {
+  Xong
+  DangChay  @map("Đang chạy")
+  ChoReview @map("Chờ review")
+  BiChan    @map("Bị chặn")
+}
+
+enum CommandResult {
+  OK
+  ChoReview @map("Chờ review")
+  BiChan    @map("Bị chặn")
+}
+
+model Project {
+  id     String @id
+  code   String
+  name   String
+  status String
+  desc   String
+  sprint String
+
+  members  ProjectMember[]
+  features Feature[]
+  docs     Doc[]
+  sessions McpSession[]
+
+  @@map("projects")
+}
+
+model Member {
+  id      String     @id
+  name    String
+  handle  String
+  kind    MemberKind
+  role    String
+  skills  String[]
+  current String
+  status  String
+  /// Chỉ set khi kind = agent: [["Model","claude-opus-4.1"], ...]
+  config  Json?
+
+  skillRows         MemberSkillRow[]
+  activity          MemberActivity[]
+  projects          ProjectMember[]
+  ownedFeatures     Feature[]        @relation("FeatureOwner")
+  assignedTasks     Task[]           @relation("TaskAssignee")
+  authoredDocs      Doc[]            @relation("DocAuthor")
+  docRevisions      DocRevision[]    @relation("RevisionAuthor")
+  approvedRevisions DocRevision[]    @relation("RevisionApprover")
+  mcpSessions       McpSession[]
+  mcpLogEntries     McpLogEntry[]
+
+  @@map("members")
+}
+
+model MemberSkillRow {
+  id        String @id @default(cuid())
+  memberId  String
+  member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  label     String
+  level     String
+  percent   Int
+  sortOrder Int    @default(0)
+
+  @@map("member_skill_rows")
+}
+
+model MemberActivity {
+  id       String   @id @default(cuid())
+  memberId String
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  icon     String
+  text     String
+  at       DateTime @default(now())
+
+  @@index([memberId, at(sort: Desc)])
+  @@map("member_activity")
+}
+
+model ProjectMember {
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, memberId])
+  @@map("project_members")
+}
+
+model Feature {
+  id        String    @id
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  stage     TaskStage
+  ownerId   String
+  owner     Member    @relation("FeatureOwner", fields: [ownerId], references: [id])
+  pct       Int
+
+  tasks Task[]
+  docs  Doc[]
+
+  @@index([projectId])
+  @@map("features")
+}
+
+model Task {
+  id          String    @id
+  featureId   String
+  feature     Feature   @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  stage       TaskStage
+  title       String
+  assigneeId  String
+  assignee    Member    @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  status      String
+  est         String
+  due         String
+  blocked     String?
+  blockedFull String?
+  running     String?
+
+  sessions McpSession[]
+
+  @@index([featureId])
+  @@map("tasks")
+}
+
+model Doc {
+  id           String    @id
+  /// "Kho tri thức chung" là theo từng project, nên projectId luôn bắt buộc
+  /// dù featureId có thể null (doc không gắn feature nào).
+  projectId    String
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  featureId    String?
+  feature      Feature?  @relation(fields: [featureId], references: [id], onDelete: SetNull)
+  title        String
+  agentWritten Boolean   @default(false)
+  version      String
+  status       String
+  summary      String
+  updatedAt    DateTime  @default(now())
+  authorId     String
+  author       Member    @relation("DocAuthor", fields: [authorId], references: [id])
+  indexedAt    DateTime?
+  chunkCount   Int?
+  readBy       String[]
+  /// Mảng { heading, paras[] } — chỉ hiển thị, không cần query từng đoạn
+  sections     Json
+
+  revisions DocRevision[]
+
+  @@index([projectId])
+  @@index([featureId])
+  @@map("docs")
+}
+
+model DocRevision {
+  id           String    @id @default(cuid())
+  docId        String
+  doc          Doc       @relation(fields: [docId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       Member    @relation("RevisionAuthor", fields: [authorId], references: [id])
+  what         String
+  createdAt    DateTime  @default(now())
+  pending      Boolean   @default(false)
+  approvedById String?
+  approvedBy   Member?   @relation("RevisionApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+
+  @@index([docId, createdAt(sort: Desc)])
+  @@map("doc_revisions")
+}
+
+model McpServer {
+  id             String          @id
+  name           String
+  status         McpServerStatus
+  url            String
+  tools          String[]
+  clients        Int
+  commandsPerDay Int
+  lastCommandAt  DateTime
+
+  @@map("mcp_servers")
+}
+
+model McpSession {
+  id          String        @id @default(cuid())
+  agentId     String
+  agent       Member        @relation(fields: [agentId], references: [id])
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id])
+  taskId      String?
+  task        Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  startedAt   DateTime      @default(now())
+  durationMin Int
+  toolCalls   Int
+  tokens      String
+  result      SessionResult
+
+  @@index([projectId])
+  @@map("mcp_sessions")
+}
+
+model McpLogEntry {
+  id      String        @id @default(cuid())
+  at      DateTime      @default(now())
+  agentId String
+  agent   Member        @relation(fields: [agentId], references: [id])
+  tool    String
+  target  String
+  result  CommandResult
+
+  @@index([at(sort: Desc)])
+  @@map("mcp_log_entries")
+}

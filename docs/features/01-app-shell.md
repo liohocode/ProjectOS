@@ -15,7 +15,7 @@ Khung dùng chung cho mọi màn: sidebar trái cố định, header, routing gi
 - [x] Style bám token Nocturne trong `app/globals.css` (sidebar 228px, kích thước/màu theo spec).
 
 ## Còn thiếu / cần làm tiếp
-- [ ] Dropdown filter thật ở header (nút "Lọc" chưa có hành vi trên mọi màn).
+- [ ] Dropdown filter thật ở header (nút "Lọc" chưa có hành vi trên mọi màn) — spec không mô tả tiêu chí lọc cụ thể cho nút này, cố tình để ngỏ thay vì bịa hành vi; định nghĩa rõ tiêu chí lọc trước khi implement.
 - [x] Task drawer, rail, docs tree/body giờ đã có thật ở `02-feature-task.md`/`03-docs.md` — `.rail`/`.team-aside` container query đã kiểm tra hoạt động đúng.
 - [x] `ProjectSwitcher` chuyển `router.push(/[id]/[screen])` không mang theo query string, nên khi đổi project ở màn Docs, tự động rơi về tài liệu đầu tiên của project mới (`getFirstDocId`) đúng như spec — không cần state riêng để xử lý việc này.
 

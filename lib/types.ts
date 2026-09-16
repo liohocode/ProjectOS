@@ -49,6 +49,7 @@ export interface DocGroup {
 }
 
 export interface DocRevision {
+  id: string;
   who: string;
   agent: boolean;
   what: string;
