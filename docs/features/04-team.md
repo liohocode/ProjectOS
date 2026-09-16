@@ -1,6 +1,6 @@
 # 04 — Dev & AI agents
 
-**Trạng thái:** Chưa bắt đầu
+**Trạng thái:** Xong (v1)
 
 ## Mục tiêu
 Xem ai (người hay agent) đang làm gì, cấu hình agent (model, MCP server, quyền...).
@@ -11,12 +11,16 @@ Xem ai (người hay agent) đang làm gì, cấu hình agent (model, MCP server
 ## Data đã sẵn có
 `lib/data/team.ts` — `getTeam()`, `getTeamByProject(projectId)`, `getMemberById(id)`, `getPipelineAgents()`. Type: `Member` (đã gồm `config` optional cho agent, `skillRows`, `activity`).
 
-## Checklist
-- [ ] 4 card pipeline (BA/TA/Dev/Index) — dùng `getPipelineAgents()` đã có sẵn (đã dùng trong sidebar, tái sử dụng cho card ở đây với mô tả dài hơn từ design-reference).
-- [ ] Bộ lọc `.seg`: Dự án này / Người / AI agent / Toàn tổ chức — state `filter` (client). `all` = `getTeamByProject`, `org` = `getTeam()`.
-- [ ] Danh sách `.mrow` — border trái accent khi hàng đang chọn (state `member`).
-- [ ] Container query ẩn cột skills (<1000px) rồi cột "đang làm" (<780px) — CSS `.mrow`/`.m-skills`/`.m-current` đã có sẵn trong `app/globals.css`.
-- [ ] Panel chi tiết phải (308px, tự ẩn <1120px dùng class `.team-shell`/`.team-aside` đã có CSS sẵn): header, "Cấu hình agent" (chỉ hiện khi `member.kind === 'agent'` và có `config`), skills (thanh 4px, fill accent nếu >70%), hoạt động gần đây, footer 2 nút.
+## Đã làm
+- [x] 4 card pipeline (`PipelineCards`, mô tả dài lấy từ design-reference, dùng lại `getPipelineAgents()` đã có ở sidebar).
+- [x] Bộ lọc `.seg` (`TeamScreen`, state `filter` client): `all`/`human`/`agent` lọc trên `getTeamByProject`, `org` = `getTeam()`.
+- [x] Danh sách `.mrow` (`MemberRow`) — border trái accent khi `is-selected`.
+- [x] Container query ẩn cột skills/`m-current` — container `team` khai báo ở `.member-list`.
+- [x] Panel chi tiết phải (`MemberPanel`, container `team-shell` khai báo ở `.team-shell`): cấu hình agent (chỉ khi có `config`), skills bar, hoạt động gần đây, footer 2 nút.
+
+## Còn thiếu / cần làm tiếp
+- [ ] Nút "Xem log" / "Giao task" ở footer panel chưa có hành vi.
+- [ ] Khi đổi filter sang "org", state `selectedId` có thể trỏ tới member đã bị lọc khỏi `shown` — panel vẫn hiển thị đúng member đó (dùng `orgTeam.find` để tra cứu) nhưng danh sách bên trái không còn highlight hàng nào tương ứng nếu member đó không thuộc `shown`; chấp nhận được cho v1, cân nhắc auto-select lại nếu cần UX chặt hơn.
 
 ## Ghi chú
-Avatar người/agent dùng class `.avatar-human` / `.avatar-agent` đã có sẵn trong `app/globals.css` (đã dùng ở sidebar footer) — tái dùng, đừng viết lại style avatar.
+Avatar người/agent dùng class `.avatar-human` / `.avatar-agent` có sẵn trong `app/globals.css` — tái dùng, không viết lại style avatar.

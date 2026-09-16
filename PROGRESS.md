@@ -4,18 +4,27 @@ Cập nhật dòng tương ứng khi nhận/hoàn thành việc. Chi tiết từ
 
 | # | Màn | Trạng thái | File |
 |---|-----|-----------|------|
-| 1 | App shell (sidebar, header, routing, project switcher) | Đang làm | [docs/features/01-app-shell.md](docs/features/01-app-shell.md) |
-| 2 | Feature & Task (list + task drawer + timeline) | Chưa bắt đầu | [docs/features/02-feature-task.md](docs/features/02-feature-task.md) |
-| 3 | Docs dự án (+ luồng duyệt revision) | Chưa bắt đầu | [docs/features/03-docs.md](docs/features/03-docs.md) |
-| 4 | Dev & AI agents | Chưa bắt đầu | [docs/features/04-team.md](docs/features/04-team.md) |
-| 5 | MCP (+ realtime) | Chưa bắt đầu | [docs/features/05-mcp.md](docs/features/05-mcp.md) |
-| 6 | Portfolio | Chưa bắt đầu | [docs/features/06-portfolio.md](docs/features/06-portfolio.md) |
+| 1 | App shell (sidebar, header, routing, project switcher) | Xong | [docs/features/01-app-shell.md](docs/features/01-app-shell.md) |
+| 2 | Feature & Task (list + task drawer + timeline) | Xong (v1) | [docs/features/02-feature-task.md](docs/features/02-feature-task.md) |
+| 3 | Docs dự án (+ luồng duyệt revision) | Xong (v1) | [docs/features/03-docs.md](docs/features/03-docs.md) |
+| 4 | Dev & AI agents | Xong (v1) | [docs/features/04-team.md](docs/features/04-team.md) |
+| 5 | MCP (+ realtime) | Xong (v1, chưa realtime) | [docs/features/05-mcp.md](docs/features/05-mcp.md) |
+| 6 | Portfolio | Xong (v1) | [docs/features/06-portfolio.md](docs/features/06-portfolio.md) |
+
+"Xong (v1)" nghĩa là đủ UI + tương tác chính theo spec, chạy trên mock data — còn vài mục nhỏ để ngỏ (ghi trong từng file feature ở mục "Còn thiếu"). Chưa nối backend/API thật.
 
 ## Đã có sẵn (dùng chung cho mọi màn)
 - `lib/types.ts` — type cho toàn bộ entity.
-- `lib/data/*.ts` — mock data đầy đủ cho projects/features/tasks/docs/team/mcp servers.
-- `app/globals.css` — token + class Nocturne, đã port đầy đủ (bao gồm CSS responsive cho `.trow/.frow/.mrow`).
-- Routing `/[project]/{work|docs|team|mcp|portfolio}`, layout dùng chung có Sidebar + Header thật (đọc data thật, không mock UI).
+- `lib/data/*.ts` — mock data đầy đủ: projects, features/tasks, docs (+ knowledge strip stats, pending revisions), team (+ pipeline), mcp servers/sessions/log, timeline, activity feed (suy ra từ task/doc), task drawer info (context docs + session log suy ra từ task/feature).
+- `app/globals.css` — token + toàn bộ class Nocturne dùng trong 6 màn.
+- Routing `/[project]/{work|docs|team|mcp|portfolio}` với layout dùng chung (Sidebar + Header thật).
+
+## Còn lại trước khi nối backend thật
+- MCP: nhật ký lệnh nên chuyển sang websocket/polling thay vì mảng tĩnh.
+- Docs: nút "Duyệt" hiện chỉ đổi state client (`ApproveButton`), chưa gọi API.
+- Feature & Task: nút "Chuyển stage" / "Giao cho agent" trong task drawer chưa có hành vi thật.
+- Xem chi tiết từng mục trong `docs/features/0X-*.md` phần "Còn thiếu / cần làm tiếp".
 
 ## Log
-- 2026-09-16 — Scaffold Next.js + App shell (bước 1) xong, 5 màn còn lại là placeholder trỏ về file feature tương ứng.
+- 2026-09-16 — Scaffold Next.js + App shell (bước 1) xong.
+- 2026-09-16 — Implement xong cả 5 màn còn lại (Feature & Task, Docs, Team, MCP, Portfolio) trên mock data, build + lint sạch.

@@ -97,6 +97,32 @@ export interface Member {
   config?: [string, string][];
 }
 
+export interface TimelineRow {
+  featureId: string | null;
+  name: string;
+  owner: string;
+  kind: MemberKind | "none";
+  start: number;
+  len: number;
+  label: string;
+}
+
+export type ActivityTone = "run" | "ok" | "review" | "block";
+
+export interface ActivityItem {
+  who: string;
+  kind: MemberKind;
+  text: string;
+  tool: string;
+  when: string;
+  tone: ActivityTone;
+}
+
+export interface TaskDrawerInfo {
+  contextDocs: string[];
+  sessionLog: { text: string; when: string }[];
+}
+
 export interface McpServer {
   id: string;
   name: string;
@@ -106,4 +132,27 @@ export interface McpServer {
   clients: number;
   commandsPerDay: number;
   lastCommandAgo: string;
+}
+
+export type SessionResult = "Xong" | "Đang chạy" | "Chờ review" | "Bị chặn";
+
+export interface McpSession {
+  id: string;
+  agent: string;
+  projectId: string;
+  taskId: string;
+  durationMin: number;
+  toolCalls: number;
+  tokens: string;
+  result: SessionResult;
+}
+
+export type CommandResult = "OK" | "Chờ review" | "Bị chặn";
+
+export interface McpLogEntry {
+  at: string;
+  agent: string;
+  tool: string;
+  target: string;
+  result: CommandResult;
 }

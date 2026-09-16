@@ -1,6 +1,6 @@
 # 03 — Docs dự án
 
-**Trạng thái:** Chưa bắt đầu
+**Trạng thái:** Xong (v1)
 
 ## Mục tiêu
 Đọc/duyệt tài liệu gắn với feature + kho tri thức chung; luồng governance: agent chỉ `docs.append` thành revision chờ người duyệt.
@@ -13,12 +13,15 @@
 
 Lưu ý: `getDocBody` hiện chỉ có nội dung đầy đủ cho 3 doc mẫu (`prd-listing`, `mcp-spec`, `arch`) — các doc còn lại trả về nội dung placeholder tự sinh. Bổ sung thêm nội dung mẫu nếu cần demo nhiều doc hơn.
 
-## Checklist
-- [ ] Strip kho tri thức (thống kê: Tài liệu n/n đã index, Chunk, Revision chờ duyệt, Agent đã ghi, Index cuối, Embedding) — cần bổ sung vài số liệu tổng hợp (chunk count, agent đã ghi) chưa có trong mock, tính từ `DOC_BODIES` hoặc thêm field.
-- [ ] Container query ẩn bớt cột theo `docs/design-reference.md` (dưới 1040px ẩn Embedding, dưới 800px ẩn thêm Agent đã ghi + Index cuối) — dùng class `.kb`/`.kb-drop`/`.kb-drop-2` đã có sẵn CSS trong `app/globals.css`.
-- [ ] Cây tài liệu trái (264px, group theo feature + "Kho tri thức chung", icon `ph-sparkle` cho doc do agent ghi).
-- [ ] Thân tài liệu: meta row, tóm tắt, 3 ô thông tin, các section, khối revision (nút "Duyệt" chỉ hiện với `pending: true`).
-- [ ] State `doc` (id tài liệu đang xem) — khi đổi project qua switcher phải reset về `getFirstDocId(newProjectId)` (xem ghi chú trong `docs/features/01-app-shell.md`).
+## Đã làm
+- [x] Strip kho tri thức: `KnowledgeStrip` + `getKnowledgeStripStats()` (chunk/agent đã ghi/index cuối tính từ `DOC_BODIES` thật, không hard-code).
+- [x] Container query ẩn cột theo breakpoint (`.kb-drop`/`.kb-drop-2`, container `kb` khai báo ở `.kb-strip`).
+- [x] Cây tài liệu trái: `DocTree`, dùng `<Link href="?doc=...">` — chuyển tài liệu qua URL query param (`?doc=`), không phải client state, nên bookmark/back-button hoạt động đúng.
+- [x] Thân tài liệu: `DocBodyView` — meta row, tóm tắt, 3 ô thông tin, các section, khối revision + `ApproveButton` (client, chỉ đổi state UI khi bấm "Duyệt", chưa gọi API).
+
+## Còn thiếu / cần làm tiếp
+- [ ] `ApproveButton` chưa gọi API thật — chỉ ẩn nút và hiện tag "Đã duyệt" phía client.
+- [ ] `getKnowledgeStripStats` chỉ tính được từ 3 doc có `DOC_BODIES` đầy đủ — số liệu "Tài liệu n/n đã index" sẽ thấp hơn thực tế nếu thêm nhiều doc mới mà không viết `DOC_BODIES` tương ứng.
 
 ## Ghi chú
-Đây là màn có luồng governance quan trọng nhất của sản phẩm — khi implement nút "Duyệt", chỉ cần đổi state phía client (chưa có backend thật), nhưng giữ đúng UI/copy vì đây là phần dễ bị hỏi lại khi demo.
+Đây là màn có luồng governance quan trọng nhất của sản phẩm — giữ đúng UI/copy vì đây là phần dễ bị hỏi lại khi demo.

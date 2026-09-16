@@ -38,5 +38,5 @@ PROGRESS.md                                   — bảng trạng thái tổng c�
 6. Dữ liệu mock hiện có trong `lib/data/*` port trực tiếp từ design canvas gốc (`docs/design-reference.md` mô tả lại cấu trúc) — tái dùng, đừng bịa dữ liệu mới trừ khi cần mở rộng để test UI.
 7. Trước khi coi một việc là xong: `npm run build` phải sạch (type + lint), và tự chạy `npm run dev` xem lại trên trình duyệt so với spec.
 
-## Thứ tự triển khai còn lại
-Xem `PROGRESS.md`. Thứ tự khuyến nghị theo spec: Feature & Task (+ task drawer) → Docs (+ luồng duyệt revision) → Dev & AI agents → MCP (+ realtime) → Portfolio.
+## Trạng thái hiện tại
+Cả 6 màn đã có UI + tương tác chính trên mock data (xem `PROGRESS.md`). Việc còn lại chủ yếu là: nối API/DB thật thay `lib/data/*`, hoàn thiện vài nút chưa có hành vi (xem mục "Còn thiếu / cần làm tiếp" trong từng `docs/features/0X-*.md`), và thêm realtime cho màn MCP.

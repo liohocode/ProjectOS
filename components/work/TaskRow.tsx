@@ -1,0 +1,34 @@
+import type { Task } from "@/lib/types";
+import { initials, stageTagClass, taskRowStyle } from "./taskStyle";
+
+export function TaskRow({ task, onOpen }: { task: Task; onOpen: () => void }) {
+  return (
+    <div className="trow rowhover" style={taskRowStyle(task)} onClick={onOpen}>
+      <span className="trow-id nowrap">{task.id}</span>
+      <span className={`${stageTagClass(task.stage)} c-stage`}>{task.stage}</span>
+      <span className="trow-title">{task.title}</span>
+      <span className={`trow-flag${task.blocked ? " is-blocked" : task.running ? " is-running" : ""}`}>
+        {task.blocked && (
+          <>
+            <i className="ph ph-warning" aria-hidden />
+            <span>{task.blocked}</span>
+          </>
+        )}
+        {!task.blocked && task.running && (
+          <>
+            <i className="ph ph-circle-notch" aria-hidden />
+            <span>{task.running}</span>
+          </>
+        )}
+      </span>
+      <span className="trow-assignee">
+        <span className={`avatar ${task.kind === "agent" ? "avatar-agent" : "avatar-human"}`} style={{ width: 18, height: 18, fontSize: 8 }}>
+          {initials(task.who)}
+        </span>
+        <span className="asg-name nowrap">{task.who}</span>
+      </span>
+      <span className="c-status nowrap">{task.status}</span>
+      <span className="c-est nowrap">{task.est}</span>
+    </div>
+  );
+}

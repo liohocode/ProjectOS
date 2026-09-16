@@ -1,6 +1,6 @@
 # 02 — Feature & Task
 
-**Trạng thái:** Chưa bắt đầu — màn mặc định của app (`/[project]/work`), ưu tiên implement trước.
+**Trạng thái:** Xong (v1) — màn mặc định của app (`/[project]/work`).
 
 ## Mục tiêu
 Lead điều phối công việc giữa người và agent: xem feature/task theo dạng list hoặc timeline, mở task drawer để xem chi tiết.
@@ -11,15 +11,20 @@ Lead điều phối công việc giữa người và agent: xem feature/task the
 ## Data đã sẵn có
 `lib/data/features.ts` — `getFeaturesByProject(projectId)`, `getTasksByProject(projectId)`. Type: `Feature`, `Task` trong `lib/types.ts`.
 
-## Checklist
-- [ ] Toolbar: segmented control "Theo feature" / "Timeline", nhãn sprint, toggle activity rail.
-- [ ] Banner block khi có task bị block (đếm qua `tasks.filter(t => t.blocked)`).
-- [ ] View "Theo feature": `<section>` theo feature, `.frow` header (caret gập/mở — state `closed` giữ ở client), `.trow` mỗi task với border trái theo kind (agent/blocked), cột cờ hiện block/running.
-- [ ] Responsive container query cho `.trow`/`.frow` — CSS đã có sẵn trong `app/globals.css` (breakpoint 880px/680px), chỉ cần đặt đúng class `list`/`c-status`/`c-est`/... lên container/element tương ứng.
-- [ ] View "Timeline": CSS grid theo tuần T1–T8 — cần thêm data (start/len theo feature) chưa có sẵn trong mock, phải bổ sung vào `lib/data/features.ts` hoặc file mới `lib/data/timeline.ts`.
-- [ ] Activity rail (phải, 300px) — cần data "agent đang làm gì", **chưa có trong `lib/data`**, phải bổ sung mock mới dựa theo ví dụ trong design-reference (mục "Activity rail").
-- [ ] Task drawer: overlay + panel phải 420px, nội dung theo spec (meta, context agent đã pull, log phiên chạy, footer 2 nút) — phần "context agent đã pull" và "log phiên chạy" cũng chưa có mock data, cần bổ sung.
+## Đã làm
+- [x] Toolbar: segmented control "Theo feature" / "Timeline", đếm task, toggle activity rail. (`components/work/WorkScreen.tsx`)
+- [x] Banner block khi có task bị block.
+- [x] View "Theo feature": `FeatureSection` (`.frow` + caret gập/mở, state `closed`) + `TaskRow` (`.trow`, border trái theo kind/blocked, cột cờ block/running).
+- [x] Responsive container query `.trow`/`.frow` — container `list` khai báo ở `.list-area` trong `globals.css`.
+- [x] View "Timeline": `TimelineView` + `lib/data/timeline.ts` (start/len tự bổ sung cho cả 3 project, xem ghi chú).
+- [x] Activity rail: `lib/data/activity.ts` — suy ra từ task (running/blocked/chờ review) + revision docs đang chờ duyệt, không phải mock rời rạc.
+- [x] Task drawer: `TaskDrawer` + `lib/data/taskDrawer.ts` (context docs từ doc group của feature, session log sinh theo template dựa trên trạng thái task).
+
+## Còn thiếu / cần làm tiếp
+- [ ] Nút "Chuyển stage" / "Giao cho agent" trong drawer chưa có hành vi (chỉ là UI).
+- [ ] Nút "Xem tất cả" ở banner block chưa điều hướng đi đâu.
+- [ ] `lib/data/timeline.ts` cho rv-app/crm là dữ liệu tự soạn thêm (bản gốc design chỉ có timeline mẫu cho rv-web) — điều chỉnh lại nếu có yêu cầu cụ thể hơn.
 
 ## Ghi chú
-- `closed` (feature gập/mở) và `task` (id đang mở drawer) là state riêng của màn này — dùng `useState` trong client component, không cần đưa lên layout dùng chung.
-- Khi implement xong, cập nhật `PROGRESS.md` và đổi Trạng thái ở đây.
+- `view`, `closed`, `railOpen`, `openTaskId` là state client trong `WorkScreen` — không đưa lên layout dùng chung vì chỉ màn này cần.
+- Activity feed và task drawer log **suy ra từ dữ liệu task/doc thật** thay vì mock song song, để tránh lệch dữ liệu giữa các nơi hiển thị cùng một task.

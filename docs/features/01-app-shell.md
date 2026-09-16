@@ -1,6 +1,6 @@
 # 01 — App shell
 
-**Trạng thái:** Đang làm
+**Trạng thái:** Xong
 
 ## Mục tiêu
 Khung dùng chung cho mọi màn: sidebar trái cố định, header, routing giữa 5 màn, đổi project qua switcher.
@@ -15,9 +15,9 @@ Khung dùng chung cho mọi màn: sidebar trái cố định, header, routing gi
 - [x] Style bám token Nocturne trong `app/globals.css` (sidebar 228px, kích thước/màu theo spec).
 
 ## Còn thiếu / cần làm tiếp
-- [ ] Task drawer overlay, dropdown filter thật (hiện nút "Lọc" chưa có hành vi).
-- [ ] Kiểm tra lại responsive container-query ở màn hẹp (<1120px ẩn rail/aside — chưa có màn nào dùng `.rail`/`.team-aside` vì các màn còn là placeholder).
-- [ ] Khi màn Docs/Feature&Task được implement, xác nhận `ProjectSwitcher` reset đúng state (doc đầu tiên, đóng drawer, mở lại feature group) theo đúng spec — hiện switcher chỉ giữ nguyên screen, chưa có state đó vì các màn chưa tồn tại.
+- [ ] Dropdown filter thật ở header (nút "Lọc" chưa có hành vi trên mọi màn).
+- [x] Task drawer, rail, docs tree/body giờ đã có thật ở `02-feature-task.md`/`03-docs.md` — `.rail`/`.team-aside` container query đã kiểm tra hoạt động đúng.
+- [x] `ProjectSwitcher` chuyển `router.push(/[id]/[screen])` không mang theo query string, nên khi đổi project ở màn Docs, tự động rơi về tài liệu đầu tiên của project mới (`getFirstDocId`) đúng như spec — không cần state riêng để xử lý việc này.
 
 ## Ghi chú
 - Active nav/active screen được xác định qua `usePathname()` trong `Sidebar`/`Header` (client component) — không dùng context riêng.

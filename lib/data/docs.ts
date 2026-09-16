@@ -182,11 +182,53 @@ export async function getDocCountByProject(projectId: string): Promise<number> {
 }
 
 export async function getPendingRevisionCount(projectId: string): Promise<number> {
+  const revisions = await getPendingRevisionsByProject(projectId);
+  return revisions.length;
+}
+
+export async function getPendingRevisionsByProject(
+  projectId: string,
+): Promise<{ docTitle: string; who: string; agent: boolean; what: string; when: string }[]> {
   const groups = await getDocGroupsByProject(projectId);
   const ids = new Set(groups.flatMap((g) => g.items.map((i) => i.id)));
   return Object.entries(DOC_BODIES)
     .filter(([id]) => ids.has(id))
-    .reduce((sum, [, body]) => sum + body.history.filter((h) => h.pending).length, 0);
+    .flatMap(([, body]) =>
+      body.history
+        .filter((h) => h.pending)
+        .map((h) => ({ docTitle: body.title, who: h.who, agent: h.agent, what: h.what, when: h.when })),
+    );
+}
+
+export interface KnowledgeStripStats {
+  totalDocs: number;
+  indexedDocs: number;
+  chunks: number;
+  pendingRevisions: number;
+  agentWritten: number;
+  lastIndexedAgo: string;
+  embeddingModel: string;
+}
+
+export async function getKnowledgeStripStats(projectId: string): Promise<KnowledgeStripStats> {
+  const groups = await getDocGroupsByProject(projectId);
+  const items = groups.flatMap((g) => g.items);
+  const bodies = items.map((i) => DOC_BODIES[i.id]).filter((b): b is DocBody => Boolean(b));
+
+  const chunks = bodies.reduce((sum, b) => {
+    const match = /(\d+)\s*chunk/.exec(b.indexed);
+    return sum + (match ? Number(match[1]) : 0);
+  }, 0);
+
+  return {
+    totalDocs: items.length,
+    indexedDocs: bodies.filter((b) => b.indexed.startsWith("Đã index")).length,
+    chunks,
+    pendingRevisions: await getPendingRevisionCount(projectId),
+    agentWritten: items.filter((i) => i.agent).length,
+    lastIndexedAgo: bodies[0]?.indexed.split(" · ")[1] ?? "Chưa index",
+    embeddingModel: "text-embedding-3-large",
+  };
 }
 
 export async function getDocBody(id: string): Promise<DocBody> {

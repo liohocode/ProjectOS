@@ -1,5 +1,91 @@
-import { ScreenPlaceholder } from "@/components/layout/ScreenPlaceholder";
+import { getMcpLog, getMcpServers, getMcpSessions } from "@/lib/data/mcp";
+import { getProjects } from "@/lib/data/projects";
+import { ServerCard } from "@/components/mcp/ServerCard";
 
-export default function McpPage() {
-  return <ScreenPlaceholder title="MCP" specFile="docs/features/05-mcp.md" />;
+const RESULT_TAG_CLASS: Record<string, string> = {
+  Xong: "tag-neutral",
+  "Đang chạy": "tag-accent",
+  "Chờ review": "tag-outline",
+  "Bị chặn": "tag-outline",
+  OK: "tag-neutral",
+};
+
+export default async function McpPage() {
+  const [servers, sessions, log, projects] = await Promise.all([
+    getMcpServers(),
+    getMcpSessions(),
+    getMcpLog(),
+    getProjects(),
+  ]);
+  const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? id;
+
+  return (
+    <div className="mcp-main">
+      <div className="mcp-grid">
+        {servers.map((server) => (
+          <ServerCard key={server.id} server={server} />
+        ))}
+      </div>
+
+      <h5 className="mcp-section-title">Phiên chạy của agent</h5>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Phiên</th>
+            <th>Agent</th>
+            <th>Dự án</th>
+            <th>Task</th>
+            <th>Thời lượng</th>
+            <th>Tool calls</th>
+            <th>Token</th>
+            <th>Kết quả</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sessions.map((s) => (
+            <tr key={s.id}>
+              <td className="mono">{s.id}</td>
+              <td>{s.agent}</td>
+              <td style={{ color: "var(--color-accent-300)" }}>{projectName(s.projectId)}</td>
+              <td>{s.taskId}</td>
+              <td>{s.durationMin} phút</td>
+              <td>{s.toolCalls}</td>
+              <td>{s.tokens}</td>
+              <td>
+                <span className={`tag ${RESULT_TAG_CLASS[s.result]} nowrap`}>{s.result}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h5 className="mcp-section-title">Nhật ký lệnh</h5>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Thời điểm</th>
+            <th>Agent</th>
+            <th>Tool</th>
+            <th>Đối tượng</th>
+            <th>Kết quả</th>
+          </tr>
+        </thead>
+        <tbody>
+          {log.map((entry, i) => (
+            <tr key={i}>
+              <td className="mono">{entry.at}</td>
+              <td>{entry.agent}</td>
+              <td className="mono" style={{ color: "var(--color-accent-300)" }}>
+                {entry.tool}
+              </td>
+              <td>{entry.target}</td>
+              <td>
+                <span className={`tag ${RESULT_TAG_CLASS[entry.result]} nowrap`}>{entry.result}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
