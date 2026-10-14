@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Đang làm | 1 | F07 (khuyến nghị F08.3 trước để có test bảo vệ) | NFR-11, FR-WK-05 |
+| Xong | 1 | F07 (khuyến nghị F08.3 trước để có test bảo vệ) | NFR-11, FR-WK-05 |
 
 ## Mục tiêu
 Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, `"chạy 14 phút"`, `"Sprint 14 · 12–26/08"`, `"182K"`) và đưa timeline vào DB — trước khi làm các thao tác ghi (F11+) và MCP server (F16), vì những feature đó cần ghi/so sánh giá trị thật.
@@ -28,7 +28,7 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 | F09.2 | Task: `estimatePoints`, `dueDate`, `runningSince`, enum `TaskStatus` | M | — | Xong — 2026-10-14 |
 | F09.3 | Kế hoạch feature trong DB, bỏ mock `lib/data/timeline.ts` | M | F09.1 | Xong — 2026-10-14 |
 | F09.4 | `McpSession.tokensUsed`/`endedAt`; enum `MemberStatus` | S | — | Xong — 2026-10-14 |
-| F09.5 | Cập nhật test integration + tài liệu sau chuẩn hoá | S | F09.1–F09.4, F08.3 | Chưa làm |
+| F09.5 | Cập nhật test integration + tài liệu sau chuẩn hoá | S | F09.1–F09.4, F08.3 | Xong — 2026-10-14 |
 
 ### F09.1 — Model Sprint
 **Làm gì**: thêm `Sprint(id cuid, projectId, name "Sprint 14", startDate, endDate)` + `Project.currentSprintId?`. Seed parse `"Sprint 14 · 12–26/08"` và `"Sprint 22 · 18/08–01/09"` (năm 2026). Bỏ cột `Project.sprint`. `lib/data/projects.ts` dựng lại chuỗi hiển thị `"Sprint 14 · 12–26/08"` từ sprint hiện tại → `Project.sprint` trong `lib/types.ts` giữ nguyên.
@@ -61,7 +61,7 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 ### F09.5 — Cập nhật test + tài liệu
 **Làm gì**: chỉnh integration test (F08.3) theo schema mới; cập nhật `docs/architecture/data-model.md` (xoá các dòng đã xử lý khỏi "Điểm còn tạm", cập nhật bảng số lượng nếu thêm feature chưa giao).
 **Hoàn thành khi**:
-- [ ] `npm run test:integration` xanh, tài liệu khớp schema
+- [x] `npm run test:integration` xanh, tài liệu khớp schema (làm dần trong F09.1–F09.4; đối chiếu lại số dòng seed với `data-model.md`)
 
 ## Quyết định / ghi chú
 - Giữ `Feature.pct` nhập tay (không tính từ số task Done) — đúng spec gốc.

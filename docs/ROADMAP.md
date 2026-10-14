@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-14 · Tổng: **38/102 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-14 · Tổng: **39/102 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -19,7 +19,7 @@ Cập nhật lần cuối: 2026-10-14 · Tổng: **38/102 task xong** (Phase 0 h
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
 | [F08](features/F08-test-ci.md) | Test tự động (unit, integration, e2e) + CI | F07 | Đang làm | 5/6 |
-| [F09](features/F09-data-model-hardening.md) | Chuẩn hoá data model: bỏ field chuỗi hiển thị, Sprint, timeline vào DB | F07 | Đang làm | 4/5 |
+| [F09](features/F09-data-model-hardening.md) | Chuẩn hoá data model: bỏ field chuỗi hiển thị, Sprint, timeline vào DB | F07 | Xong | 5/5 |
 | [F10](features/F10-ux-states-a11y.md) | Loading / error / empty / 404, thao tác bàn phím | F07 | Chưa bắt đầu | 0/5 |
 
 ## Phase 2 — Ghi dữ liệu
@@ -85,3 +85,4 @@ Thứ tự khuyến nghị sau đó: F08 → F09 → F11 → F12 → F13/F14 →
 - 2026-10-14 — Tổ chức lại `docs/`: tổng hợp yêu cầu (`product/requirements.md`), kiến trúc + ADR, chia roadmap thành 19 feature / 98 task (F08–F19 mới lập kế hoạch).
 - 2026-10-14 — Chốt: đăng nhập Google, deploy Cloudflare Workers + Neon Postgres (gói Free), hoãn embedding. Cập nhật F15, F16, F17, F18, F19 theo ràng buộc Cloudflare (ADR-013…015).
 - 2026-10-14 — Đổi hạ tầng: **Google Cloud Run + Neon** thay Cloudflare Workers (ADR-016). F19 lập lại thành 9 task; F16 chuyển MCP stateless, F17 chuyển sang polling ngắn.
+- 2026-10-14 — **F09 xong**: Sprint thành model, field task/phiên MCP/trạng thái thành viên kiểu thật, timeline đọc từ DB, feature chưa giao hiện ở list view. F08 xong phần code (unit 38, integration 30, e2e 10 test) — còn chờ push để CI chạy lần đầu.

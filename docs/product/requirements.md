@@ -44,7 +44,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-WK-02 | Banner task block (liệt kê mã + lý do, nút "Xem tất cả") | ✅ | F02 |
 | FR-WK-03 | List theo feature: header feature (gập/mở, mã, tên, stage, số docs, progress, owner) + task row (mã, stage, tiêu đề, cờ block/đang chạy, assignee, trạng thái, ước lượng); viền trái accent cho task agent, amber cho task block | ✅ | F02 |
 | FR-WK-04 | Responsive container query: rụng cột trạng thái/ước lượng < 880px, stage/tên assignee < 680px | ✅ | F02 |
-| FR-WK-05 | View Timeline theo tuần T1–T8, bar phân biệt người / agent / chưa bắt đầu, legend | 🟡 dữ liệu timeline còn mock | F02 → F09 |
+| FR-WK-05 | View Timeline theo tuần T1–T8, bar phân biệt người / agent / chưa bắt đầu, legend | ✅ đọc từ DB (F09.3) | F02, F09 |
 | FR-WK-06 | Activity rail "Agent đang làm gì", tự ẩn khi vùng làm việc < 1120px | 🟡 suy ra từ task/doc, chưa phải log sự kiện thật | F02 → F17 |
 | FR-WK-07 | Task drawer: meta, cảnh báo block, context agent đã pull, log phiên chạy | 🟡 log sinh theo mẫu | F02 → F17 |
 | FR-WK-08 | Drawer: "Chuyển stage", "Giao cho agent" | 🟡 chỉ đổi state client, chưa ghi DB | F11 |
@@ -92,8 +92,8 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | NFR-04 | `:focus-visible` rõ ràng; nút/hàng có thể thao tác bằng bàn phím | 🟡 hàng task/thành viên là `div` click được, chưa focus được | F10 |
 | NFR-05 | Có loading state, error state, empty state, trang 404 | ⬜ | F10 |
 | NFR-06 | Phân trang cho danh sách lớn (nhật ký lệnh, phiên chạy) | ⬜ | F14 |
-| NFR-07 | Có test tự động (unit, integration với DB, e2e smoke) và CI chạy lint/type/build/test | ⬜ | F08 |
+| NFR-07 | Có test tự động (unit, integration với DB, e2e smoke) và CI chạy lint/type/build/test | 🟡 test đủ 3 tầng; CI chờ push để chạy lần đầu | F08 |
 | NFR-08 | Không commit secret; mọi cấu hình qua biến môi trường (`.env.example` liệt kê đủ) | ✅ | — |
 | NFR-09 | Có đăng nhập (**Google**, chỉ người đã có trong danh sách thành viên); thao tác ghi kiểm tra quyền | ⬜ | F15 |
 | NFR-10 | Triển khai được lên môi trường thật **miễn phí**: Google Cloud Run + Neon Postgres gói Free, deploy tự động từ GitHub; migrate khi deploy; budget alert; backup DB | ⬜ | F19 |
-| NFR-11 | Dữ liệu thời gian lưu kiểu thời gian thật (không lưu chuỗi "chạy 14 phút", "22/08") | 🟡 một số field còn là chuỗi | F09 |
+| NFR-11 | Dữ liệu thời gian lưu kiểu thời gian thật (không lưu chuỗi "chạy 14 phút", "22/08") | ✅ | F09 |
