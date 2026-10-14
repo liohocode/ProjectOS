@@ -1,28 +1,35 @@
 import type { TimelineRow } from "@/lib/types";
+import { prisma } from "@/lib/prisma";
+import { datesToWeeks } from "@/lib/timeline";
+import { UNASSIGNED_OWNER } from "./features";
 
-// Vị trí (start/len theo tuần T1–T8) không có trong dữ liệu feature gốc —
-// bổ sung riêng cho view Timeline. Sẽ chuyển vào DB ở docs/features/F09-data-model-hardening.md (F09.3).
-const TIMELINE_BY_PROJECT: Record<string, TimelineRow[]> = {
-  "rv-web": [
-    { featureId: "FEAT-118", name: "FEAT-118 Listing rework", owner: "Linh", kind: "human", start: 1, len: 5, label: "Dev · 62%" },
-    { featureId: "FEAT-119", name: "FEAT-119 Search & filter", owner: "Atlas", kind: "agent", start: 3, len: 4, label: "Agent · 2 task" },
-    { featureId: "FEAT-120", name: "FEAT-120 Agent integration", owner: "Vega", kind: "agent", start: 2, len: 3, label: "Review" },
-    { featureId: "FEAT-124", name: "FEAT-124 Mobile parity", owner: "Bảo", kind: "agent", start: 5, len: 3, label: "BA đang phân tích" },
-    { featureId: null, name: "FEAT-126 Docs index nâng cấp", owner: "Chưa giao", kind: "none", start: 7, len: 2, label: "Chưa bắt đầu" },
-  ],
-  "rv-app": [
-    { featureId: "FEAT-201", name: "FEAT-201 Onboarding lại từ đầu", owner: "Bảo", kind: "agent", start: 1, len: 3, label: "BA đang phân tích" },
-    { featureId: "FEAT-205", name: "FEAT-205 Push notification", owner: "Linh", kind: "human", start: 2, len: 4, label: "Dev · 55%" },
-    { featureId: "FEAT-208", name: "FEAT-208 Offline cache", owner: "Vega", kind: "agent", start: 4, len: 3, label: "TA · 1 task" },
-    { featureId: null, name: "FEAT-212 Đồng bộ thông báo", owner: "Chưa giao", kind: "none", start: 6, len: 2, label: "Chưa bắt đầu" },
-  ],
-  crm: [
-    { featureId: "FEAT-301", name: "FEAT-301 Pipeline deal", owner: "Nam", kind: "human", start: 1, len: 5, label: "Dev · 74%" },
-    { featureId: "FEAT-304", name: "FEAT-304 Import dữ liệu khách", owner: "Atlas", kind: "agent", start: 4, len: 3, label: "Review · 88%" },
-    { featureId: null, name: "FEAT-309 Báo cáo doanh số", owner: "Chưa giao", kind: "none", start: 6, len: 2, label: "Chưa bắt đầu" },
-  ],
-};
-
+// View Timeline: tuần T1–T8 tính từ ngày bắt đầu sprint hiện tại của dự án.
+// Feature chưa có ngày kế hoạch hoặc nằm ngoài cửa sổ 8 tuần thì không vẽ.
 export async function getTimelineByProject(projectId: string): Promise<TimelineRow[]> {
-  return TIMELINE_BY_PROJECT[projectId] ?? [];
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: {
+      currentSprint: true,
+      features: { include: { owner: true }, orderBy: { id: "asc" } },
+    },
+  });
+  if (!project?.currentSprint) return [];
+  const sprintStart = project.currentSprint.startDate;
+
+  return project.features.flatMap((f): TimelineRow[] => {
+    if (!f.plannedStart || !f.plannedEnd) return [];
+    const span = datesToWeeks(f.plannedStart, f.plannedEnd, sprintStart);
+    if (!span) return [];
+    return [
+      {
+        featureId: f.id,
+        name: `${f.id} ${f.name}`,
+        owner: f.owner?.name ?? UNASSIGNED_OWNER,
+        kind: f.owner?.kind ?? "none",
+        start: span.start,
+        len: span.len,
+        label: f.owner ? `${f.stage} · ${f.pct}%` : "Chưa bắt đầu",
+      },
+    ];
+  });
 }

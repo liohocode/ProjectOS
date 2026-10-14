@@ -31,10 +31,19 @@ export function FeatureSection({
           </div>
           <span className="frow-pct">{feature.pct}%</span>
         </div>
-        <span className="avatar avatar-human" style={{ width: 22, height: 22, fontSize: 9.5 }}>
-          {initials(feature.owner)}
+        <span
+          className={`avatar ${feature.ownerKind ? `avatar-${feature.ownerKind}` : "avatar-none"}`}
+          style={{ width: 22, height: 22, fontSize: 9.5 }}
+          title={feature.owner}
+        >
+          {feature.ownerKind ? initials(feature.owner) : <i className="ph ph-user" aria-hidden />}
         </span>
       </div>
+      {open && feature.tasks.length === 0 && (
+        <div className="trow-empty">
+          Chưa có task{feature.ownerKind ? "" : " · chưa giao cho ai"}
+        </div>
+      )}
       {open && feature.tasks.map((task) => <TaskRow key={task.id} task={task} onOpen={() => onOpenTask(task.id)} />)}
     </section>
   );

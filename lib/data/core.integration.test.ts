@@ -53,16 +53,24 @@ describe("team", () => {
 });
 
 describe("features & tasks", () => {
-  it("rv-web có 4 feature, 13 task; số docs tính từ quan hệ", async () => {
+  it("rv-web có 5 feature (1 chưa giao), 13 task; số docs tính từ quan hệ", async () => {
     const features = await getFeaturesByProject("rv-web");
-    expect(features.map((f) => f.id)).toEqual(["FEAT-118", "FEAT-119", "FEAT-120", "FEAT-124"]);
+    expect(features.map((f) => f.id)).toEqual(["FEAT-118", "FEAT-119", "FEAT-120", "FEAT-124", "FEAT-126"]);
     expect(features.flatMap((f) => f.tasks)).toHaveLength(13);
     expect(Object.fromEntries(features.map((f) => [f.id, f.docs]))).toEqual({
       "FEAT-118": 4,
       "FEAT-119": 2,
       "FEAT-120": 2,
       "FEAT-124": 0,
+      "FEAT-126": 0,
     });
+  });
+
+  it("owner đúng loại; feature chưa giao không owner, không task", async () => {
+    const features = await getFeaturesByProject("rv-web");
+    expect(features.find((f) => f.id === "FEAT-118")).toMatchObject({ owner: "Trần Mỹ Linh", ownerKind: "human" });
+    expect(features.find((f) => f.id === "FEAT-119")).toMatchObject({ owner: "Atlas", ownerKind: "agent" });
+    expect(features.find((f) => f.id === "FEAT-126")).toMatchObject({ owner: "Chưa giao", ownerKind: null, tasks: [] });
   });
 
   it("task giữ đúng người thực hiện, kind và cờ block/running", async () => {

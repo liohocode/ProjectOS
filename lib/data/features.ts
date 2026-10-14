@@ -2,6 +2,8 @@ import type { Feature, Task } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning } from "@/lib/taskFormat";
 
+export const UNASSIGNED_OWNER = "Chưa giao";
+
 export async function getFeaturesByProject(projectId: string): Promise<Feature[]> {
   const rows = await prisma.feature.findMany({
     where: { projectId },
@@ -18,7 +20,8 @@ export async function getFeaturesByProject(projectId: string): Promise<Feature[]
     id: row.id,
     name: row.name,
     stage: row.stage,
-    owner: row.owner.name,
+    owner: row.owner?.name ?? UNASSIGNED_OWNER,
+    ownerKind: row.owner?.kind ?? null,
     pct: row.pct,
     docs: row._count.docs,
     tasks: row.tasks.map(

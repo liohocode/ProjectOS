@@ -1,4 +1,4 @@
-import type { Feature } from "@/lib/types";
+import type { SeedFeature as Feature } from "./types";
 
 const FEATURES_BY_PROJECT: Record<string, Feature[]> = {
   "rv-web": [

@@ -26,7 +26,7 @@ McpServer  (độc lập)
 | `MemberSkillRow` | cuid | `label`, `level` (Cao/Trung bình/Cơ bản/Không dùng), `percent`, `sortOrder` |
 | `MemberActivity` | cuid | `icon`, `text`, `at` (timestamp thật) |
 | `ProjectMember` | (`projectId`,`memberId`) | |
-| `Feature` (`features`) | `id` chuỗi (`FEAT-118`) | `stage` enum; `pct` nhập tay (không tính từ task); số docs tính bằng `_count` |
+| `Feature` (`features`) | `id` chuỗi (`FEAT-118`) | `stage` enum; `pct` nhập tay (không tính từ task); số docs tính bằng `_count`; `ownerId` null = đã lên kế hoạch nhưng chưa giao; `plannedStart`/`plannedEnd` (`DATE`) → view Timeline, quy đổi sang tuần T1–T8 bằng `lib/timeline.ts` |
 | `Task` (`tasks`) | `id` chuỗi (`T-401`) | `status` enum `TaskStatus`; `estimatePoints Int?`, `dueDate DATE?`, `runningSince DateTime?` — format sang "5đ" / "22/08" / "chạy 14 phút" bằng `lib/taskFormat.ts` |
 | `Doc` (`docs`) | `id` chuỗi slug (`prd-listing`) | `projectId` bắt buộc, `featureId` tuỳ chọn; `sections Json` = `[{heading, paras[]}]`; `readBy String[]`; `indexedAt`, `chunkCount` |
 | `DocRevision` | cuid | `what` (mô tả), `pending Boolean`, `approvedById`, `approvedAt`. **Chưa có nội dung đề xuất** — F12.1 |
@@ -51,7 +51,6 @@ McpServer  (độc lập)
 ## Điểm còn tạm (nợ kỹ thuật dữ liệu)
 | Field | Hiện tại | Đích | Task |
 |---|---|---|---|
-| Timeline | `lib/data/timeline.ts` mock | `Feature.plannedStart/plannedEnd` | F09.3 |
 | `McpSession.tokens` | `"182K"` | `tokensUsed Int` | F09.4 |
 | `Member.status`, `Member.current` | chuỗi tự do | enum + suy ra từ task đang làm | F09.4 |
 | `DocRevision` | chỉ có mô tả | `proposedSections Json`, `status` enum (pending/approved/rejected) | F12.1 |
@@ -67,7 +66,7 @@ Số lượng sau seed (dùng làm mốc cho test integration):
 | sprints | 3 (mỗi project 1 sprint hiện tại) |
 | members | 7 (4 agent, 3 người) |
 | project_members | 18 |
-| features | 9 |
+| features | 12 (9 có owner + 3 đã lên kế hoạch chưa giao: FEAT-126, FEAT-212, FEAT-309) |
 | tasks | 22 (3 task block: T-418, T-402, T-522) |
 | docs | 22 |
 | doc_revisions | 27 (2 đang chờ duyệt, cả 2 ở `rv-web`) |

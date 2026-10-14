@@ -9,9 +9,11 @@ import { getTeam, getTeamByProject } from "./seed-data/team";
 import { getFeaturesByProject } from "./seed-data/features";
 import { getDocGroupsByProject, getDocBody } from "./seed-data/docs";
 import { getMcpServers, getMcpSessions, getMcpLog } from "./seed-data/mcp";
-import type { Member } from "../lib/types";
+import { TIMELINE_BY_PROJECT } from "./seed-data/timeline";
+import type { SeedMember as Member } from "./seed-data/types";
 import { parseSprintLabel } from "../lib/sprint";
 import { parseDue, parseEstimate, parseRunning, parseTaskStatus } from "../lib/taskFormat";
+import { weeksToDates } from "../lib/timeline";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -115,6 +117,7 @@ async function main() {
   }
 
   console.log(`Seeding ${projects.length} projects...`);
+  const sprintStartByProject = new Map<string, Date>();
   for (const p of projects) {
     // Dữ liệu mẫu gốc lưu sprint dạng nhãn hiển thị, không có năm — gán năm 2026 (năm của dữ liệu mẫu).
     // Sprint cần project tồn tại trước, project lại trỏ ngược về sprint hiện tại → 3 bước.
@@ -122,6 +125,7 @@ async function main() {
     await prisma.project.create({ data: project });
     const created = await prisma.sprint.create({ data: { ...parseSprintLabel(sprint, 2026), projectId: p.id } });
     await prisma.project.update({ where: { id: p.id }, data: { currentSprintId: created.id } });
+    sprintStartByProject.set(p.id, created.startDate);
   }
 
   console.log("Seeding project members (alloc)...");
@@ -162,6 +166,21 @@ async function main() {
           },
         },
       });
+    }
+  }
+
+  console.log("Seeding timeline (kế hoạch feature + feature chưa giao)...");
+  for (const p of projects) {
+    const sprintStart = sprintStartByProject.get(p.id)!;
+    for (const row of TIMELINE_BY_PROJECT[p.id] ?? []) {
+      const dates = weeksToDates(row.start, row.len, sprintStart);
+      if (row.featureId) {
+        await prisma.feature.update({ where: { id: row.featureId }, data: dates });
+      } else {
+        // "FEAT-126 Docs index nâng cấp" → id + tên; chưa giao, chưa có task.
+        const [, id, name] = /^(\S+)\s+(.+)$/.exec(row.name)!;
+        await prisma.feature.create({ data: { id, projectId: p.id, name, stage: "BA", pct: 0, ownerId: null, ...dates } });
+      }
     }
   }
 

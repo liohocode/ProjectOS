@@ -30,7 +30,9 @@ export interface Feature {
   id: string;
   name: string;
   stage: TaskStage;
+  /** Tên owner; "Chưa giao" khi feature đã lên kế hoạch nhưng chưa giao cho ai */
   owner: string;
+  ownerKind: MemberKind | null;
   pct: number;
   docs: number;
   tasks: Task[];

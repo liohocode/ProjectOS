@@ -26,7 +26,7 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 |---|---|---|---|---|
 | F09.1 | Model `Sprint` thay `Project.sprint` chuỗi | M | — | Xong — 2026-10-14 |
 | F09.2 | Task: `estimatePoints`, `dueDate`, `runningSince`, enum `TaskStatus` | M | — | Xong — 2026-10-14 |
-| F09.3 | Kế hoạch feature trong DB, bỏ mock `lib/data/timeline.ts` | M | F09.1 | Chưa làm |
+| F09.3 | Kế hoạch feature trong DB, bỏ mock `lib/data/timeline.ts` | M | F09.1 | Xong — 2026-10-14 |
 | F09.4 | `McpSession.tokensUsed`/`endedAt`; enum `MemberStatus` | S | — | Chưa làm |
 | F09.5 | Cập nhật test integration + tài liệu sau chuẩn hoá | S | F09.1–F09.4, F08.3 | Chưa làm |
 
@@ -47,10 +47,10 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 ### F09.3 — Timeline trong DB
 **Làm gì**: thêm `Feature.plannedStart DateTime?`, `Feature.plannedEnd DateTime?`; cho phép `Feature.ownerId` null (feature đã lên kế hoạch nhưng chưa giao — vd `FEAT-126 Docs index nâng cấp`). Seed: chuyển dữ liệu từ `lib/data/timeline.ts` (tuần T1–T8 tính từ ngày bắt đầu sprint hiện tại) và tạo các feature chưa giao (`FEAT-126`, `FEAT-212`, `FEAT-309`). `getTimelineByProject` đọc từ DB, quy đổi ngày → `start`/`len` theo tuần, `kind` = kind của owner hoặc `"none"`, `label` sinh từ stage/pct. Xoá dữ liệu mock trong `lib/data/timeline.ts` (giữ hàm).
 **Lưu ý UI** (đã chốt với người dùng 2026-10-14): feature chưa giao **vẫn hiện ở list view** — header feature với owner "Chưa giao" và một dòng "Chưa có task" (cần CSS nhỏ trong `globals.css`).
-**File**: `prisma/schema.prisma`, migration, `prisma/seed.ts`, `lib/data/timeline.ts`, `lib/data/features.ts`, `components/work/FeatureSection.tsx`
+**File**: `prisma/schema.prisma`, `prisma/migrations/*_feature_planning/`, `prisma/seed.ts`, `prisma/seed-data/timeline.ts`, `prisma/seed-data/types.ts`, `lib/timeline.ts` (+ test), `lib/data/timeline.ts`, `lib/data/features.ts`, `lib/types.ts`, `components/work/FeatureSection.tsx`, `app/globals.css`
 **Hoàn thành khi**:
-- [ ] Timeline 3 project hiển thị như trước (vị trí bar giữ nguyên)
-- [ ] Không còn dữ liệu mock nào trong `lib/data/` (cập nhật mục "Ngoại lệ" trong `CLAUDE.md`)
+- [x] Timeline 3 project hiển thị như trước (vị trí bar giữ nguyên — integration test đối chiếu từng bar)
+- [x] Không còn dữ liệu mock nào trong `lib/data/` (đã cập nhật `CLAUDE.md`)
 
 ### F09.4 — Phiên MCP và trạng thái thành viên
 **Làm gì**: `McpSession.tokens String` → `tokensUsed Int` (`"182K"` → 182000), thêm `endedAt DateTime?` và tính `durationMin` từ `startedAt`/`endedAt` (phiên đang chạy: tới hiện tại); `lib/data/mcp.ts` format lại `"182K"`. `Member.status` → enum `MemberStatus` (`DangChay`, `DangLam`, `DangReview`, `Cho`) map tiếng Việt.
@@ -68,3 +68,4 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 - 2026-10-14: người dùng xác nhận feature đã lên kế hoạch nhưng chưa giao vẫn hiển thị ở list view (F09.3).
 - F09.1: `migrate dev` từ chối chạy không tương tác khi có thay đổi mất dữ liệu (xoá cột). Cách làm (dùng lại cho F09.2–F09.4): `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` sinh SQL → tự tạo thư mục migration và **chèn bước chuyển dữ liệu trước khi xoá cột** → `prisma migrate deploy` → kiểm tra diff rỗng → `prisma generate` → khởi động lại dev server. Migration parse nhãn sprint cũ bằng regex SQL giống `lib/sprint.ts`, không mất dữ liệu ở DB dev. Seed tạo project → sprint → gán `currentSprintId` (3 bước, vì 2 bảng trỏ vào nhau).
 - F09.2: `status` đổi kiểu tại chỗ (`USING status::"TaskStatus"`) vì giá trị chuỗi cũ trùng giá trị `@map` của enum. `formatRunning` hiển thị "chạy N giờ M phút" khi ≥ 60 phút (trước đây chỉ có phút). Integration test của "chạy N phút" chấp nhận lệch 1 phút (tính từ thời điểm seed).
+- F09.3: nhãn bar timeline giờ sinh từ dữ liệu (`<stage> · <pct>%`, chưa giao → "Chưa bắt đầu") thay cho nhãn viết tay cũ ("Agent · 2 task", "BA đang phân tích"…); tên owner hiển thị đầy đủ ("Trần Mỹ Linh" thay vì "Linh"). Feature chưa giao được tính vào số feature và % trung bình ở Portfolio (rv-web: 5 feature, 39%). Thêm `Feature.ownerKind` để avatar owner đúng loại người/agent — trước đây header feature luôn vẽ avatar người kể cả owner là agent. Snapshot seed (`prisma/seed-data/*`) giờ dùng type cục bộ trong `prisma/seed-data/types.ts` (đúng ADR-007) — đổi `lib/types.ts` không còn làm hỏng seed. Đã seed lại DB dev.

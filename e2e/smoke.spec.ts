@@ -33,6 +33,17 @@ test("mở task drawer của task bị block", async ({ page }) => {
   await expect(drawer).toBeHidden();
 });
 
+test("feature chưa giao hiện ở list view; timeline vẽ từ DB", async ({ page }) => {
+  await page.goto("/rv-web/work");
+  const planned = page.locator(".feature-section", { hasText: "FEAT-126" });
+  await expect(planned.locator(".trow-empty")).toContainText("Chưa có task");
+  await expect(planned.locator(".avatar-none")).toBeVisible();
+
+  await page.locator(".seg-opt", { hasText: "Timeline" }).click();
+  await expect(page.locator(".timeline-bar")).toHaveCount(5);
+  await expect(page.locator(".timeline-bar.kind-none")).toHaveText("Chưa bắt đầu");
+});
+
 test("đổi dự án qua switcher giữ nguyên màn", async ({ page }) => {
   await page.goto("/rv-web/team");
   await page.locator(".switcher-btn").click();

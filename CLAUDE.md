@@ -13,7 +13,7 @@ Spec UI gốc (nguồn sự thật cho UI/UX): `docs/design/design-reference.md`
 ## Stack
 - **Next.js 16** (App Router) + React 19 + TypeScript. Next 16 có breaking change so với kiến thức cũ (vd `middleware.ts` đổi thành `proxy.ts`, `params` là Promise) — đọc `node_modules/next/dist/docs/` trước khi dùng API lạ (xem `AGENTS.md`).
 - UI: CSS thuần design system **Nocturne** trong `app/globals.css` (nguồn duy nhất cho màu/spacing/radius/shadow — không hard-code), không Tailwind. Icon Phosphor (`<i className="ph ph-xxx" />`).
-- **Postgres qua Docker + Prisma 7.10.0** (pin cứng). `lib/data/*.ts` đọc/ghi thật qua `lib/prisma.ts` — trừ `lib/data/timeline.ts` còn mock (F09.3).
+- **Postgres qua Docker + Prisma 7.10.0** (pin cứng). `lib/data/*.ts` đọc/ghi thật qua `lib/prisma.ts` (không còn mock).
 - Ghi dữ liệu: Server Actions ở `lib/actions/*.ts`.
 
 Chi tiết: `docs/architecture/overview.md`, `docs/architecture/data-model.md`, `docs/architecture/decisions.md`.

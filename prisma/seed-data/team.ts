@@ -1,4 +1,4 @@
-import type { Member } from "@/lib/types";
+import type { SeedMember as Member } from "./types";
 
 const TEAM: Member[] = [
   {

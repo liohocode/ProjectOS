@@ -1,4 +1,4 @@
-import type { Project } from "@/lib/types";
+import type { SeedProject as Project } from "./types";
 
 const PROJECTS: Project[] = [
   {

@@ -61,7 +61,6 @@ Ghi dữ liệu (hiện chỉ có duyệt revision):
 |---|---|---|
 | `lib/data/activity.ts` | Activity rail suy ra từ task running/blocked/chờ review + revision chờ duyệt | Bảng sự kiện thật — F17 |
 | `lib/data/taskDrawer.ts` | Log phiên chạy sinh theo mẫu từ trạng thái task | Lấy từ `McpSession`/`McpLogEntry` thật — F17 |
-| `lib/data/timeline.ts` | Mock tĩnh (start/len theo tuần) | Field kế hoạch trên `Feature` — F09 |
 | `lib/data/portfolio.ts` | Tổng hợp từ projects + features + team | Giữ nguyên (đúng thiết kế) |
 
 ## Môi trường dev

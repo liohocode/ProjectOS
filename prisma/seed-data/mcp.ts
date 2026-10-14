@@ -1,4 +1,4 @@
-import type { McpLogEntry, McpServer, McpSession } from "@/lib/types";
+import type { SeedMcpLogEntry as McpLogEntry, SeedMcpServer as McpServer, SeedMcpSession as McpSession } from "./types";
 
 // Chỉ danh sách server — đủ cho footer/nav sidebar. Bảng "Phiên chạy" và
 // "Nhật ký lệnh" của màn MCP sẽ được thêm khi triển khai màn đó
