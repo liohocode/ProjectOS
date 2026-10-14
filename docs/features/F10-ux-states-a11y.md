@@ -19,7 +19,7 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | F10.1 | `loading.tsx` + skeleton cho 5 màn | S | — | Xong — 2026-10-14 |
-| F10.2 | `error.tsx` cho `[project]`, nhận diện lỗi mất kết nối DB | S | — | Chưa làm |
+| F10.2 | `error.tsx` cho `[project]`, nhận diện lỗi mất kết nối DB | S | — | Xong — 2026-10-14 |
 | F10.3 | `not-found.tsx` cho project không tồn tại | S | — | Chưa làm |
 | F10.4 | Empty state cho từng màn | S | — | Chưa làm |
 | F10.5 | Bàn phím: hàng click được, drawer, dropdown | M | — | Chưa làm |
@@ -32,9 +32,9 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 
 ### F10.2 — Error boundary
 **Làm gì**: `app/[project]/error.tsx` (client component, nhận `error`, `reset`): thông báo tiếng Việt + nút "Thử lại". Nếu lỗi là Prisma không kết nối được DB (`PrismaClientInitializationError` / mã `P1001`) → hiển thị hướng dẫn "Chưa kết nối được database — chạy `docker compose up -d`". Lưu ý: ở production Next ẩn message lỗi server, nhận diện qua `error.digest` hoặc ném lỗi có message an toàn từ `lib/data`.
-**File**: `app/[project]/error.tsx`, có thể `lib/prisma.ts` hoặc helper `lib/errors.ts`
+**File**: `app/error.tsx`, `app/[project]/error.tsx`, `components/ui/ErrorState.tsx`, `lib/dbErrors.ts` (+ test), `lib/prisma.ts`, `app/globals.css`
 **Hoàn thành khi**:
-- [ ] `docker compose stop db` rồi mở app → thấy thông báo + hướng dẫn, không phải màn lỗi trắng; bật lại DB bấm "Thử lại" là chạy
+- [x] `docker compose stop db` rồi mở app → thấy thông báo + hướng dẫn, không phải màn lỗi trắng; bật lại DB bấm "Thử lại" là chạy (kiểm bằng Playwright trên dev server)
 
 ### F10.3 — 404 project
 **Làm gì**: `app/[project]/not-found.tsx` (hoặc `app/not-found.tsx`) theo phong cách Nocturne: "Không tìm thấy dự án" + link về `/rv-web/portfolio` (hoặc dự án đầu tiên lấy từ DB).
@@ -56,3 +56,4 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 ## Quyết định / ghi chú
 - Component dùng chung nhiều màn đặt ở `components/ui/` (tạo mới ở task này).
 - F10.1: kiểm chứng bằng cách tạm thêm 2,5s delay vào `work/page.tsx` → HTML stream trong 1,5s đầu chỉ có skeleton + "Đang tải…" (`role=status`, `aria-busy`), chưa có nội dung; đã gỡ delay. Thêm tiện ích `.sr-only` dùng chung.
+- F10.2: Next 16 dùng prop **`retry()`** (tải lại dữ liệu) thay cho `reset()`. Lỗi DB xảy ra ngay ở `app/[project]/layout.tsx` (dữ liệu sidebar) → `app/[project]/error.tsx` không bắt được (error boundary chỉ bọc phần con của cùng segment) → thêm `app/error.tsx`. Prisma 7 + adapter để mã `ECONNREFUSED` ở thuộc tính `code`, message chỉ là "Invalid … invocation" và `code` không qua được ranh giới server→client → `lib/prisma.ts` dùng `$extends({ query: { $allOperations } })` chuẩn hoá lỗi kết nối thành `DatabaseUnavailableError` (message cố định `DB_UNAVAILABLE…`). Hạn chế: ở **production** Next ẩn message lỗi server → chỉ hiện thông báo chung + mã lỗi (digest); hướng dẫn `docker compose` chỉ hiện ở dev.
