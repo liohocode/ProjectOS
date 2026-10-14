@@ -54,7 +54,8 @@ test("đổi dự án qua switcher giữ nguyên màn", async ({ page }) => {
 
 test("duyệt revision ghi xuống DB", async ({ page }) => {
   await page.goto("/rv-web/docs?doc=prd-listing");
-  const strip = page.locator(".kb-strip");
+  // Skeleton loading (docs/loading.tsx) dùng lại class .kb-strip để giữ bố cục → lọc theo chữ của strip thật.
+  const strip = page.locator(".kb-strip", { hasText: "KHO TRI THỨC" });
   await expect(strip).toContainText("Revision chờ duyệt 2");
 
   const approve = page.getByRole("button", { name: "Duyệt" });
@@ -68,5 +69,5 @@ test("duyệt revision ghi xuống DB", async ({ page }) => {
 
   await page.reload();
   await expect(page.getByRole("button", { name: "Duyệt" })).toHaveCount(0);
-  await expect(page.locator(".kb-strip")).toContainText("Revision chờ duyệt 1");
+  await expect(strip).toContainText("Revision chờ duyệt 1");
 });
