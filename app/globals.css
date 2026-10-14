@@ -1,4 +1,4 @@
-/* Nocturne — design-system tokens and component classes. Source: docs/design-reference.md. */
+/* Nocturne — design-system tokens and component classes. Source: docs/design/design-reference.md. */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
@@ -48,7 +48,7 @@
   --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, 0.55);
   --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0, 0, 0, 0.65);
 
-  /* Màu bổ sung dùng trong thiết kế này, ngoài token Nocturne gốc — xem docs/design-reference.md */
+  /* Màu bổ sung dùng trong thiết kế này, ngoài token Nocturne gốc — xem docs/design/design-reference.md */
   --color-sidebar-bg: #1a1c2b;
   --color-panel-bg: #1c1e2c;
   --color-content-muted: #cfd3e5;
@@ -237,7 +237,7 @@ img { display: block; max-width: 100%; }
   background: var(--color-surface); box-shadow: var(--shadow-lg);
 }
 
-/* ══════════════ App shell — sidebar + header (xem docs/features/01-app-shell.md) ══════════════ */
+/* ══════════════ App shell — sidebar + header (xem docs/features/F01-app-shell.md) ══════════════ */
 
 .app-shell {
   display: flex;
@@ -517,7 +517,7 @@ img { display: block; max-width: 100%; }
   overflow: auto;
 }
 
-/* ══════════════ Feature & Task (xem docs/features/02-feature-task.md) ══════════════ */
+/* ══════════════ Feature & Task (xem docs/features/F02-feature-task.md) ══════════════ */
 
 .work-shell {
   container-type: inline-size;
@@ -729,7 +729,7 @@ img { display: block; max-width: 100%; }
 .drawer-log-when { color: var(--color-neutral-500); font-size: 11px; }
 .drawer-footer { display: flex; gap: var(--space-2); margin-top: var(--space-6); }
 
-/* ══════════════ Docs dự án (xem docs/features/03-docs.md) ══════════════ */
+/* ══════════════ Docs dự án (xem docs/features/F03-docs.md) ══════════════ */
 
 .kb-strip {
   container-type: inline-size;
@@ -806,7 +806,7 @@ img { display: block; max-width: 100%; }
 .revision-when { color: var(--color-neutral-500); font-size: 12px; }
 .revision-approve { height: 26px; }
 
-/* ══════════════ Dev & AI agents (xem docs/features/04-team.md) ══════════════ */
+/* ══════════════ Dev & AI agents (xem docs/features/F04-team.md) ══════════════ */
 
 .team-shell {
   container-type: inline-size;
@@ -863,7 +863,7 @@ img { display: block; max-width: 100%; }
 .panel-activity-item { display: flex; gap: 8px; font-size: 12px; padding: 4px 0; }
 .panel-footer { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
 
-/* ══════════════ MCP (xem docs/features/05-mcp.md) ══════════════ */
+/* ══════════════ MCP (xem docs/features/F05-mcp-screen.md) ══════════════ */
 
 .mcp-main { padding: var(--space-6) var(--space-8); overflow-y: auto; height: 100%; }
 .mcp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(292px, 1fr)); gap: var(--space-4); }
@@ -873,7 +873,7 @@ img { display: block; max-width: 100%; }
 .mono { font-family: ui-monospace, monospace; }
 .mcp-section-title { margin: var(--space-8) 0 var(--space-3); }
 
-/* ══════════════ Portfolio (xem docs/features/06-portfolio.md) ══════════════ */
+/* ══════════════ Portfolio (xem docs/features/F06-portfolio.md) ══════════════ */
 
 .portfolio-main { padding: var(--space-6) var(--space-8); overflow-y: auto; height: 100%; }
 .portfolio-summary { font-size: 12px; color: var(--color-neutral-400); margin-bottom: var(--space-4); }

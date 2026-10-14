@@ -1,58 +1,49 @@
 # Meridian (PMOS) — hướng dẫn cho coding agent
 
-Đây là codebase thật của Meridian — công cụ quản lý dự án cho team mà developer làm việc cùng AI coding agent. Nguồn spec đầy đủ (5 màn hình, design tokens, state shape, dữ liệu mẫu): **`docs/design-reference.md`**. Đọc file đó trước khi implement bất kỳ màn nào.
+Codebase thật của Meridian — công cụ quản lý dự án cho team mà developer làm việc cùng AI coding agent.
+
+## Bắt đầu từ đâu
+1. **`docs/README.md`** — mục lục tài liệu.
+2. **`docs/ROADMAP.md`** — tiến độ, việc nên nhận tiếp, quyết định đang chờ người dùng.
+3. **`docs/WORKFLOW.md`** — quy trình nhận / làm / đóng task, Definition of Done, quy ước commit. **Bắt buộc làm theo.**
+4. File feature của task bạn nhận (`docs/features/FXX-*.md`) — mỗi task có "Làm gì / File / Hoàn thành khi".
+
+Spec UI gốc (nguồn sự thật cho UI/UX): `docs/design/design-reference.md`. Yêu cầu đánh mã: `docs/product/requirements.md`.
 
 ## Stack
-- Next.js (App Router) + TypeScript, không Tailwind — UI dùng class của design system **Nocturne**, token/class định nghĩa trong `app/globals.css` (nguồn duy nhất cho màu/spacing/radius/shadow — không hard-code giá trị mới).
-- **Backend: Postgres qua Docker + Prisma 7** (`lib/data/*.ts` hiện đọc/ghi thật qua `lib/prisma.ts`, không còn mock — trừ `lib/data/timeline.ts`, xem ghi chú bên dưới). Mỗi hàm vẫn trả `Promise<...>` như trước, chữ ký không đổi.
-- Icon: Phosphor Icons (`<i className="ph ph-xxx" />`), nạp qua `<link>` trong `app/layout.tsx`.
+- **Next.js 16** (App Router) + React 19 + TypeScript. Next 16 có breaking change so với kiến thức cũ (vd `middleware.ts` đổi thành `proxy.ts`, `params` là Promise) — đọc `node_modules/next/dist/docs/` trước khi dùng API lạ (xem `AGENTS.md`).
+- UI: CSS thuần design system **Nocturne** trong `app/globals.css` (nguồn duy nhất cho màu/spacing/radius/shadow — không hard-code), không Tailwind. Icon Phosphor (`<i className="ph ph-xxx" />`).
+- **Postgres qua Docker + Prisma 7.10.0** (pin cứng). `lib/data/*.ts` đọc/ghi thật qua `lib/prisma.ts` — trừ `lib/data/timeline.ts` còn mock (F09.3).
+- Ghi dữ liệu: Server Actions ở `lib/actions/*.ts`.
+
+Chi tiết: `docs/architecture/overview.md`, `docs/architecture/data-model.md`, `docs/architecture/decisions.md`.
 
 ## Chạy dự án
 ```
 nvm use --lts   # hoặc: export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use --lts
-docker compose up -d           # Postgres (chỉ DB — Next.js vẫn chạy trực tiếp, không dockerize)
+docker compose up -d           # Postgres (chỉ DB — Next.js chạy trực tiếp)
+cp .env.example .env           # lần đầu
 npm install
-npx prisma generate            # sinh lại client vào lib/generated/prisma sau khi đổi schema
-npx prisma migrate dev         # tạo/áp migration mới nếu sửa prisma/schema.prisma
-npx prisma db seed             # nạp lại dữ liệu mẫu (script tự xoá sạch rồi seed lại — an toàn chạy nhiều lần trên DB dev)
-npx prisma studio              # GUI xem/sửa dữ liệu trực tiếp trong trình duyệt
-npm run dev     # http://localhost:3000
-npm run build   # kiểm tra type/lint trước khi commit
-```
-**Lưu ý Prisma 7**: khác nhiều so với Prisma 5/6 — client sinh ra vào `lib/generated/prisma` (không phải `node_modules`), bắt buộc dùng driver adapter (`@prisma/adapter-pg`, xem `lib/prisma.ts`), cấu hình datasource nằm ở `prisma7.config.ts` (không phải trong `schema.prisma`). Trước khi sửa gì liên quan Prisma, đọc `.agents/skills/prisma-*/SKILL.md` (do chính Prisma cài vào repo lúc `prisma init`) thay vì dựa vào kiến thức Prisma cũ.
-
-## Cấu trúc
-```
-app/
-  layout.tsx, globals.css, page.tsx          — root, redirect "/" → "/rv-web/work"
-  [project]/layout.tsx                        — sidebar + header dùng chung cho 5 màn
-  [project]/{work,docs,team,mcp,portfolio}/page.tsx
-components/layout/                            — Sidebar, Header, ProjectSwitcher, NavItem
-lib/types.ts                                  — type cho toàn bộ entity (Project, Feature, Task, Doc, Member, McpServer...)
-lib/prisma.ts                                  — Prisma Client singleton (driver adapter pg)
-lib/relativeTime.ts                            — format Date → "x phút trước" (dùng ở docs/team/mcp)
-lib/data/*.ts                                 — data access thật qua Prisma (xem ngoại lệ timeline.ts)
-lib/generated/prisma/                          — client Prisma tự sinh, KHÔNG commit, KHÔNG sửa tay (chạy `prisma generate` lại nếu thiếu)
-prisma/schema.prisma                           — schema DB (nguồn sự thật cho cấu trúc dữ liệu)
-prisma/seed.ts                                 — script seed, nguồn dữ liệu ở prisma/seed-data/*.ts (bản mock gốc, tách khỏi lib/data để seed không phụ thuộc vòng vào DB nó đang tạo)
-docker-compose.yml                             — Postgres cho dev, `docker compose up -d`
-docs/design-reference.md                      — spec đầy đủ (nguồn sự thật cho UI/UX)
-docs/features/0X-*.md                         — 1 file / màn: mục tiêu, trạng thái, checklist
-PROGRESS.md                                   — bảng trạng thái tổng của cả 6 màn
+npx prisma generate            # sinh client vào lib/generated/prisma (chạy lại sau mỗi lần đổi schema)
+npx prisma migrate dev         # áp migration; sửa schema thì thêm --name <mô tả>
+npx prisma db seed             # nạp lại dữ liệu mẫu (tự xoá sạch rồi seed — an toàn chạy nhiều lần trên DB dev)
+npx prisma studio              # GUI xem/sửa dữ liệu
+npm run dev                    # http://localhost:3000
+npm run build && npm run lint  # bắt buộc sạch trước khi commit
 ```
 
-**Ngoại lệ chưa có trong DB**: `lib/data/timeline.ts` (dữ liệu cho view Timeline ở màn Feature & Task) vẫn là mock tĩnh — không có model Prisma tương ứng vì bản thân dữ liệu mẫu gốc cũng chỉ soạn tay cho demo, chưa phải nghiệp vụ thật (xem `docs/features/02-feature-task.md`).
+**Prisma 7** khác nhiều so với 5/6: client sinh vào `lib/generated/prisma` (không commit, không sửa tay), bắt buộc driver adapter `@prisma/adapter-pg`, datasource cấu hình ở `prisma7.config.ts`. Trước khi đụng Prisma đọc `.agents/skills/prisma-*/SKILL.md`. Prisma chặn lệnh phá dữ liệu (`migrate reset`, `db push --force-reset`) khi chạy bởi AI agent — phải hỏi người dùng trước.
 
-## Quy tắc khi thêm/sửa việc
-1. Trước khi bắt đầu một màn, đọc file tương ứng trong `docs/features/` + phần liên quan trong `docs/design-reference.md`.
-2. Cập nhật **Trạng thái** ở đầu file `docs/features/0X-*.md` khi nhận việc (`Chưa bắt đầu` → `Đang làm`) và khi xong (`Đang làm` → `Xong`), kèm ghi chú quyết định quan trọng nếu có lệch so với spec.
-3. Cập nhật dòng tương ứng trong `PROGRESS.md` (không cần mô tả chi tiết ở đây, chỉ trạng thái + link).
-4. Mỗi màn là 1 file feature riêng — làm việc song song trên các màn khác nhau sẽ không đụng file. Nếu nhiều agent cùng đụng một file trong `app/`/`components/`/`lib/`, phối hợp qua `PROGRESS.md` hoặc chia nhỏ theo component.
-5. Bám sát fidelity: màu/spacing/radius/shadow lấy từ `app/globals.css`, không hard-code. Layout responsive dùng **container query** (đã có sẵn breakpoint cho `.trow/.frow/.mrow` trong `globals.css`), không dùng media query.
-6. Dữ liệu trong Postgres đến từ `prisma/seed.ts` (nguồn: `prisma/seed-data/*.ts`, chính là mock gốc port từ design canvas) — nếu cần thêm dữ liệu mẫu, sửa ở `prisma/seed-data/` rồi `npx prisma db seed`, đừng chèn thẳng qua Prisma Studio nếu muốn người khác seed lại được giống hệt.
-7. Sửa `prisma/schema.prisma` → bắt buộc `npx prisma migrate dev --name <mô tả>` rồi `npx prisma generate` trước khi code dùng được field mới (client sinh tĩnh, không tự cập nhật). Nếu dev server đang chạy mà đổi schema xong không thấy hiệu lực / báo lỗi "Unknown argument", khả năng cao do dev server cache client cũ — khởi động lại `npm run dev`.
-8. Trước khi coi một việc là xong: `npm run build` phải sạch (type + lint), và tự chạy `npm run dev` xem lại trên trình duyệt so với spec.
-9. Cần `.env` với `DATABASE_URL` (copy từ `.env.example`) và `docker compose up -d` đang chạy thì `npm run dev`/`prisma` mới hoạt động.
+## Quy tắc bắt buộc
+1. Làm theo `docs/WORKFLOW.md`: nhận task → cập nhật trạng thái trong file feature → làm đúng phạm vi → Definition of Done → cập nhật file feature + `docs/ROADMAP.md`.
+2. Page/layout chỉ gọi `lib/data/*`; component client không import `lib/data`/`lib/prisma`. Giữ chữ ký hàm `lib/data/*` (đổi thì sửa mọi nơi gọi).
+3. Fidelity: token từ `app/globals.css`; responsive bằng **container query**, không media query.
+4. Sửa `prisma/schema.prisma` → `npx prisma migrate dev --name <mô tả>` → `npx prisma generate` → **khởi động lại `npm run dev`** (dev server cache client cũ, triệu chứng: lỗi "Unknown argument"). Cập nhật `docs/architecture/data-model.md` cùng commit.
+5. Dữ liệu mẫu sửa ở `prisma/seed-data/` rồi `npx prisma db seed`, không chèn tay qua Prisma Studio.
+6. Quyết định kiến trúc mới → thêm ADR vào `docs/architecture/decisions.md`.
+7. Cần `.env` có `DATABASE_URL` và `docker compose up -d` đang chạy thì app/prisma mới hoạt động. Không commit `.env`.
 
-## Trạng thái hiện tại
-Cả 6 màn đã có UI + tương tác chính trên mock data (xem `PROGRESS.md`). Việc còn lại chủ yếu là: nối API/DB thật thay `lib/data/*`, hoàn thiện vài nút chưa có hành vi (xem mục "Còn thiếu / cần làm tiếp" trong từng `docs/features/0X-*.md`), và thêm realtime cho màn MCP.
+## Trạng thái hiện tại (2026-10)
+Phase 0 xong: 5 màn + app shell chạy trên Postgres thật (F01–F07). Kế hoạch tiếp theo đã chia thành feature F08–F19 với task chi tiết — xem `docs/ROADMAP.md`.
+
+Đã chốt (2026-10-14): đăng nhập **Google** (ADR-013); production trên **Google Cloud Run + Neon Postgres gói Free** (ADR-016, ADR-015) — code mới không được giữ request mở lâu (không SSE dài, MCP stateless) và không giữ trạng thái quan trọng trong RAM (có thể nhiều instance, scale về 0). Embedding/kho tri thức ngữ nghĩa (F18) đang hoãn.

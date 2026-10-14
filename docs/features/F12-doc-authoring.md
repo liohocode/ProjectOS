@@ -1,0 +1,61 @@
+# F12 — Soạn & duyệt tài liệu (governance thật)
+
+| Trạng thái | Phase | Phụ thuộc | Yêu cầu |
+|---|---|---|---|
+| Chưa bắt đầu | 2 | F03, F11.4 (khuôn mẫu dialog) | FR-DC-06, 07, 08 |
+
+## Mục tiêu
+Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiêu chí…") — duyệt chỉ đổi cờ, không có nội dung nào được đưa vào bản chính. Feature này làm cho luồng governance — **lõi sản phẩm** — chạy thật: revision mang nội dung đề xuất, người duyệt xem diff rồi duyệt (áp vào bản chính) hoặc từ chối; người tạo và sửa tài liệu trực tiếp.
+
+## Phạm vi
+- **Trong**: schema revision, duyệt/từ chối, diff, tạo tài liệu, người sửa trực tiếp, hiển thị lịch sử.
+- **Ngoài**: agent gửi revision qua MCP `docs.append` (F16.5 — dùng lại hàm tạo revision ở đây), index lại sau khi duyệt (F18.4), phân quyền ai được duyệt (F15.4).
+
+## Tham chiếu
+- `docs/design/design-reference.md` → "2. Docs dự án" (khối "Revision chờ duyệt và lịch sử")
+- `docs/product/overview.md` → "Governance tài liệu"
+- Code: `lib/actions/docs.ts`, `components/docs/*`, `lib/data/docs.ts`, `prisma/schema.prisma` (`DocRevision`)
+
+## Tasks
+| Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
+|---|---|---|---|---|
+| F12.1 | Schema revision: nội dung đề xuất + trạng thái | M | — | Chưa làm |
+| F12.2 | Duyệt = áp nội dung vào bản chính, tăng version | S | F12.1 | Chưa làm |
+| F12.3 | Từ chối revision + xem diff trước khi duyệt | M | F12.1 | Chưa làm |
+| F12.4 | Lịch sử hiển thị người duyệt / bị từ chối | S | F12.1 | Chưa làm |
+| F12.5 | "Tài liệu mới" | M | F11.4 | Chưa làm |
+| F12.6 | Người sửa tài liệu trực tiếp | M | F12.1, F11.4 | Chưa làm |
+
+### F12.1 — Schema revision
+**Làm gì**: `DocRevision`: thay `pending Boolean` bằng enum `RevisionStatus` (`pending`, `approved`, `rejected`); thêm `proposedSummary String?`, `proposedSections Json?` (cùng shape `[{heading, paras[]}]` với `Doc.sections`), `rejectedReason String?`, `baseVersion String` (version của doc lúc tạo revision). Migration chuyển dữ liệu cũ (`pending=true` → `pending`, còn lại → `approved`). Seed: 2 revision đang chờ ở `prd-listing`, `mcp-spec` có `proposedSections` = bản hiện tại + thay đổi đúng như mô tả (vd thêm đoạn vào "Tiêu chí hoàn thành"). Tách hàm `createRevision(docId, authorId, what, proposed)` trong `lib/actions/docs.ts` (hoặc `lib/domain/docs.ts` nếu cần dùng từ MCP) để F16.5 tái sử dụng. Cập nhật `lib/data/docs.ts`, `lib/types.ts` (`DocRevision.status`), `getPendingRevision*` lọc theo status.
+**Hoàn thành khi**:
+- [ ] UI hiện như trước, nút "Duyệt" vẫn đúng chỗ; `data-model.md` cập nhật
+
+### F12.2 — Duyệt áp nội dung
+**Làm gì**: `approveRevision` chạy trong `prisma.$transaction`: nếu revision có `proposedSections`/`proposedSummary` → ghi vào `Doc`, tăng version phụ (`v4.2` → `v4.3`), `updatedAt = now`; nếu `baseVersion` khác version hiện tại → từ chối duyệt với lỗi "Tài liệu đã thay đổi từ khi revision được tạo" (tránh ghi đè).
+**Hoàn thành khi**:
+- [ ] Duyệt revision của `prd-listing` → thân tài liệu đổi theo, version tăng, reload vẫn giữ
+
+### F12.3 — Từ chối + diff
+**Làm gì**: nút "Từ chối" (nhập lý do) → `rejectRevision`. Nút/khu "Xem thay đổi" mở rộng dưới dòng revision: so sánh theo section — section mới, section bị xoá, đoạn thay đổi (diff theo đoạn là đủ, không cần diff ký tự). Viết hàm thuần `diffSections(current, proposed)` + unit test.
+**Hoàn thành khi**:
+- [ ] Từ chối → revision rời khỏi trạng thái chờ, badge nav "Docs" giảm
+- [ ] Diff hiển thị đúng cho 2 revision mẫu
+
+### F12.4 — Lịch sử
+**Làm gì**: mỗi dòng lịch sử hiện trạng thái: "Đã duyệt bởi Trung Hiếu · 2 giờ trước", "Bị từ chối: <lý do>", hoặc nút Duyệt/Từ chối nếu đang chờ. Bỏ cơ chế `approved` state cục bộ trong `ApproveButton` (dữ liệu lấy lại từ server).
+**Hoàn thành khi**:
+- [ ] Trạng thái lịch sử đúng sau reload
+
+### F12.5 — Tài liệu mới
+**Làm gì**: dùng khuôn mẫu dialog theo URL (ADR "Dialog điều khiển bằng URL", tạo ở F11.4) cho màn docs: tiêu đề, gắn feature (hoặc "Kho tri thức chung"), tóm tắt, nội dung (textarea markdown — tách section theo dòng `## `). Action `createDoc` sinh id slug từ tiêu đề (bỏ dấu tiếng Việt), thêm hậu tố nếu trùng (id `Doc` là khoá toàn cục). Người tạo = tác giả, `agentWritten=false`, version `v1.0`. Sau khi tạo điều hướng `?doc=<id>`.
+**Hoàn thành khi**:
+- [ ] Tạo tài liệu tiếng Việt có dấu → id slug hợp lệ, hiển thị trong cây đúng nhóm
+
+### F12.6 — Người sửa trực tiếp
+**Làm gì**: nút "Sửa" ở thân tài liệu → form (tóm tắt + nội dung markdown). Lưu: tạo revision `approved` do chính người sửa (để có lịch sử), áp nội dung, tăng version. Agent **không** có đường này (chỉ `docs.append`).
+**Hoàn thành khi**:
+- [ ] Sửa xong thấy dòng lịch sử mới "Đã duyệt bởi <người sửa>"
+
+## Quyết định / ghi chú
+- Nội dung tài liệu tiếp tục lưu dạng `sections Json` (không chuyển sang markdown thô) — form chỉ chuyển đổi qua lại markdown ↔ sections ở biên.

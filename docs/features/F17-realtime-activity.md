@@ -1,0 +1,53 @@
+# F17 — Realtime & nhật ký hoạt động thật
+
+| Trạng thái | Phase | Phụ thuộc | Yêu cầu |
+|---|---|---|---|
+| Chưa bắt đầu | 4 | F11, F16.2 | FR-WK-06, FR-WK-07, FR-MC-03 |
+
+## Mục tiêu
+Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer hiện là dữ liệu **suy ra** (ADR-008); nhật ký lệnh ở màn MCP là tĩnh. Feature này thay bằng bảng sự kiện thật và đẩy cập nhật lên trình duyệt ngay khi có thay đổi (spec: "nên là stream/websocket cho realtime feed và log").
+
+## Phạm vi
+- **Trong**: model sự kiện, ghi sự kiện từ server action + MCP tool, endpoint sự kiện + polling ngắn, cập nhật activity rail / nhật ký lệnh / badge, log phiên chạy thật trong drawer.
+- **Ngoài**: thông báo đẩy ra ngoài (email/Slack).
+
+## Tham chiếu
+- `docs/architecture/overview.md` → "Các module suy ra (tạm thời)"
+- Code: `lib/data/activity.ts`, `lib/data/taskDrawer.ts`, `components/work/ActivityRail.tsx`, `app/[project]/mcp/page.tsx`, `lib/actions/_activity.ts` (F11.7)
+
+## Tasks
+| Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
+|---|---|---|---|---|
+| F17.1 | Model `ActivityEvent` + ghi từ server action và MCP tool | M | F11.7, F16.2 | Chưa làm |
+| F17.2 | Endpoint lấy sự kiện mới theo con trỏ (cho polling ngắn) | S | F17.1 | Chưa làm |
+| F17.3 | Client polling: activity rail, nhật ký lệnh, badge | M | F17.2 | Chưa làm |
+| F17.4 | Log phiên chạy trong drawer lấy từ dữ liệu thật | S | F16.2, F17.1 | Chưa làm |
+| F17.5 | "chạy N phút" tự tăng phía client | S | F09.2 | Chưa làm |
+
+### F17.1 — Bảng sự kiện
+**Làm gì**: model `ActivityEvent(id, projectId, actorId, type enum, taskId?, docId?, featureId?, text, tool?, tone enum {run, ok, review, block}, at)`. Đổi helper `recordActivity` (F11.7) thành ghi `ActivityEvent` (vẫn có thể ghi kèm `MemberActivity` hoặc thay hẳn — chọn và ghi chú). MCP tool (F16.2) cũng ghi. `getActivityFeed(projectId)` đọc bảng này (giữ chữ ký), xoá logic suy ra.
+**Hoàn thành khi**:
+- [ ] Activity rail hiện sự kiện thật theo thời gian, mới nhất trên cùng
+
+### F17.2 — Endpoint sự kiện theo con trỏ
+**Làm gì**: `app/api/projects/[project]/events/route.ts` (GET) nhận `?after=<cursor>` (id/thời điểm sự kiện cuối client đã có), trả JSON các `ActivityEvent`/`McpLogEntry` mới hơn (giới hạn số lượng) + cursor mới — request ngắn, trả về ngay. **Không** dùng SSE giữ kết nối hay Postgres `LISTEN/NOTIFY`: production trên Cloud Run tính tiền suốt thời gian request mở và Neon pooled không hỗ trợ LISTEN (ADR-016). Kiểm tra quyền xem dự án (F15.3 nếu đã có).
+**Hoàn thành khi**:
+- [ ] Gọi endpoint với cursor cũ trả đúng các sự kiện mới, request kết thúc < 300ms trên DB đã thức
+
+### F17.3 — Client
+**Làm gì**: hook `useProjectEvents(projectId)` gọi F17.2 mỗi ~10–15 giây **chỉ khi tab đang hiển thị** (`document.visibilityState`), dừng khi ẩn tab (để Cloud Run/Neon được về 0, tiết kiệm hạn mức free); gọi ngay một lần khi tab hiện lại. Activity rail chèn sự kiện mới lên đầu; bảng nhật ký lệnh màn MCP chèn dòng mới; với sự kiện làm đổi số liệu (task block, revision mới) gọi `router.refresh()` để badge nav / banner cập nhật (throttle).
+**Hoàn thành khi**:
+- [ ] Mở 2 tab: thao tác ở tab A → tab B cập nhật trong vài giây (≤ chu kỳ polling) không cần reload
+
+### F17.4 — Log phiên chạy thật
+**Làm gì**: `getTaskDrawerInfo` lấy log từ `ActivityEvent` + `McpLogEntry` của task (theo `taskId`/`target`), context docs từ các lệnh `docs.read` trong phiên của task. Xoá `buildSessionLog` (mẫu sinh sẵn).
+**Hoàn thành khi**:
+- [ ] Drawer của task vừa được agent claim qua MCP hiển thị đúng các bước đã diễn ra
+
+### F17.5 — Thời gian chạy live
+**Làm gì**: task row / drawer / activity rail nhận `runningSince` (thêm field vào type nếu cần) và hiển thị "chạy N phút" tự cập nhật mỗi 30s phía client.
+**Hoàn thành khi**:
+- [ ] Để trang mở vài phút thấy số phút tăng
+
+## Quyết định / ghi chú
+- Production trên Cloud Run (ADR-016): chọn **polling ngắn từ client** thay cho SSE/WebSocket giữ kết nối — kết nối dài bị tính tiền suốt thời gian mở và giữ instance + Neon luôn thức, đốt hạn mức free. Độ trễ 10–15 giây chấp nhận được cho activity feed. Nếu sau này chuyển sang VPS (xem F19), có thể nâng cấp lên SSE + `LISTEN/NOTIFY` — ghi ADR khi đó.

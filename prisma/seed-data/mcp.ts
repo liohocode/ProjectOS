@@ -2,7 +2,7 @@ import type { McpLogEntry, McpServer, McpSession } from "@/lib/types";
 
 // Chỉ danh sách server — đủ cho footer/nav sidebar. Bảng "Phiên chạy" và
 // "Nhật ký lệnh" của màn MCP sẽ được thêm khi triển khai màn đó
-// (xem docs/features/05-mcp.md).
+// (xem docs/features/F05-mcp-screen.md).
 const MCP_SERVERS: McpServer[] = [
   {
     id: "meridian-core",
@@ -41,7 +41,7 @@ export async function getMcpServers(): Promise<McpServer[]> {
 }
 
 // Bảng cắt ngang nhiều dự án — không filter theo project đang mở, theo đúng
-// spec màn MCP. Xem docs/features/05-mcp.md.
+// spec màn MCP. Xem docs/features/F05-mcp-screen.md.
 const MCP_SESSIONS: McpSession[] = [
   { id: "sess-8f2a", agent: "Atlas", projectId: "rv-web", taskId: "T-405", durationMin: 14, toolCalls: 6, tokens: "182K", result: "Đang chạy" },
   { id: "sess-6c11", agent: "Vega", projectId: "rv-web", taskId: "T-407", durationMin: 3, toolCalls: 2, tokens: "54K", result: "Đang chạy" },

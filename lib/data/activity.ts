@@ -4,7 +4,7 @@ import { getPendingRevisionsByProject } from "./docs";
 
 // Activity rail — suy ra từ task (running/blocked/chờ review) và revision
 // docs đang chờ duyệt, thay vì một mock rời rạc, để luôn khớp với dữ liệu
-// task/doc thật ở các màn khác. Xem docs/features/02-feature-task.md.
+// task/doc thật ở các màn khác. Thay bằng bảng sự kiện thật ở docs/features/F17-realtime-activity.md (F17.1).
 export async function getActivityFeed(projectId: string): Promise<ActivityItem[]> {
   const [tasks, pendingRevisions] = await Promise.all([
     getTasksByProject(projectId),

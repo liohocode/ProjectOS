@@ -1,7 +1,7 @@
 import type { TimelineRow } from "@/lib/types";
 
 // Vị trí (start/len theo tuần T1–T8) không có trong dữ liệu feature gốc —
-// bổ sung riêng cho view Timeline. Xem docs/features/02-feature-task.md.
+// bổ sung riêng cho view Timeline. Sẽ chuyển vào DB ở docs/features/F09-data-model-hardening.md (F09.3).
 const TIMELINE_BY_PROJECT: Record<string, TimelineRow[]> = {
   "rv-web": [
     { featureId: "FEAT-118", name: "FEAT-118 Listing rework", owner: "Linh", kind: "human", start: 1, len: 5, label: "Dev · 62%" },

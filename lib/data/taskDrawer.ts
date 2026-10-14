@@ -12,7 +12,7 @@ const STAGE_ASSIGNER: Record<string, string> = {
 
 /**
  * Context docs + log phiên chạy cho task drawer — suy ra từ feature/task thật
- * bằng một mẫu chung, thay vì viết tay cho từng task. Xem docs/features/02-feature-task.md.
+ * bằng một mẫu chung, thay vì viết tay cho từng task. Thay bằng log thật ở docs/features/F17-realtime-activity.md (F17.4).
  */
 export async function getTaskDrawerInfo(projectId: string, taskId: string): Promise<TaskDrawerInfo | null> {
   const features = await getFeaturesByProject(projectId);

@@ -1,5 +1,7 @@
 # Handoff: Meridian — Hệ thống quản lý dự án đa dự án với AI coding agents
 
+> **Ghi chú (2026-10):** đây là bản spec UI gốc từ gói handoff thiết kế, giữ nguyên nội dung làm nguồn sự thật cho UI/UX. Các file prototype nhắc tới bên dưới (`Meridian v2.dc.html`, `support.js`, `_ds/`) đã bị xoá khỏi repo khi chuyển sang codebase thật — token Nocturne đã port vào `app/globals.css`, dữ liệu mẫu đã port vào `prisma/seed-data/`. Yêu cầu đã được tổng hợp và đánh số ở `docs/product/requirements.md`.
+
 ## Overview
 Meridian là một công cụ quản lý dự án phần mềm cho đội ngũ mà **developer thật làm việc cùng AI coding agents**. Nó gồm một màn portfolio và bốn module:
 
