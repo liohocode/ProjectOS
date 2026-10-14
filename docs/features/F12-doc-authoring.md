@@ -44,6 +44,7 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 
 ### F12.4 — Lịch sử
 **Làm gì**: mỗi dòng lịch sử hiện trạng thái: "Đã duyệt bởi Trung Hiếu · 2 giờ trước", "Bị từ chối: <lý do>", hoặc nút Duyệt/Từ chối nếu đang chờ. Bỏ cơ chế `approved` state cục bộ trong `ApproveButton` (dữ liệu lấy lại từ server).
+**Lỗi đang tồn tại (phát hiện ở F08.4)**: bấm "Duyệt" hiện tại **không có phản hồi** — `revalidatePath` render lại trang, revision hết chờ nên `ApproveButton` bị gỡ trước khi kịp hiện "Đã duyệt"; người dùng chỉ thấy nút biến mất. Task này sửa luôn. Cập nhật `e2e/smoke.spec.ts` (test "duyệt revision") để kiểm tra dòng "Đã duyệt bởi …".
 **Hoàn thành khi**:
 - [ ] Trạng thái lịch sử đúng sau reload
 

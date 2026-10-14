@@ -21,7 +21,7 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 | F08.1 | Vitest + unit test hàm thuần | S | — | Xong — 2026-10-14 |
 | F08.2 | DB test riêng (`meridian_test`) + script chuẩn bị | S | — | Xong — 2026-10-14 |
 | F08.3 | Integration test `lib/data/*` và `lib/actions/docs.ts` | M | F08.1, F08.2 | Xong — 2026-10-14 |
-| F08.4 | Playwright e2e smoke 5 màn | M | F08.2 | Chưa làm |
+| F08.4 | Playwright e2e smoke 5 màn | M | F08.2 | Xong — 2026-10-14 |
 | F08.5 | npm scripts `typecheck`, `test`, `test:e2e`; cập nhật Definition of Done | S | F08.1 | Chưa làm |
 | F08.6 | GitHub Actions CI | M | F08.3, F08.5 | Chưa làm |
 
@@ -48,9 +48,9 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 
 ### F08.4 — Playwright e2e smoke
 **Làm gì**: cài `@playwright/test` + Chromium. `playwright.config.ts` khởi động `npm run dev` (hoặc `build && start`) với DB test. Kịch bản: mở `/` → về `/rv-web/work`; 5 màn của `rv-web` đều render tiêu đề header đúng (`components/layout/screenMeta.ts`); mở task drawer T-418 thấy cảnh báo block; đổi project qua switcher sang `rv-app` giữ nguyên màn; màn docs `?doc=prd-listing` bấm "Duyệt" → reload vẫn "Đã duyệt"/không còn nút.
-**File**: `playwright.config.ts`, `e2e/smoke.spec.ts`, `package.json`, `.gitignore` (`test-results/`, `playwright-report/`)
+**File**: `playwright.config.ts`, `e2e/global-setup.ts`, `e2e/smoke.spec.ts`, `package.json`, `.gitignore` (`test-results/`, `playwright-report/`)
 **Hoàn thành khi**:
-- [ ] `npm run test:e2e` xanh ở local
+- [x] `npm run test:e2e` xanh ở local (9 test)
 
 ### F08.5 — npm scripts + Definition of Done
 **Làm gì**: thêm `typecheck` (`tsc --noEmit`), `test` (unit), `test:integration`, `test:e2e`. Cập nhật `docs/WORKFLOW.md` (Definition of Done) và `CLAUDE.md` để bắt buộc `npm test` (+ integration nếu đụng `lib/data`/`lib/actions`).
@@ -71,3 +71,4 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 - F08.1: Vitest 5 yêu cầu `@types/node` ≥ 22 → nâng lên `^24` (khớp runtime Node 24). Config đặt đuôi `.mts` (repo không phải `"type": "module"`, tránh cảnh báo Vite). Bảng map enum MCP tách ra `lib/data/mcpLabels.ts` (thuần, không import Prisma) để unit test được; test đối chiếu với enum sinh ra ở `lib/generated/prisma/enums.ts` → thêm giá trị enum mới mà quên nhãn sẽ fail. `fsevents` (chỉ macOS) bị `deny` install script — có binary dựng sẵn, không cần. Script `npm test` = `vitest run` đã thêm sớm.
 - F08.2: viết bằng TypeScript + `pg` (không dùng `docker exec`) để chạy được cả local lẫn CI (Postgres là service container). Tên DB test bắt buộc chứa `test` — chặn nhầm sang DB thật. Không có `DATABASE_URL_TEST` thì suy ra từ `DATABASE_URL` với tên `meridian_test`.
 - F08.3: global setup chạy `scripts/test-db-prepare.ts` một lần (bỏ qua bằng `SKIP_TEST_DB_PREPARE=1`); `test/integration-env.ts` trỏ `DATABASE_URL` sang `DATABASE_URL_TEST` trước khi file test import `lib/prisma.ts` và mock `next/cache`. Chạy tuần tự (`fileParallelism: false`). Test ghi dữ liệu phải tự trả lại trạng thái seed trong `afterAll` — xem `lib/actions/docs.integration.test.ts` làm mẫu cho các action sau (F11+). Lưu ý: `Feature.docs` giờ tính từ quan hệ nên khác số trong mock gốc (FEAT-118: 4, FEAT-119: 2, FEAT-120: 2, FEAT-124: 0).
+- F08.4: e2e chạy **bản build production ở cổng 3100** (`npm run build && next start`) trỏ vào DB test — không đụng dev server cổng 3000 và DB dev. Global setup reseed DB test mỗi lần chạy. Phát hiện lỗi UX: bấm "Duyệt" không có phản hồi (nút chỉ biến mất) → ghi vào F12.4; test hiện kiểm tra nút biến mất + số "Revision chờ duyệt" giảm và giữ sau reload.
