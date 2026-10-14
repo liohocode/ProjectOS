@@ -14,6 +14,8 @@ import type { SeedMember as Member } from "./seed-data/types";
 import { parseSprintLabel } from "../lib/sprint";
 import { parseDue, parseEstimate, parseRunning, parseTaskStatus } from "../lib/taskFormat";
 import { weeksToDates } from "../lib/timeline";
+import { parseTokens } from "../lib/mcpFormat";
+import { parseMemberStatus } from "../lib/memberFormat";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -104,7 +106,7 @@ async function main() {
         role: m.role,
         skills: m.skills,
         current: m.current,
-        status: m.status,
+        status: parseMemberStatus(m.status),
         config: (m.config as unknown as Prisma.InputJsonValue) ?? undefined,
         skillRows: {
           create: m.skillRows.map(([label, level, percent], sortOrder) => ({ label, level, percent, sortOrder })),
@@ -240,16 +242,23 @@ async function main() {
   }
 
   const sessions = await getMcpSessions();
+  const seedNow = Date.now();
   for (const s of sessions) {
+    // Dữ liệu gốc chỉ có thời lượng: phiên đang chạy bắt đầu cách đây durationMin phút và
+    // chưa kết thúc; phiên đã xong coi như vừa kết thúc.
+    const running = s.result === "Đang chạy";
+    const endedAt = running ? null : new Date(seedNow);
+    const startedAt = new Date(seedNow - s.durationMin * 60_000);
     await prisma.mcpSession.create({
       data: {
         id: s.id,
         agentId: resolveMemberId(members, s.agent),
         projectId: s.projectId,
         taskId: s.taskId,
-        durationMin: s.durationMin,
+        startedAt,
+        endedAt,
         toolCalls: s.toolCalls,
-        tokens: s.tokens,
+        tokensUsed: parseTokens(s.tokens),
         result: SESSION_RESULT_MAP[s.result],
       },
     });

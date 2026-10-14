@@ -46,6 +46,11 @@ describe("team", () => {
     expect(atlas?.activity[0]?.when).toMatch(/trước|Hôm qua/);
   });
 
+  it("trạng thái thành viên hiển thị bằng nhãn tiếng Việt", async () => {
+    const statuses = Object.fromEntries((await getTeam()).map((m) => [m.id, m.status]));
+    expect(statuses).toMatchObject({ "agent-atlas": "Đang chạy", "agent-scout": "Chờ", hieu: "Đang review", nam: "Đang làm" });
+  });
+
   it("pipeline agent đúng thứ tự BA → TA → Dev → Index", async () => {
     const pipeline = await getPipelineAgents();
     expect(pipeline.map((p) => `${p.stage}:${p.agent.name}`)).toEqual(["BA:Bảo", "TA:Vega", "Dev:Atlas", "Index:Scout"]);
@@ -111,6 +116,11 @@ describe("mcp", () => {
     const sessions = await getMcpSessions();
     expect(sessions).toHaveLength(8);
     expect(new Set(sessions.map((s) => s.result))).toEqual(new Set(["Đang chạy", "Chờ review", "Bị chặn", "Xong"]));
+
+    const s8f2a = sessions.find((s) => s.id === "sess-8f2a");
+    expect(s8f2a).toMatchObject({ tokens: "182K", result: "Đang chạy" });
+    expect(s8f2a?.durationMin).toBeGreaterThanOrEqual(14); // đang chạy → tăng theo thời gian
+    expect(sessions.find((s) => s.id === "sess-5a77")).toMatchObject({ tokens: "95K", durationMin: 12 });
 
     const log = await getMcpLog();
     expect(log).toHaveLength(8);

@@ -22,7 +22,7 @@ McpServer  (độc lập)
 |---|---|---|
 | `Project` (`projects`) | `id` chuỗi (`rv-web`) | `currentSprintId` → sprint hiện tại; nhãn hiển thị "Sprint 14 · 12–26/08" dựng lại bằng `lib/sprint.ts` |
 | `Sprint` (`sprints`) | cuid | `name`, `startDate`, `endDate` (kiểu `DATE`) |
-| `Member` (`members`) | `id` chuỗi (`agent-atlas`, `hieu`) | `kind` = `human`/`agent`; `skills String[]`; `config Json?` = `[["Model","claude-sonnet-4.5"], ...]`, chỉ agent có |
+| `Member` (`members`) | `id` chuỗi (`agent-atlas`, `hieu`) | `kind` = `human`/`agent`; `status` enum `MemberStatus` (nhãn ở `lib/memberFormat.ts`); `current` chuỗi tự do; `skills String[]`; `config Json?` = `[["Model","claude-sonnet-4.5"], ...]`, chỉ agent có |
 | `MemberSkillRow` | cuid | `label`, `level` (Cao/Trung bình/Cơ bản/Không dùng), `percent`, `sortOrder` |
 | `MemberActivity` | cuid | `icon`, `text`, `at` (timestamp thật) |
 | `ProjectMember` | (`projectId`,`memberId`) | |
@@ -31,7 +31,7 @@ McpServer  (độc lập)
 | `Doc` (`docs`) | `id` chuỗi slug (`prd-listing`) | `projectId` bắt buộc, `featureId` tuỳ chọn; `sections Json` = `[{heading, paras[]}]`; `readBy String[]`; `indexedAt`, `chunkCount` |
 | `DocRevision` | cuid | `what` (mô tả), `pending Boolean`, `approvedById`, `approvedAt`. **Chưa có nội dung đề xuất** — F12.1 |
 | `McpServer` | `id` chuỗi | `status` enum `online`/`limited`, `tools String[]` |
-| `McpSession` | `id` chuỗi (`sess-8f2a`) / cuid | `durationMin`, `toolCalls`, `tokens` (chuỗi "182K" — F09.4), `result` enum |
+| `McpSession` | `id` chuỗi (`sess-8f2a`) / cuid | `startedAt`, `endedAt` (null = đang chạy; thời lượng tính từ 2 mốc này), `toolCalls`, `tokensUsed Int` (hiển thị "182K" qua `lib/mcpFormat.ts`), `result` enum |
 | `McpLogEntry` | cuid | `at`, `tool`, `target`, `result` enum; index `at desc` |
 
 ## Quy ước
@@ -44,6 +44,7 @@ McpServer  (độc lập)
   | `ChoReview` | `Chờ review` |
   | `BiChan` | `Bị chặn` |
   | `TaskStatus.DangLam` / `Cho` / `ChoReview` / `DangChay` | `Đang làm` / `Chờ` / `Chờ review` / `Đang chạy` |
+  | `MemberStatus.DangChay` / `DangLam` / `DangReview` / `Cho` | `Đang chạy` / `Đang làm` / `Đang review` / `Chờ` |
   | `Xong`, `OK` | giữ nguyên |
 - **Thời gian**: lưu `DateTime`, format sang "x phút trước" bằng `lib/relativeTime.ts` tại `lib/data/*`. Không lưu chuỗi tương đối vào DB (các field còn vi phạm liệt kê dưới).
 - Tên bảng snake_case qua `@@map`.
@@ -51,8 +52,7 @@ McpServer  (độc lập)
 ## Điểm còn tạm (nợ kỹ thuật dữ liệu)
 | Field | Hiện tại | Đích | Task |
 |---|---|---|---|
-| `McpSession.tokens` | `"182K"` | `tokensUsed Int` | F09.4 |
-| `Member.status`, `Member.current` | chuỗi tự do | enum + suy ra từ task đang làm | F09.4 |
+| `Member.current` | chuỗi tự do ("T-405 Sinh test cho API bộ lọc") | suy ra từ task đang chạy/đang làm của thành viên | F17 (cùng lúc với bảng sự kiện thật) |
 | `DocRevision` | chỉ có mô tả | `proposedSections Json`, `status` enum (pending/approved/rejected) | F12.1 |
 
 ## Dữ liệu seed

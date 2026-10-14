@@ -27,7 +27,7 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 | F09.1 | Model `Sprint` thay `Project.sprint` chuỗi | M | — | Xong — 2026-10-14 |
 | F09.2 | Task: `estimatePoints`, `dueDate`, `runningSince`, enum `TaskStatus` | M | — | Xong — 2026-10-14 |
 | F09.3 | Kế hoạch feature trong DB, bỏ mock `lib/data/timeline.ts` | M | F09.1 | Xong — 2026-10-14 |
-| F09.4 | `McpSession.tokensUsed`/`endedAt`; enum `MemberStatus` | S | — | Chưa làm |
+| F09.4 | `McpSession.tokensUsed`/`endedAt`; enum `MemberStatus` | S | — | Xong — 2026-10-14 |
 | F09.5 | Cập nhật test integration + tài liệu sau chuẩn hoá | S | F09.1–F09.4, F08.3 | Chưa làm |
 
 ### F09.1 — Model Sprint
@@ -54,9 +54,9 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 
 ### F09.4 — Phiên MCP và trạng thái thành viên
 **Làm gì**: `McpSession.tokens String` → `tokensUsed Int` (`"182K"` → 182000), thêm `endedAt DateTime?` và tính `durationMin` từ `startedAt`/`endedAt` (phiên đang chạy: tới hiện tại); `lib/data/mcp.ts` format lại `"182K"`. `Member.status` → enum `MemberStatus` (`DangChay`, `DangLam`, `DangReview`, `Cho`) map tiếng Việt.
-**File**: `prisma/schema.prisma`, migration, `prisma/seed.ts`, `lib/data/mcp.ts`, `lib/data/team.ts`
+**File**: `prisma/schema.prisma`, `prisma/migrations/*_session_tokens_member_status/`, `prisma/seed.ts`, `lib/mcpFormat.ts` + `lib/memberFormat.ts` (+ test), `lib/data/mcp.ts`, `lib/data/team.ts`
 **Hoàn thành khi**:
-- [ ] Bảng phiên chạy và danh sách thành viên hiển thị như cũ
+- [x] Bảng phiên chạy và danh sách thành viên hiển thị như cũ
 
 ### F09.5 — Cập nhật test + tài liệu
 **Làm gì**: chỉnh integration test (F08.3) theo schema mới; cập nhật `docs/architecture/data-model.md` (xoá các dòng đã xử lý khỏi "Điểm còn tạm", cập nhật bảng số lượng nếu thêm feature chưa giao).
@@ -69,3 +69,4 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 - F09.1: `migrate dev` từ chối chạy không tương tác khi có thay đổi mất dữ liệu (xoá cột). Cách làm (dùng lại cho F09.2–F09.4): `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` sinh SQL → tự tạo thư mục migration và **chèn bước chuyển dữ liệu trước khi xoá cột** → `prisma migrate deploy` → kiểm tra diff rỗng → `prisma generate` → khởi động lại dev server. Migration parse nhãn sprint cũ bằng regex SQL giống `lib/sprint.ts`, không mất dữ liệu ở DB dev. Seed tạo project → sprint → gán `currentSprintId` (3 bước, vì 2 bảng trỏ vào nhau).
 - F09.2: `status` đổi kiểu tại chỗ (`USING status::"TaskStatus"`) vì giá trị chuỗi cũ trùng giá trị `@map` của enum. `formatRunning` hiển thị "chạy N giờ M phút" khi ≥ 60 phút (trước đây chỉ có phút). Integration test của "chạy N phút" chấp nhận lệch 1 phút (tính từ thời điểm seed).
 - F09.3: nhãn bar timeline giờ sinh từ dữ liệu (`<stage> · <pct>%`, chưa giao → "Chưa bắt đầu") thay cho nhãn viết tay cũ ("Agent · 2 task", "BA đang phân tích"…); tên owner hiển thị đầy đủ ("Trần Mỹ Linh" thay vì "Linh"). Feature chưa giao được tính vào số feature và % trung bình ở Portfolio (rv-web: 5 feature, 39%). Thêm `Feature.ownerKind` để avatar owner đúng loại người/agent — trước đây header feature luôn vẽ avatar người kể cả owner là agent. Snapshot seed (`prisma/seed-data/*`) giờ dùng type cục bộ trong `prisma/seed-data/types.ts` (đúng ADR-007) — đổi `lib/types.ts` không còn làm hỏng seed. Đã seed lại DB dev.
+- F09.4: bỏ cột `durationMin` — thời lượng tính từ `startedAt`/`endedAt` nên phiên đang chạy tự tăng. `Member.current` **chưa** suy ra từ task (để F17 làm cùng bảng sự kiện) — ghi trong `data-model.md`. Quy trình migration mất dữ liệu đã đưa vào `CLAUDE.md` (quy tắc 4).

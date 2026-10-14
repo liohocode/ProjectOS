@@ -31,6 +31,13 @@ enum TaskStatus {
   Xong
 }
 
+enum MemberStatus {
+  DangChay   @map("Đang chạy")
+  DangLam    @map("Đang làm")
+  DangReview @map("Đang review")
+  Cho        @map("Chờ")
+}
+
 enum McpServerStatus {
   online
   limited
@@ -82,14 +89,14 @@ model Sprint {
 }
 
 model Member {
-  id      String     @id
+  id      String       @id
   name    String
   handle  String
   kind    MemberKind
   role    String
   skills  String[]
   current String
-  status  String
+  status  MemberStatus
   /// Chỉ set khi kind = agent: [["Model","claude-opus-4.1"], ...]
   config  Json?
 
@@ -245,18 +252,19 @@ model McpServer {
 }
 
 model McpSession {
-  id          String        @id @default(cuid())
-  agentId     String
-  agent       Member        @relation(fields: [agentId], references: [id])
-  projectId   String
-  project     Project       @relation(fields: [projectId], references: [id])
-  taskId      String?
-  task        Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  startedAt   DateTime      @default(now())
-  durationMin Int
-  toolCalls   Int
-  tokens      String
-  result      SessionResult
+  id         String        @id @default(cuid())
+  agentId    String
+  agent      Member        @relation(fields: [agentId], references: [id])
+  projectId  String
+  project    Project       @relation(fields: [projectId], references: [id])
+  taskId     String?
+  task       Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  startedAt  DateTime      @default(now())
+  /// null = phiên còn đang chạy; thời lượng tính từ startedAt tới endedAt (hoặc hiện tại)
+  endedAt    DateTime?
+  toolCalls  Int
+  tokensUsed Int           @default(0)
+  result     SessionResult
 
   @@index([projectId])
   @@map("mcp_sessions")

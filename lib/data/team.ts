@@ -1,6 +1,7 @@
 import type { Member } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
+import { MEMBER_STATUS_LABEL } from "@/lib/memberFormat";
 
 const memberInclude = {
   skillRows: { orderBy: { sortOrder: "asc" } },
@@ -18,7 +19,7 @@ function toMember(row: MemberRow): Member {
     role: row.role,
     skills: row.skills,
     current: row.current,
-    status: row.status,
+    status: MEMBER_STATUS_LABEL[row.status],
     skillRows: row.skillRows.map((s) => [s.label, s.level, s.percent]),
     activity: row.activity.map((a) => ({ icon: a.icon, text: a.text, when: formatRelativeVi(a.at) })),
     config: (row.config as [string, string][] | null) ?? undefined,

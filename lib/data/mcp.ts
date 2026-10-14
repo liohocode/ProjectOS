@@ -2,6 +2,7 @@ import type { McpLogEntry, McpServer, McpSession } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
 import { COMMAND_RESULT_LABEL, SESSION_RESULT_LABEL } from "./mcpLabels";
+import { formatTokens, sessionDurationMin } from "@/lib/mcpFormat";
 
 export async function getMcpServers(): Promise<McpServer[]> {
   const rows = await prisma.mcpServer.findMany({ orderBy: { id: "asc" } });
@@ -22,14 +23,15 @@ export async function getMcpSessions(): Promise<McpSession[]> {
     include: { agent: true },
     orderBy: { startedAt: "desc" },
   });
+  const now = new Date();
   return rows.map((row) => ({
     id: row.id,
     agent: row.agent.name,
     projectId: row.projectId,
     taskId: row.taskId ?? "",
-    durationMin: row.durationMin,
+    durationMin: sessionDurationMin(row.startedAt, row.endedAt, now),
     toolCalls: row.toolCalls,
-    tokens: row.tokens,
+    tokens: formatTokens(row.tokensUsed),
     result: SESSION_RESULT_LABEL[row.result],
   }));
 }
