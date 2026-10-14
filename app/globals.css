@@ -964,3 +964,18 @@ img { display: block; max-width: 100%; }
 }
 .not-found-project:hover { background: color-mix(in srgb, var(--color-accent) 14%, transparent); }
 .not-found-project .ph-arrow-right { margin-left: auto; color: var(--color-accent); }
+
+/* Empty state dùng chung (components/ui/EmptyState.tsx) */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: var(--space-2); padding: var(--space-8) var(--space-6);
+  border-radius: var(--radius-md); box-shadow: inset 0 0 0 1px var(--color-divider);
+  color: var(--color-neutral-400);
+}
+.empty-state-icon { font-size: 28px; color: var(--color-neutral-600); }
+.empty-state-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 15px; color: var(--color-text); }
+.empty-state-desc { margin: 0; font-size: 12.5px; max-width: 380px; }
+.empty-state-action { margin-top: var(--space-2); }
+.empty-state-compact { padding: var(--space-4); box-shadow: none; }
+.empty-state-compact .empty-state-icon { font-size: 20px; }
+.empty-state-compact .empty-state-title { font-size: 13px; }

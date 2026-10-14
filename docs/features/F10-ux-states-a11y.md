@@ -21,7 +21,7 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 | F10.1 | `loading.tsx` + skeleton cho 5 màn | S | — | Xong — 2026-10-14 |
 | F10.2 | `error.tsx` cho `[project]`, nhận diện lỗi mất kết nối DB | S | — | Xong — 2026-10-14 |
 | F10.3 | `not-found.tsx` cho project không tồn tại | S | — | Xong — 2026-10-14 |
-| F10.4 | Empty state cho từng màn | S | — | Chưa làm |
+| F10.4 | Empty state cho từng màn | S | — | Xong — 2026-10-14 |
 | F10.5 | Bàn phím: hàng click được, drawer, dropdown | M | — | Chưa làm |
 
 ### F10.1 — Loading skeleton
@@ -44,9 +44,9 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 
 ### F10.4 — Empty state
 **Làm gì**: component `EmptyState` (icon Phosphor + tiêu đề + mô tả + nút hành động tuỳ chọn). Áp cho: work (project chưa có feature), docs (chưa có tài liệu — thay `screen-placeholder` hiện tại ở `app/[project]/docs/page.tsx`), team (filter không ra ai), mcp (chưa có phiên/log), activity rail (đã có câu "Chưa có hoạt động nào" — chuyển sang component chung).
-**File**: `components/ui/EmptyState.tsx` (thư mục mới cho component dùng chung), các screen liên quan, `app/globals.css`
+**File**: `components/ui/EmptyState.tsx`, `components/work/{WorkScreen,ActivityRail}.tsx`, `components/team/TeamScreen.tsx`, `app/[project]/{docs,mcp,portfolio}/page.tsx`, `app/globals.css`, `e2e/empty-states.spec.ts`
 **Hoàn thành khi**:
-- [ ] Tạo tạm 1 project rỗng trong DB test → cả 5 màn đều có empty state hợp lý
+- [x] Tạo tạm 1 project rỗng trong DB test → cả 5 màn đều có empty state hợp lý (e2e `empty-states.spec.ts` tự tạo/xoá dự án rỗng)
 
 ### F10.5 — Bàn phím
 **Làm gì**: `TaskRow`, `MemberRow`, header `FeatureSection` đang là `div` có `onClick` → thêm `role="button"`, `tabIndex={0}`, xử lý Enter/Space (hoặc đổi sang `<button>` nếu không vỡ grid). `TaskDrawer`: Esc để đóng, focus vào panel khi mở và trả focus về hàng khi đóng. `ProjectSwitcher` dropdown và picker "Giao cho agent": Esc đóng, click ra ngoài đóng.
@@ -59,3 +59,4 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 - F10.1: kiểm chứng bằng cách tạm thêm 2,5s delay vào `work/page.tsx` → HTML stream trong 1,5s đầu chỉ có skeleton + "Đang tải…" (`role=status`, `aria-busy`), chưa có nội dung; đã gỡ delay. Thêm tiện ích `.sr-only` dùng chung.
 - F10.2: Next 16 dùng prop **`retry()`** (tải lại dữ liệu) thay cho `reset()`. Lỗi DB xảy ra ngay ở `app/[project]/layout.tsx` (dữ liệu sidebar) → `app/[project]/error.tsx` không bắt được (error boundary chỉ bọc phần con của cùng segment) → thêm `app/error.tsx`. Prisma 7 + adapter để mã `ECONNREFUSED` ở thuộc tính `code`, message chỉ là "Invalid … invocation" và `code` không qua được ranh giới server→client → `lib/prisma.ts` dùng `$extends({ query: { $allOperations } })` chuẩn hoá lỗi kết nối thành `DatabaseUnavailableError` (message cố định `DB_UNAVAILABLE…`). Hạn chế: ở **production** Next ẩn message lỗi server → chỉ hiện thông báo chung + mã lỗi (digest); hướng dẫn `docker compose` chỉ hiện ở dev.
 - F10.3: đặt ở `app/not-found.tsx` (không phải `app/[project]/`) vì `notFound()` được gọi trong `app/[project]/layout.tsx` → boundary của segment cha xử lý. Trang liệt kê dự án thật từ DB thay vì link cứng `/rv-web`.
+- F10.4: thêm empty state cho cả view Timeline (dự án chưa có sprint hoặc feature chưa có ngày kế hoạch) và 2 bảng màn MCP (phiên chạy, nhật ký lệnh — dữ liệu cắt ngang dự án nên chỉ rỗng khi cả hệ thống chưa có). Màn MCP/Portfolio không kiểm bằng e2e vì dữ liệu của chúng là toàn cục.

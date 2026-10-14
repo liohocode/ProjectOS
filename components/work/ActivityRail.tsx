@@ -1,5 +1,6 @@
 import type { ActivityItem } from "@/lib/types";
 import { initials } from "./taskStyle";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export function ActivityRail({ items, onClose }: { items: ActivityItem[]; onClose: () => void }) {
   return (
@@ -10,7 +11,9 @@ export function ActivityRail({ items, onClose }: { items: ActivityItem[]; onClos
           <i className="ph ph-x" aria-hidden />
         </button>
       </div>
-      {items.length === 0 && <p className="text-muted" style={{ fontSize: 12 }}>Chưa có hoạt động nào.</p>}
+      {items.length === 0 && (
+        <EmptyState compact icon="ph-activity" title="Chưa có hoạt động nào" description="Việc agent đang chạy, task bị block và revision chờ duyệt sẽ hiện ở đây." />
+      )}
       {items.map((item, i) => (
         <div className={`rail-item tone-${item.tone}`} key={i}>
           <span

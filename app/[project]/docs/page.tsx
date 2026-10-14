@@ -2,6 +2,7 @@ import { getDocBody, getDocGroupsByProject, getFirstDocId, getKnowledgeStripStat
 import { KnowledgeStrip } from "@/components/docs/KnowledgeStrip";
 import { DocTree } from "@/components/docs/DocTree";
 import { DocBodyView } from "@/components/docs/DocBodyView";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default async function DocsPage(props: PageProps<"/[project]/docs">) {
   const { project: projectId } = await props.params;
@@ -18,7 +19,17 @@ export default async function DocsPage(props: PageProps<"/[project]/docs">) {
       <KnowledgeStrip stats={stats} />
       <div className="docs-shell">
         <DocTree projectId={projectId} groups={groups} activeDocId={docId} />
-        {body ? <DocBodyView body={body} projectId={projectId} /> : <div className="screen-placeholder">Chưa có tài liệu nào.</div>}
+        {body ? (
+          <DocBodyView body={body} projectId={projectId} />
+        ) : (
+          <div className="doc-body-area">
+            <EmptyState
+              icon="ph-files"
+              title="Dự án chưa có tài liệu nào"
+              description="Tài liệu gắn feature và kho tri thức chung của dự án sẽ hiện ở đây. Agent chỉ có thể đề xuất revision — người duyệt mới đưa vào bản chính."
+            />
+          </div>
+        )}
       </div>
     </div>
   );

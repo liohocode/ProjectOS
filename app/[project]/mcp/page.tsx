@@ -1,6 +1,7 @@
 import { getMcpLog, getMcpServers, getMcpSessions } from "@/lib/data/mcp";
 import { getProjects } from "@/lib/data/projects";
 import { ServerCard } from "@/components/mcp/ServerCard";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const RESULT_TAG_CLASS: Record<string, string> = {
   Xong: "tag-neutral",
@@ -28,64 +29,72 @@ export default async function McpPage() {
       </div>
 
       <h5 className="mcp-section-title">Phiên chạy của agent</h5>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Phiên</th>
-            <th>Agent</th>
-            <th>Dự án</th>
-            <th>Task</th>
-            <th>Thời lượng</th>
-            <th>Tool calls</th>
-            <th>Token</th>
-            <th>Kết quả</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sessions.map((s) => (
-            <tr key={s.id}>
-              <td className="mono">{s.id}</td>
-              <td>{s.agent}</td>
-              <td style={{ color: "var(--color-accent-300)" }}>{projectName(s.projectId)}</td>
-              <td>{s.taskId}</td>
-              <td>{s.durationMin} phút</td>
-              <td>{s.toolCalls}</td>
-              <td>{s.tokens}</td>
-              <td>
-                <span className={`tag ${RESULT_TAG_CLASS[s.result]} nowrap`}>{s.result}</span>
-              </td>
+      {sessions.length === 0 ? (
+        <EmptyState compact icon="ph-plugs" title="Chưa có phiên chạy nào" description="Khi agent kết nối MCP server của Meridian, mỗi phiên sẽ được ghi lại ở đây." />
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Phiên</th>
+              <th>Agent</th>
+              <th>Dự án</th>
+              <th>Task</th>
+              <th>Thời lượng</th>
+              <th>Tool calls</th>
+              <th>Token</th>
+              <th>Kết quả</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sessions.map((s) => (
+              <tr key={s.id}>
+                <td className="mono">{s.id}</td>
+                <td>{s.agent}</td>
+                <td style={{ color: "var(--color-accent-300)" }}>{projectName(s.projectId)}</td>
+                <td>{s.taskId}</td>
+                <td>{s.durationMin} phút</td>
+                <td>{s.toolCalls}</td>
+                <td>{s.tokens}</td>
+                <td>
+                  <span className={`tag ${RESULT_TAG_CLASS[s.result]} nowrap`}>{s.result}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       <h5 className="mcp-section-title">Nhật ký lệnh</h5>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Thời điểm</th>
-            <th>Agent</th>
-            <th>Tool</th>
-            <th>Đối tượng</th>
-            <th>Kết quả</th>
-          </tr>
-        </thead>
-        <tbody>
-          {log.map((entry, i) => (
-            <tr key={i}>
-              <td className="mono">{entry.at}</td>
-              <td>{entry.agent}</td>
-              <td className="mono" style={{ color: "var(--color-accent-300)" }}>
-                {entry.tool}
-              </td>
-              <td>{entry.target}</td>
-              <td>
-                <span className={`tag ${RESULT_TAG_CLASS[entry.result]} nowrap`}>{entry.result}</span>
-              </td>
+      {log.length === 0 ? (
+        <EmptyState compact icon="ph-terminal-window" title="Chưa có lệnh nào" description="Mọi lệnh agent gọi qua MCP (kèm kết quả OK / Chờ review / Bị chặn) sẽ hiện ở đây." />
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Thời điểm</th>
+              <th>Agent</th>
+              <th>Tool</th>
+              <th>Đối tượng</th>
+              <th>Kết quả</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {log.map((entry, i) => (
+              <tr key={i}>
+                <td className="mono">{entry.at}</td>
+                <td>{entry.agent}</td>
+                <td className="mono" style={{ color: "var(--color-accent-300)" }}>
+                  {entry.tool}
+                </td>
+                <td>{entry.target}</td>
+                <td>
+                  <span className={`tag ${RESULT_TAG_CLASS[entry.result]} nowrap`}>{entry.result}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

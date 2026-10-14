@@ -6,6 +6,7 @@ import { FeatureSection } from "./FeatureSection";
 import { TimelineView } from "./TimelineView";
 import { ActivityRail } from "./ActivityRail";
 import { TaskDrawer } from "./TaskDrawer";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type View = "list" | "timeline";
 
@@ -82,7 +83,13 @@ export function WorkScreen({
           </div>
         )}
 
-        {view === "list" ? (
+        {features.length === 0 ? (
+          <EmptyState
+            icon="ph-cube"
+            title="Dự án chưa có feature nào"
+            description="Khi BA agent hoặc lead tạo feature và chia task, chúng sẽ hiện ở đây theo từng feature."
+          />
+        ) : view === "list" ? (
           <div className="list-area">
             {features.map((feature) => (
               <FeatureSection
@@ -94,6 +101,12 @@ export function WorkScreen({
               />
             ))}
           </div>
+        ) : timeline.length === 0 ? (
+          <EmptyState
+            icon="ph-chart-bar-horizontal"
+            title="Chưa có kế hoạch nào trong 8 tuần tới"
+            description="Feature chưa có ngày bắt đầu/kết thúc hoặc dự án chưa có sprint hiện tại."
+          />
         ) : (
           <TimelineView rows={timeline} />
         )}

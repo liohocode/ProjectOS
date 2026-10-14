@@ -5,6 +5,7 @@ import type { Member } from "@/lib/types";
 import { PipelineCards } from "./PipelineCards";
 import { MemberRow } from "./MemberRow";
 import { MemberPanel } from "./MemberPanel";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type Filter = "all" | "human" | "agent" | "org";
 
@@ -54,11 +55,19 @@ export function TeamScreen({
           <span className="team-toolbar-note">{shown.length} thành viên</span>
         </div>
 
-        <div className="member-list">
-          {shown.map((member) => (
-            <MemberRow key={member.id} member={member} selected={member.id === selected?.id} onSelect={() => setSelectedId(member.id)} />
-          ))}
-        </div>
+        {shown.length === 0 ? (
+          <EmptyState
+            icon="ph-users-three"
+            title={filter === "all" ? "Dự án chưa có thành viên nào" : "Không có thành viên nào khớp bộ lọc"}
+            description={filter === "org" ? "Tổ chức chưa có thành viên." : "Chọn \"Toàn tổ chức\" để xem mọi người và agent."}
+          />
+        ) : (
+          <div className="member-list">
+            {shown.map((member) => (
+              <MemberRow key={member.id} member={member} selected={member.id === selected?.id} onSelect={() => setSelectedId(member.id)} />
+            ))}
+          </div>
+        )}
       </div>
 
       {selected && <MemberPanel member={selected} />}
