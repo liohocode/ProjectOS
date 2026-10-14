@@ -956,3 +956,11 @@ img { display: block; max-width: 100%; }
 .error-state code { font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300); }
 .error-state-actions { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
 .error-state-digest { margin: var(--space-4) 0 0; font-size: 11px; color: var(--color-neutral-600); font-family: ui-monospace, monospace; }
+.not-found-projects { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.not-found-project {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3); border-radius: var(--radius-md);
+  color: var(--color-text); text-decoration: none; box-shadow: var(--shadow-sm);
+}
+.not-found-project:hover { background: color-mix(in srgb, var(--color-accent) 14%, transparent); }
+.not-found-project .ph-arrow-right { margin-left: auto; color: var(--color-accent); }

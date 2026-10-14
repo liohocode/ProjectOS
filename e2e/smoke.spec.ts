@@ -71,3 +71,11 @@ test("duyệt revision ghi xuống DB", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Duyệt" })).toHaveCount(0);
   await expect(strip).toContainText("Revision chờ duyệt 1");
 });
+
+test("dự án không tồn tại → trang 404 có danh sách dự án để chọn", async ({ page }) => {
+  const res = await page.goto("/khong-ton-tai/work");
+  expect(res?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "Không tìm thấy dự án hoặc trang này" })).toBeVisible();
+  await page.locator(".not-found-project", { hasText: "Rever Mobile App" }).click();
+  await expect(page).toHaveURL(/\/rv-app\/work$/);
+});

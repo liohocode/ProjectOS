@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-14 · Tổng: **41/102 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-14 · Tổng: **42/102 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -20,7 +20,7 @@ Cập nhật lần cuối: 2026-10-14 · Tổng: **41/102 task xong** (Phase 0 h
 |---|---|---|---|---|
 | [F08](features/F08-test-ci.md) | Test tự động (unit, integration, e2e) + CI | F07 | Đang làm | 5/6 |
 | [F09](features/F09-data-model-hardening.md) | Chuẩn hoá data model: bỏ field chuỗi hiển thị, Sprint, timeline vào DB | F07 | Xong | 5/5 |
-| [F10](features/F10-ux-states-a11y.md) | Loading / error / empty / 404, thao tác bàn phím | F07 | Đang làm | 2/5 |
+| [F10](features/F10-ux-states-a11y.md) | Loading / error / empty / 404, thao tác bàn phím | F07 | Đang làm | 3/5 |
 
 ## Phase 2 — Ghi dữ liệu
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
