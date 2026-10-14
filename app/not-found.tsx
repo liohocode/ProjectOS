@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { getProjects } from "@/lib/data/projects";
 
 // Hiện khi URL trỏ tới dự án không tồn tại (notFound() trong app/[project]/layout.tsx)
 // hoặc route không có. Liệt kê dự án thật để người dùng chọn lại.
 export default async function NotFound() {
+  // Render lúc request, không prerender lúc build (build trên CI không có DB).
+  await connection();
   const projects = await getProjects();
 
   return (
