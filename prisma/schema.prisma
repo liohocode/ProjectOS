@@ -42,19 +42,35 @@ enum CommandResult {
 }
 
 model Project {
-  id     String @id
-  code   String
-  name   String
-  status String
-  desc   String
-  sprint String
+  id              String  @id
+  code            String
+  name            String
+  status          String
+  desc            String
+  currentSprintId String? @unique
+  currentSprint   Sprint? @relation("CurrentSprint", fields: [currentSprintId], references: [id], onDelete: SetNull)
 
   members  ProjectMember[]
   features Feature[]
   docs     Doc[]
   sessions McpSession[]
+  sprints  Sprint[]        @relation("ProjectSprints")
 
   @@map("projects")
+}
+
+model Sprint {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation("ProjectSprints", fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+
+  currentFor Project? @relation("CurrentSprint")
+
+  @@index([projectId])
+  @@map("sprints")
 }
 
 model Member {

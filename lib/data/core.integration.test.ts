@@ -16,6 +16,15 @@ describe("projects", () => {
     expect((await getProjectById("rv-web"))?.name).toBe("Rever Web v3");
     expect(await getProjectById("khong-ton-tai")).toBeUndefined();
   });
+
+  it("nhãn sprint dựng lại từ model Sprint giống hệt dữ liệu gốc", async () => {
+    const sprints = Object.fromEntries((await getProjects()).map((p) => [p.id, p.sprint]));
+    expect(sprints).toEqual({
+      "rv-web": "Sprint 14 · 12–26/08",
+      "rv-app": "Sprint 9 · 11–25/08",
+      crm: "Sprint 22 · 18/08–01/09",
+    });
+  });
 });
 
 describe("team", () => {

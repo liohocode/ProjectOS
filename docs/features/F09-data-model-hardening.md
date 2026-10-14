@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 1 | F07 (khuyến nghị F08.3 trước để có test bảo vệ) | NFR-11, FR-WK-05 |
+| Đang làm | 1 | F07 (khuyến nghị F08.3 trước để có test bảo vệ) | NFR-11, FR-WK-05 |
 
 ## Mục tiêu
 Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, `"chạy 14 phút"`, `"Sprint 14 · 12–26/08"`, `"182K"`) và đưa timeline vào DB — trước khi làm các thao tác ghi (F11+) và MCP server (F16), vì những feature đó cần ghi/so sánh giá trị thật.
@@ -24,7 +24,7 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F09.1 | Model `Sprint` thay `Project.sprint` chuỗi | M | — | Chưa làm |
+| F09.1 | Model `Sprint` thay `Project.sprint` chuỗi | M | — | Xong — 2026-10-14 |
 | F09.2 | Task: `estimatePoints`, `dueDate`, `runningSince`, enum `TaskStatus` | M | — | Chưa làm |
 | F09.3 | Kế hoạch feature trong DB, bỏ mock `lib/data/timeline.ts` | M | F09.1 | Chưa làm |
 | F09.4 | `McpSession.tokensUsed`/`endedAt`; enum `MemberStatus` | S | — | Chưa làm |
@@ -32,10 +32,10 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 
 ### F09.1 — Model Sprint
 **Làm gì**: thêm `Sprint(id cuid, projectId, name "Sprint 14", startDate, endDate)` + `Project.currentSprintId?`. Seed parse `"Sprint 14 · 12–26/08"` và `"Sprint 22 · 18/08–01/09"` (năm 2026). Bỏ cột `Project.sprint`. `lib/data/projects.ts` dựng lại chuỗi hiển thị `"Sprint 14 · 12–26/08"` từ sprint hiện tại → `Project.sprint` trong `lib/types.ts` giữ nguyên.
-**File**: `prisma/schema.prisma`, migration mới, `prisma/seed.ts`, `lib/data/projects.ts`, (nếu `lib/data/portfolio.ts` đọc sprint thì kiểm tra lại)
+**File**: `prisma/schema.prisma`, `prisma/migrations/*_sprint_model/migration.sql`, `prisma/seed.ts`, `lib/sprint.ts` (+ test), `lib/data/projects.ts`
 **Hoàn thành khi**:
-- [ ] Header context và card Portfolio hiển thị sprint y như trước
-- [ ] Hàm format sprint có unit test (nếu F08.1 đã có)
+- [x] Header context và card Portfolio hiển thị sprint y như trước
+- [x] Hàm format sprint có unit test
 
 ### F09.2 — Field kiểu thật cho Task
 **Làm gì**: `est String` → `estimatePoints Int?` (`"5đ"`→5, `"—"`→null); `due String` → `dueDate DateTime?` (`"22/08"` → 2026-08-22); `running String?` → `runningSince DateTime?` (`"chạy 14 phút"` → now − 14 phút lúc seed); `status String` → enum `TaskStatus` (`DangLam @map("Đang làm")`, `Cho @map("Chờ")`, `ChoReview @map("Chờ review")`, `DangChay @map("Đang chạy")`, `Xong`). `lib/data/features.ts` format lại: `est` = `"5đ"`/`"—"`, `due` = `"dd/MM"`, `running` = `"chạy N phút"` (tính từ `runningSince`), `status` = chuỗi tiếng Việt. Kiểm tra `lib/data/activity.ts` và `lib/data/taskDrawer.ts` vẫn dùng đúng (chúng đọc `Task` đã format).
@@ -66,3 +66,4 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 ## Quyết định / ghi chú
 - Giữ `Feature.pct` nhập tay (không tính từ số task Done) — đúng spec gốc.
 - 2026-10-14: người dùng xác nhận feature đã lên kế hoạch nhưng chưa giao vẫn hiển thị ở list view (F09.3).
+- F09.1: `migrate dev` từ chối chạy không tương tác khi có thay đổi mất dữ liệu (xoá cột). Cách làm (dùng lại cho F09.2–F09.4): `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` sinh SQL → tự tạo thư mục migration và **chèn bước chuyển dữ liệu trước khi xoá cột** → `prisma migrate deploy` → kiểm tra diff rỗng → `prisma generate` → khởi động lại dev server. Migration parse nhãn sprint cũ bằng regex SQL giống `lib/sprint.ts`, không mất dữ liệu ở DB dev. Seed tạo project → sprint → gán `currentSprintId` (3 bước, vì 2 bảng trỏ vào nhau).

@@ -10,6 +10,7 @@ import { getFeaturesByProject } from "./seed-data/features";
 import { getDocGroupsByProject, getDocBody } from "./seed-data/docs";
 import { getMcpServers, getMcpSessions, getMcpLog } from "./seed-data/mcp";
 import type { Member } from "../lib/types";
+import { parseSprintLabel } from "../lib/sprint";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -74,6 +75,8 @@ async function clearAll() {
   await prisma.task.deleteMany();
   await prisma.feature.deleteMany();
   await prisma.projectMember.deleteMany();
+  await prisma.project.updateMany({ data: { currentSprintId: null } });
+  await prisma.sprint.deleteMany();
   await prisma.memberActivity.deleteMany();
   await prisma.memberSkillRow.deleteMany();
   await prisma.mcpServer.deleteMany();
@@ -112,7 +115,12 @@ async function main() {
 
   console.log(`Seeding ${projects.length} projects...`);
   for (const p of projects) {
-    await prisma.project.create({ data: p });
+    // Dữ liệu mẫu gốc lưu sprint dạng nhãn hiển thị, không có năm — gán năm 2026 (năm của dữ liệu mẫu).
+    // Sprint cần project tồn tại trước, project lại trỏ ngược về sprint hiện tại → 3 bước.
+    const { sprint, ...project } = p;
+    await prisma.project.create({ data: project });
+    const created = await prisma.sprint.create({ data: { ...parseSprintLabel(sprint, 2026), projectId: p.id } });
+    await prisma.project.update({ where: { id: p.id }, data: { currentSprintId: created.id } });
   }
 
   console.log("Seeding project members (alloc)...");

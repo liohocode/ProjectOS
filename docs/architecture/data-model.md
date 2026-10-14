@@ -5,6 +5,7 @@ Nguồn sự thật: `prisma/schema.prisma`. File này giải thích quan hệ, 
 ## Sơ đồ quan hệ
 ```
 Project 1─n Feature 1─n Task
+Project 1─n Sprint; Project 0..1─1 Sprint (currentSprint — sprint hiện tại)
 Project 1─n Doc            (Doc.featureId null = "Kho tri thức chung" của project)
 Feature 1─n Doc
 Doc     1─n DocRevision    (author, approvedBy → Member)
@@ -19,7 +20,8 @@ McpServer  (độc lập)
 ## Bảng
 | Model (bảng) | Khoá | Ghi chú |
 |---|---|---|
-| `Project` (`projects`) | `id` chuỗi (`rv-web`) | `sprint` đang là chuỗi hiển thị — F09.1 |
+| `Project` (`projects`) | `id` chuỗi (`rv-web`) | `currentSprintId` → sprint hiện tại; nhãn hiển thị "Sprint 14 · 12–26/08" dựng lại bằng `lib/sprint.ts` |
+| `Sprint` (`sprints`) | cuid | `name`, `startDate`, `endDate` (kiểu `DATE`) |
 | `Member` (`members`) | `id` chuỗi (`agent-atlas`, `hieu`) | `kind` = `human`/`agent`; `skills String[]`; `config Json?` = `[["Model","claude-sonnet-4.5"], ...]`, chỉ agent có |
 | `MemberSkillRow` | cuid | `label`, `level` (Cao/Trung bình/Cơ bản/Không dùng), `percent`, `sortOrder` |
 | `MemberActivity` | cuid | `icon`, `text`, `at` (timestamp thật) |
@@ -48,7 +50,6 @@ McpServer  (độc lập)
 ## Điểm còn tạm (nợ kỹ thuật dữ liệu)
 | Field | Hiện tại | Đích | Task |
 |---|---|---|---|
-| `Project.sprint` | `"Sprint 14 · 12–26/08"` | model `Sprint` (tên, ngày bắt đầu/kết thúc) | F09.1 |
 | `Task.est` | `"5đ"`, `"—"` | `estimatePoints Int?` | F09.2 |
 | `Task.due` | `"22/08"` | `dueDate DateTime?` | F09.2 |
 | `Task.running` | `"chạy 14 phút"` | `runningSince DateTime?` | F09.2 |
@@ -66,6 +67,7 @@ Số lượng sau seed (dùng làm mốc cho test integration):
 | Bảng | Số dòng |
 |---|---|
 | projects | 3 |
+| sprints | 3 (mỗi project 1 sprint hiện tại) |
 | members | 7 (4 agent, 3 người) |
 | project_members | 18 |
 | features | 9 |
