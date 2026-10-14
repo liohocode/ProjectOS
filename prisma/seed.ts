@@ -11,6 +11,7 @@ import { getDocGroupsByProject, getDocBody } from "./seed-data/docs";
 import { getMcpServers, getMcpSessions, getMcpLog } from "./seed-data/mcp";
 import type { Member } from "../lib/types";
 import { parseSprintLabel } from "../lib/sprint";
+import { parseDue, parseEstimate, parseRunning, parseTaskStatus } from "../lib/taskFormat";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -151,12 +152,12 @@ async function main() {
               stage: t.stage,
               title: t.title,
               assigneeId: resolveMemberId(members, t.who),
-              status: t.status,
-              est: t.est,
-              due: t.due,
+              status: parseTaskStatus(t.status),
+              estimatePoints: parseEstimate(t.est),
+              dueDate: parseDue(t.due, 2026),
               blocked: t.blocked,
               blockedFull: t.blockedFull,
-              running: t.running,
+              runningSince: t.running ? parseRunning(t.running, new Date()) : null,
             })),
           },
         },

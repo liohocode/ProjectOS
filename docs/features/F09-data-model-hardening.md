@@ -25,7 +25,7 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | F09.1 | Model `Sprint` thay `Project.sprint` chuỗi | M | — | Xong — 2026-10-14 |
-| F09.2 | Task: `estimatePoints`, `dueDate`, `runningSince`, enum `TaskStatus` | M | — | Chưa làm |
+| F09.2 | Task: `estimatePoints`, `dueDate`, `runningSince`, enum `TaskStatus` | M | — | Xong — 2026-10-14 |
 | F09.3 | Kế hoạch feature trong DB, bỏ mock `lib/data/timeline.ts` | M | F09.1 | Chưa làm |
 | F09.4 | `McpSession.tokensUsed`/`endedAt`; enum `MemberStatus` | S | — | Chưa làm |
 | F09.5 | Cập nhật test integration + tài liệu sau chuẩn hoá | S | F09.1–F09.4, F08.3 | Chưa làm |
@@ -39,10 +39,10 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 
 ### F09.2 — Field kiểu thật cho Task
 **Làm gì**: `est String` → `estimatePoints Int?` (`"5đ"`→5, `"—"`→null); `due String` → `dueDate DateTime?` (`"22/08"` → 2026-08-22); `running String?` → `runningSince DateTime?` (`"chạy 14 phút"` → now − 14 phút lúc seed); `status String` → enum `TaskStatus` (`DangLam @map("Đang làm")`, `Cho @map("Chờ")`, `ChoReview @map("Chờ review")`, `DangChay @map("Đang chạy")`, `Xong`). `lib/data/features.ts` format lại: `est` = `"5đ"`/`"—"`, `due` = `"dd/MM"`, `running` = `"chạy N phút"` (tính từ `runningSince`), `status` = chuỗi tiếng Việt. Kiểm tra `lib/data/activity.ts` và `lib/data/taskDrawer.ts` vẫn dùng đúng (chúng đọc `Task` đã format).
-**File**: `prisma/schema.prisma`, migration, `prisma/seed.ts`, `lib/data/features.ts`
+**File**: `prisma/schema.prisma`, `prisma/migrations/*_task_typed_fields/migration.sql`, `prisma/seed.ts`, `lib/taskFormat.ts` (+ test), `lib/data/features.ts`
 **Hoàn thành khi**:
-- [ ] Task row, drawer, banner block, activity rail hiển thị như cũ
-- [ ] "chạy N phút" tăng dần theo thời gian thật khi reload
+- [x] Task row, drawer, banner block, activity rail hiển thị như cũ (e2e xanh)
+- [x] "chạy N phút" tăng dần theo thời gian thật khi reload
 
 ### F09.3 — Timeline trong DB
 **Làm gì**: thêm `Feature.plannedStart DateTime?`, `Feature.plannedEnd DateTime?`; cho phép `Feature.ownerId` null (feature đã lên kế hoạch nhưng chưa giao — vd `FEAT-126 Docs index nâng cấp`). Seed: chuyển dữ liệu từ `lib/data/timeline.ts` (tuần T1–T8 tính từ ngày bắt đầu sprint hiện tại) và tạo các feature chưa giao (`FEAT-126`, `FEAT-212`, `FEAT-309`). `getTimelineByProject` đọc từ DB, quy đổi ngày → `start`/`len` theo tuần, `kind` = kind của owner hoặc `"none"`, `label` sinh từ stage/pct. Xoá dữ liệu mock trong `lib/data/timeline.ts` (giữ hàm).
@@ -67,3 +67,4 @@ Xoá các field "chuỗi hiển thị" còn sót từ mock (`"5đ"`, `"22/08"`, 
 - Giữ `Feature.pct` nhập tay (không tính từ số task Done) — đúng spec gốc.
 - 2026-10-14: người dùng xác nhận feature đã lên kế hoạch nhưng chưa giao vẫn hiển thị ở list view (F09.3).
 - F09.1: `migrate dev` từ chối chạy không tương tác khi có thay đổi mất dữ liệu (xoá cột). Cách làm (dùng lại cho F09.2–F09.4): `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` sinh SQL → tự tạo thư mục migration và **chèn bước chuyển dữ liệu trước khi xoá cột** → `prisma migrate deploy` → kiểm tra diff rỗng → `prisma generate` → khởi động lại dev server. Migration parse nhãn sprint cũ bằng regex SQL giống `lib/sprint.ts`, không mất dữ liệu ở DB dev. Seed tạo project → sprint → gán `currentSprintId` (3 bước, vì 2 bảng trỏ vào nhau).
+- F09.2: `status` đổi kiểu tại chỗ (`USING status::"TaskStatus"`) vì giá trị chuỗi cũ trùng giá trị `@map` của enum. `formatRunning` hiển thị "chạy N giờ M phút" khi ≥ 60 phút (trước đây chỉ có phút). Integration test của "chạy N phút" chấp nhận lệch 1 phút (tính từ thời điểm seed).

@@ -23,6 +23,14 @@ enum TaskStage {
   Done
 }
 
+enum TaskStatus {
+  DangLam   @map("Đang làm")
+  Cho       @map("Chờ")
+  ChoReview @map("Chờ review")
+  DangChay  @map("Đang chạy")
+  Xong
+}
+
 enum McpServerStatus {
   online
   limited
@@ -151,19 +159,21 @@ model Feature {
 }
 
 model Task {
-  id          String    @id
-  featureId   String
-  feature     Feature   @relation(fields: [featureId], references: [id], onDelete: Cascade)
-  stage       TaskStage
-  title       String
-  assigneeId  String
-  assignee    Member    @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  status      String
-  est         String
-  due         String
-  blocked     String?
-  blockedFull String?
-  running     String?
+  id             String     @id
+  featureId      String
+  feature        Feature    @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  stage          TaskStage
+  title          String
+  assigneeId     String
+  assignee       Member     @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  status         TaskStatus
+  /// Story point; null = chưa ước lượng (hiển thị "—")
+  estimatePoints Int?
+  dueDate        DateTime?  @db.Date
+  blocked        String?
+  blockedFull    String?
+  /// Thời điểm agent/người bắt đầu chạy task; null = không chạy
+  runningSince   DateTime?
 
   sessions McpSession[]
 

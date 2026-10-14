@@ -69,8 +69,16 @@ describe("features & tasks", () => {
     const tasks = await getTasksByProject("rv-web");
     const t418 = tasks.find((t) => t.id === "T-418");
     expect(t418).toMatchObject({ who: "Atlas", kind: "agent", blocked: "chờ ADR-11" });
-    expect(tasks.find((t) => t.id === "T-405")?.running).toBe("chạy 14 phút");
+    expect(tasks.find((t) => t.id === "T-405")?.running).toMatch(/^chạy 1[45] phút$/); // tính từ runningSince lúc seed
     expect(tasks.find((t) => t.id === "T-401")?.blocked).toBeUndefined();
+  });
+
+  it("field kiểu thật được format lại đúng chuỗi hiển thị cũ", async () => {
+    const tasks = await getTasksByProject("rv-web");
+    expect(tasks.find((t) => t.id === "T-401")).toMatchObject({ est: "5đ", due: "22/08", status: "Đang làm" });
+    expect(tasks.find((t) => t.id === "T-430")).toMatchObject({ est: "—", due: "27/08", status: "Đang chạy" });
+    expect(tasks.find((t) => t.id === "T-396")?.status).toBe("Chờ review");
+    expect(tasks.find((t) => t.id === "T-418")?.running).toBeUndefined();
   });
 
   it("3 task block trên toàn hệ thống (T-418, T-402, T-522)", async () => {

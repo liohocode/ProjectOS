@@ -1,5 +1,6 @@
 import type { Feature, Task } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
+import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning } from "@/lib/taskFormat";
 
 export async function getFeaturesByProject(projectId: string): Promise<Feature[]> {
   const rows = await prisma.feature.findMany({
@@ -12,6 +13,7 @@ export async function getFeaturesByProject(projectId: string): Promise<Feature[]
     orderBy: { id: "asc" },
   });
 
+  const now = new Date();
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
@@ -26,12 +28,12 @@ export async function getFeaturesByProject(projectId: string): Promise<Feature[]
         title: t.title,
         who: t.assignee.name,
         kind: t.assignee.kind,
-        status: t.status,
-        est: t.est,
-        due: t.due,
+        status: TASK_STATUS_LABEL[t.status],
+        est: formatEstimate(t.estimatePoints),
+        due: formatDue(t.dueDate),
         blocked: t.blocked ?? undefined,
         blockedFull: t.blockedFull ?? undefined,
-        running: t.running ?? undefined,
+        running: t.runningSince ? formatRunning(t.runningSince, now) : undefined,
       }),
     ),
   }));

@@ -27,7 +27,7 @@ McpServer  (độc lập)
 | `MemberActivity` | cuid | `icon`, `text`, `at` (timestamp thật) |
 | `ProjectMember` | (`projectId`,`memberId`) | |
 | `Feature` (`features`) | `id` chuỗi (`FEAT-118`) | `stage` enum; `pct` nhập tay (không tính từ task); số docs tính bằng `_count` |
-| `Task` (`tasks`) | `id` chuỗi (`T-401`) | `est`, `due`, `running`, `status` còn là chuỗi — F09.2 |
+| `Task` (`tasks`) | `id` chuỗi (`T-401`) | `status` enum `TaskStatus`; `estimatePoints Int?`, `dueDate DATE?`, `runningSince DateTime?` — format sang "5đ" / "22/08" / "chạy 14 phút" bằng `lib/taskFormat.ts` |
 | `Doc` (`docs`) | `id` chuỗi slug (`prd-listing`) | `projectId` bắt buộc, `featureId` tuỳ chọn; `sections Json` = `[{heading, paras[]}]`; `readBy String[]`; `indexedAt`, `chunkCount` |
 | `DocRevision` | cuid | `what` (mô tả), `pending Boolean`, `approvedById`, `approvedAt`. **Chưa có nội dung đề xuất** — F12.1 |
 | `McpServer` | `id` chuỗi | `status` enum `online`/`limited`, `tools String[]` |
@@ -36,13 +36,14 @@ McpServer  (độc lập)
 
 ## Quy ước
 - **Khoá chính là id chuỗi đọc được** (`rv-web`, `FEAT-118`, `T-401`, `prd-listing`, `agent-atlas`) cho các thực thể nghiệp vụ — UI và URL dùng thẳng các id này. Bảng phụ (skill row, activity, revision, log) dùng `cuid()`. Lý do: `decisions.md` ADR-006.
-- **Enum có giá trị tiếng Việt**: tên identifier ASCII + `@map` giữ giá trị trong DB. Map ngược sang chuỗi hiển thị ở `lib/data/mcp.ts` (`SESSION_RESULT_LABEL`, `COMMAND_RESULT_LABEL`) và `prisma/seed.ts` (`SESSION_RESULT_MAP`, `COMMAND_RESULT_MAP`).
+- **Enum có giá trị tiếng Việt**: tên identifier ASCII + `@map` giữ giá trị trong DB. Map ngược sang chuỗi hiển thị ở `lib/data/mcpLabels.ts` (`SESSION_RESULT_LABEL`, `COMMAND_RESULT_LABEL`), `lib/taskFormat.ts` (`TASK_STATUS_LABEL`) và `prisma/seed.ts` (`SESSION_RESULT_MAP`, `COMMAND_RESULT_MAP`). Unit test đối chiếu với enum sinh ra — thêm giá trị enum mà quên nhãn sẽ fail.
 
   | Prisma | DB / hiển thị |
   |---|---|
   | `SessionResult.DangChay` | `Đang chạy` |
   | `ChoReview` | `Chờ review` |
   | `BiChan` | `Bị chặn` |
+  | `TaskStatus.DangLam` / `Cho` / `ChoReview` / `DangChay` | `Đang làm` / `Chờ` / `Chờ review` / `Đang chạy` |
   | `Xong`, `OK` | giữ nguyên |
 - **Thời gian**: lưu `DateTime`, format sang "x phút trước" bằng `lib/relativeTime.ts` tại `lib/data/*`. Không lưu chuỗi tương đối vào DB (các field còn vi phạm liệt kê dưới).
 - Tên bảng snake_case qua `@@map`.
@@ -50,10 +51,6 @@ McpServer  (độc lập)
 ## Điểm còn tạm (nợ kỹ thuật dữ liệu)
 | Field | Hiện tại | Đích | Task |
 |---|---|---|---|
-| `Task.est` | `"5đ"`, `"—"` | `estimatePoints Int?` | F09.2 |
-| `Task.due` | `"22/08"` | `dueDate DateTime?` | F09.2 |
-| `Task.running` | `"chạy 14 phút"` | `runningSince DateTime?` | F09.2 |
-| `Task.status` | chuỗi tự do | enum `TaskStatus` | F09.2 |
 | Timeline | `lib/data/timeline.ts` mock | `Feature.plannedStart/plannedEnd` | F09.3 |
 | `McpSession.tokens` | `"182K"` | `tokensUsed Int` | F09.4 |
 | `Member.status`, `Member.current` | chuỗi tự do | enum + suy ra từ task đang làm | F09.4 |
