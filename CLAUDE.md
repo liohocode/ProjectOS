@@ -29,7 +29,12 @@ npx prisma migrate dev         # áp migration; sửa schema thì thêm --name <
 npx prisma db seed             # nạp lại dữ liệu mẫu (tự xoá sạch rồi seed — an toàn chạy nhiều lần trên DB dev)
 npx prisma studio              # GUI xem/sửa dữ liệu
 npm run dev                    # http://localhost:3000
-npm run build && npm run lint  # bắt buộc sạch trước khi commit
+
+# Kiểm tra trước khi commit (chi tiết: Definition of Done trong docs/WORKFLOW.md)
+npm run lint && npm run typecheck && npm run build
+npm test                       # unit (Vitest), không cần DB
+npm run test:integration       # Vitest trên DB test meridian_test (tự tạo + migrate + seed)
+npm run test:e2e               # Playwright, build production cổng 3100 + DB test
 ```
 
 **Prisma 7** khác nhiều so với 5/6: client sinh vào `lib/generated/prisma` (không commit, không sửa tay), bắt buộc driver adapter `@prisma/adapter-pg`, datasource cấu hình ở `prisma7.config.ts`. Trước khi đụng Prisma đọc `.agents/skills/prisma-*/SKILL.md`. Prisma chặn lệnh phá dữ liệu (`migrate reset`, `db push --force-reset`) khi chạy bởi AI agent — phải hỏi người dùng trước.
@@ -41,7 +46,8 @@ npm run build && npm run lint  # bắt buộc sạch trước khi commit
 4. Sửa `prisma/schema.prisma` → `npx prisma migrate dev --name <mô tả>` → `npx prisma generate` → **khởi động lại `npm run dev`** (dev server cache client cũ, triệu chứng: lỗi "Unknown argument"). Cập nhật `docs/architecture/data-model.md` cùng commit.
 5. Dữ liệu mẫu sửa ở `prisma/seed-data/` rồi `npx prisma db seed`, không chèn tay qua Prisma Studio.
 6. Quyết định kiến trúc mới → thêm ADR vào `docs/architecture/decisions.md`.
-7. Cần `.env` có `DATABASE_URL` và `docker compose up -d` đang chạy thì app/prisma mới hoạt động. Không commit `.env`.
+7. Cần `.env` có `DATABASE_URL` (+ `DATABASE_URL_TEST` cho test) và `docker compose up -d` đang chạy thì app/prisma/test mới hoạt động. Không commit `.env`.
+8. Test không bao giờ chạy trên DB dev/production: integration + e2e luôn dùng `DATABASE_URL_TEST` (tên DB bắt buộc chứa `test`).
 
 ## Trạng thái hiện tại (2026-10)
 Phase 0 xong: 5 màn + app shell chạy trên Postgres thật (F01–F07). Kế hoạch tiếp theo đã chia thành feature F08–F19 với task chi tiết — xem `docs/ROADMAP.md`.

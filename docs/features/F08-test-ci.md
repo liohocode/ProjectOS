@@ -22,7 +22,7 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 | F08.2 | DB test riêng (`meridian_test`) + script chuẩn bị | S | — | Xong — 2026-10-14 |
 | F08.3 | Integration test `lib/data/*` và `lib/actions/docs.ts` | M | F08.1, F08.2 | Xong — 2026-10-14 |
 | F08.4 | Playwright e2e smoke 5 màn | M | F08.2 | Xong — 2026-10-14 |
-| F08.5 | npm scripts `typecheck`, `test`, `test:e2e`; cập nhật Definition of Done | S | F08.1 | Chưa làm |
+| F08.5 | npm scripts `typecheck`, `test`, `test:e2e`; cập nhật Definition of Done | S | F08.1 | Xong — 2026-10-14 |
 | F08.6 | GitHub Actions CI | M | F08.3, F08.5 | Chưa làm |
 
 ### F08.1 — Vitest + unit test hàm thuần
@@ -56,7 +56,7 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 **Làm gì**: thêm `typecheck` (`tsc --noEmit`), `test` (unit), `test:integration`, `test:e2e`. Cập nhật `docs/WORKFLOW.md` (Definition of Done) và `CLAUDE.md` để bắt buộc `npm test` (+ integration nếu đụng `lib/data`/`lib/actions`).
 **File**: `package.json`, `docs/WORKFLOW.md`, `CLAUDE.md`
 **Hoàn thành khi**:
-- [ ] Các script chạy được, tài liệu đã cập nhật
+- [x] Các script chạy được, tài liệu đã cập nhật
 
 ### F08.6 — GitHub Actions CI
 **Làm gì**: workflow `.github/workflows/ci.yml` chạy trên push/PR vào `main`: Node 24, `npm ci`, service container `postgres:16-alpine`, `prisma generate` → `prisma validate` → `prisma migrate deploy` → `prisma db seed` → `lint` → `typecheck` → `build` → `test` → `test:integration`. Job e2e tách riêng (có thể `continue-on-error` lúc đầu).
@@ -72,3 +72,4 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 - F08.2: viết bằng TypeScript + `pg` (không dùng `docker exec`) để chạy được cả local lẫn CI (Postgres là service container). Tên DB test bắt buộc chứa `test` — chặn nhầm sang DB thật. Không có `DATABASE_URL_TEST` thì suy ra từ `DATABASE_URL` với tên `meridian_test`.
 - F08.3: global setup chạy `scripts/test-db-prepare.ts` một lần (bỏ qua bằng `SKIP_TEST_DB_PREPARE=1`); `test/integration-env.ts` trỏ `DATABASE_URL` sang `DATABASE_URL_TEST` trước khi file test import `lib/prisma.ts` và mock `next/cache`. Chạy tuần tự (`fileParallelism: false`). Test ghi dữ liệu phải tự trả lại trạng thái seed trong `afterAll` — xem `lib/actions/docs.integration.test.ts` làm mẫu cho các action sau (F11+). Lưu ý: `Feature.docs` giờ tính từ quan hệ nên khác số trong mock gốc (FEAT-118: 4, FEAT-119: 2, FEAT-120: 2, FEAT-124: 0).
 - F08.4: e2e chạy **bản build production ở cổng 3100** (`npm run build && next start`) trỏ vào DB test — không đụng dev server cổng 3000 và DB dev. Global setup reseed DB test mỗi lần chạy. Phát hiện lỗi UX: bấm "Duyệt" không có phản hồi (nút chỉ biến mất) → ghi vào F12.4; test hiện kiểm tra nút biến mất + số "Revision chờ duyệt" giảm và giữ sau reload.
+- F08.5: `typecheck` = `next typegen && tsc --noEmit` — helper type `PageProps`/`LayoutProps` của Next 16 sinh ở `.next/types`, máy sạch (CI) cần `next typegen` trước `tsc`.

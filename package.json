@@ -10,7 +10,8 @@
     "test": "vitest run",
     "db:test:prepare": "tsx scripts/test-db-prepare.ts",
     "test:integration": "vitest run --config vitest.integration.config.mts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

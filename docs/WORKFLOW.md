@@ -22,8 +22,11 @@
 ## 4. Definition of Done
 Một task chỉ `Xong` khi:
 - [ ] Mọi mục "Hoàn thành khi" của task đã đạt
-- [ ] `npm run build` và `npm run lint` sạch
-- [ ] Test liên quan chạy xanh (bắt buộc từ khi F08 xong: `npm test`; thêm `npm run test:integration` nếu đụng `lib/data`/`lib/actions`/`prisma`)
+- [ ] `npm run lint`, `npm run typecheck`, `npm run build` sạch
+- [ ] `npm test` (unit) xanh — luôn bắt buộc
+- [ ] `npm run test:integration` xanh nếu đụng `lib/data`, `lib/actions`, `prisma/` (cần `docker compose up -d`; tự chuẩn bị DB test)
+- [ ] `npm run test:e2e` xanh nếu đổi UI/route/luồng thao tác (build production + DB test, cổng 3100)
+- [ ] Code mới có test tương xứng: hàm thuần → unit test cạnh file (`*.test.ts`); hàm `lib/data`/server action → `*.integration.test.ts` (test ghi dữ liệu phải tự trả lại trạng thái seed — mẫu: `lib/actions/docs.integration.test.ts`); luồng UI quan trọng → thêm vào `e2e/`
 - [ ] Với thay đổi UI: tự chạy `npm run dev`, xem trên trình duyệt ở cả 3 project mẫu, so với spec
 - [ ] Tài liệu liên quan đã cập nhật (data-model, ADR, guide nếu có)
 - [ ] Không commit secret (`.env` đã gitignore — kiểm tra `git status` trước khi commit)
