@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { trapTab, useDismiss } from "@/components/ui/a11y";
 import type { Feature, Member, Task, TaskDrawerInfo } from "@/lib/types";
 import { initials, stageTagClass } from "./taskStyle";
 
@@ -20,9 +21,41 @@ export function TaskDrawer({
   onAssignAgent: (agent: Member) => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const closePicker = useCallback(() => setPickerOpen(false), []);
+  // Esc do drawer xử lý (đóng picker trước, rồi mới đóng drawer) → picker chỉ dùng click-ra-ngoài.
+  useDismiss(pickerOpen, closePicker, pickerRef, { escape: false });
+
+  // Mở drawer: focus vào panel; đóng: trả focus về phần tử đã mở drawer (hàng task).
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    return () => opener?.focus?.();
+  }, []);
+
+  function onKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      if (pickerOpen) setPickerOpen(false);
+      else onClose();
+      return;
+    }
+    trapTab(e, panelRef.current);
+  }
+
   return (
     <div className="drawer-backdrop" onClick={onClose}>
-      <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="drawer-panel"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="task-drawer-title"
+        tabIndex={-1}
+        onKeyDown={onKeyDown}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="drawer-head">
           <span className="trow-id nowrap">{task.id}</span>
           <span className={stageTagClass(task.stage)}>{task.stage}</span>
@@ -33,7 +66,7 @@ export function TaskDrawer({
             <i className="ph ph-x" aria-hidden />
           </button>
         </div>
-        <h4>{task.title}</h4>
+        <h4 id="task-drawer-title">{task.title}</h4>
 
         {task.blocked && <div className="drawer-warning">{task.blockedFull ?? task.blocked}</div>}
 
@@ -91,34 +124,42 @@ export function TaskDrawer({
           </div>
         )}
 
-        <div className="drawer-footer" style={{ position: "relative", flexWrap: "wrap" }}>
+        <div className="drawer-footer" style={{ flexWrap: "wrap" }}>
           <button type="button" className="btn btn-secondary" onClick={onCycleStage}>
             Chuyển stage
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => setPickerOpen((v) => !v)}>
-            Giao cho agent
-          </button>
-          {pickerOpen && (
-            <div className="switcher-dropdown" style={{ top: "100%", left: 0, right: "auto", width: 220, marginTop: 4 }}>
-              {agents.length === 0 && <div className="switcher-item">Không có agent nào trong dự án</div>}
-              {agents.map((agent) => (
-                <button
-                  key={agent.id}
-                  type="button"
-                  className="switcher-item"
-                  onClick={() => {
-                    onAssignAgent(agent);
-                    setPickerOpen(false);
-                  }}
-                >
-                  <span className="avatar avatar-agent" style={{ width: 20, height: 20, fontSize: 8.5 }}>
-                    {initials(agent.name)}
-                  </span>
-                  {agent.name} · {agent.role}
-                </button>
-              ))}
-            </div>
-          )}
+          <div ref={pickerRef} style={{ position: "relative" }}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              aria-haspopup="menu"
+              aria-expanded={pickerOpen}
+              onClick={() => setPickerOpen((v) => !v)}
+            >
+              Giao cho agent
+            </button>
+            {pickerOpen && (
+              <div className="switcher-dropdown" style={{ top: "100%", left: 0, right: "auto", width: 220, marginTop: 4 }}>
+                {agents.length === 0 && <div className="switcher-item">Không có agent nào trong dự án</div>}
+                {agents.map((agent) => (
+                  <button
+                    key={agent.id}
+                    type="button"
+                    className="switcher-item"
+                    onClick={() => {
+                      onAssignAgent(agent);
+                      setPickerOpen(false);
+                    }}
+                  >
+                    <span className="avatar avatar-agent" style={{ width: 20, height: 20, fontSize: 8.5 }}>
+                      {initials(agent.name)}
+                    </span>
+                    {agent.name} · {agent.role}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

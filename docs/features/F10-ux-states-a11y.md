@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Đang làm | 1 | F07 | NFR-04, NFR-05 |
+| Xong | 1 | F07 | NFR-04, NFR-05 |
 
 ## Mục tiêu
 Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu đi qua DB thật nên cần: khung chờ khi tải, thông báo lỗi có thể thử lại (đặc biệt khi Postgres chưa chạy), màn rỗng có hướng dẫn, 404 đẹp cho project sai, và thao tác được bằng bàn phím.
@@ -22,7 +22,7 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 | F10.2 | `error.tsx` cho `[project]`, nhận diện lỗi mất kết nối DB | S | — | Xong — 2026-10-14 |
 | F10.3 | `not-found.tsx` cho project không tồn tại | S | — | Xong — 2026-10-14 |
 | F10.4 | Empty state cho từng màn | S | — | Xong — 2026-10-14 |
-| F10.5 | Bàn phím: hàng click được, drawer, dropdown | M | — | Chưa làm |
+| F10.5 | Bàn phím: hàng click được, drawer, dropdown | M | — | Xong — 2026-10-14 |
 
 ### F10.1 — Loading skeleton
 **Làm gì**: `app/[project]/<screen>/loading.tsx` cho 5 màn (sidebar/header nằm ở layout nên vẫn hiện). Skeleton dùng class mới `.skeleton` trong `globals.css` (nền `--color-surface`, hiệu ứng nhạt dần, tôn trọng `prefers-reduced-motion`). Hình dạng gần với nội dung thật (vd màn work: 3 khối feature section).
@@ -50,9 +50,10 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 
 ### F10.5 — Bàn phím
 **Làm gì**: `TaskRow`, `MemberRow`, header `FeatureSection` đang là `div` có `onClick` → thêm `role="button"`, `tabIndex={0}`, xử lý Enter/Space (hoặc đổi sang `<button>` nếu không vỡ grid). `TaskDrawer`: Esc để đóng, focus vào panel khi mở và trả focus về hàng khi đóng. `ProjectSwitcher` dropdown và picker "Giao cho agent": Esc đóng, click ra ngoài đóng.
+**File**: `components/ui/a11y.ts` (`buttonLikeProps`, `useDismiss`, `trapTab`), `components/work/{TaskRow,TaskDrawer}.tsx`, `components/team/MemberRow.tsx`, `components/layout/ProjectSwitcher.tsx`, `e2e/keyboard.spec.ts`
 **Hoàn thành khi**:
-- [ ] Dùng Tab/Enter/Esc thao tác được toàn bộ màn work và team không cần chuột
-- [ ] `:focus-visible` hiện viền accent (đã có sẵn trong `globals.css`)
+- [x] Dùng Tab/Enter/Esc thao tác được toàn bộ màn work và team không cần chuột (e2e `keyboard.spec.ts`)
+- [x] `:focus-visible` hiện viền accent (đã có sẵn trong `globals.css`)
 
 ## Quyết định / ghi chú
 - Component dùng chung nhiều màn đặt ở `components/ui/` (tạo mới ở task này).
@@ -60,3 +61,4 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 - F10.2: Next 16 dùng prop **`retry()`** (tải lại dữ liệu) thay cho `reset()`. Lỗi DB xảy ra ngay ở `app/[project]/layout.tsx` (dữ liệu sidebar) → `app/[project]/error.tsx` không bắt được (error boundary chỉ bọc phần con của cùng segment) → thêm `app/error.tsx`. Prisma 7 + adapter để mã `ECONNREFUSED` ở thuộc tính `code`, message chỉ là "Invalid … invocation" và `code` không qua được ranh giới server→client → `lib/prisma.ts` dùng `$extends({ query: { $allOperations } })` chuẩn hoá lỗi kết nối thành `DatabaseUnavailableError` (message cố định `DB_UNAVAILABLE…`). Hạn chế: ở **production** Next ẩn message lỗi server → chỉ hiện thông báo chung + mã lỗi (digest); hướng dẫn `docker compose` chỉ hiện ở dev.
 - F10.3: đặt ở `app/not-found.tsx` (không phải `app/[project]/`) vì `notFound()` được gọi trong `app/[project]/layout.tsx` → boundary của segment cha xử lý. Trang liệt kê dự án thật từ DB thay vì link cứng `/rv-web`.
 - F10.4: thêm empty state cho cả view Timeline (dự án chưa có sprint hoặc feature chưa có ngày kế hoạch) và 2 bảng màn MCP (phiên chạy, nhật ký lệnh — dữ liệu cắt ngang dự án nên chỉ rỗng khi cả hệ thống chưa có). Màn MCP/Portfolio không kiểm bằng e2e vì dữ liệu của chúng là toàn cục.
+- F10.5: hàng `.trow`/`.mrow` giữ là `div` (đổi sang `<button>` vỡ grid) + `buttonLikeProps` (role=button, tabindex 0, Enter/Space). Drawer: `role="dialog"`, focus vào panel khi mở, Tab xoay vòng trong panel, Esc đóng picker trước rồi mới đóng drawer, đóng xong focus trả về đúng hàng. `useDismiss` (Esc + click ra ngoài) dùng cho dropdown dự án và picker — **F11.4 dùng lại `useDismiss` + `trapTab` cho Dialog**. Test e2e bàn phím phải đợi hydrate (`networkidle`) — HTML SSR có `tabindex` nhưng chưa có handler.

@@ -89,8 +89,8 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | NFR-01 | UI tiếng Việt, giữ thuật ngữ kỹ thuật tiếng Anh (task, feature, sprint, agent, MCP, review, backlog) | ✅ | — |
 | NFR-02 | Fidelity design system Nocturne: mọi màu/spacing/radius/shadow từ token trong `app/globals.css`, không hard-code | ✅ | — |
 | NFR-03 | Responsive bằng **container query**, không media query; tiêu đề task và tên thành viên không bao giờ bị ẩn | ✅ | — |
-| NFR-04 | `:focus-visible` rõ ràng; nút/hàng có thể thao tác bằng bàn phím | 🟡 hàng task/thành viên là `div` click được, chưa focus được | F10 |
-| NFR-05 | Có loading state, error state, empty state, trang 404 | ⬜ | F10 |
+| NFR-04 | `:focus-visible` rõ ràng; nút/hàng có thể thao tác bằng bàn phím | ✅ (F10.5) | F10 |
+| NFR-05 | Có loading state, error state, empty state, trang 404 | ✅ (F10.1–F10.4) | F10 |
 | NFR-06 | Phân trang cho danh sách lớn (nhật ký lệnh, phiên chạy) | ⬜ | F14 |
 | NFR-07 | Có test tự động (unit, integration với DB, e2e smoke) và CI chạy lint/type/build/test | 🟡 test đủ 3 tầng; CI chờ push để chạy lần đầu | F08 |
 | NFR-08 | Không commit secret; mọi cấu hình qua biến môi trường (`.env.example` liệt kê đủ) | ✅ | — |

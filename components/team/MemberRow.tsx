@@ -1,5 +1,6 @@
 import type { Member } from "@/lib/types";
 import { initials } from "@/components/work/taskStyle";
+import { buttonLikeProps } from "@/components/ui/a11y";
 
 function statusColor(status: string) {
   if (status === "Đang chạy" || status === "Đang làm" || status === "Đang review") return "var(--color-accent)";
@@ -17,7 +18,12 @@ export function MemberRow({
   onSelect: () => void;
 }) {
   return (
-    <div className={`mrow rowhover${selected ? " is-selected" : ""}`} onClick={onSelect}>
+    <div
+      className={`mrow rowhover${selected ? " is-selected" : ""}`}
+      aria-pressed={selected}
+      aria-label={`${member.name} — ${member.role}`}
+      {...buttonLikeProps(onSelect)}
+    >
       <span className={`avatar ${member.kind === "agent" ? "avatar-agent" : "avatar-human"}`} style={{ width: 22, height: 22, fontSize: 9.5 }}>
         {initials(member.name)}
       </span>

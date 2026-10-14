@@ -1,9 +1,10 @@
 import type { Task } from "@/lib/types";
 import { initials, stageTagClass, taskRowStyle } from "./taskStyle";
+import { buttonLikeProps } from "@/components/ui/a11y";
 
 export function TaskRow({ task, onOpen }: { task: Task; onOpen: () => void }) {
   return (
-    <div className="trow rowhover" style={taskRowStyle(task)} onClick={onOpen}>
+    <div className="trow rowhover" style={taskRowStyle(task)} aria-label={`${task.id}: ${task.title}`} {...buttonLikeProps(onOpen)}>
       <span className="trow-id nowrap">{task.id}</span>
       <span className={`${stageTagClass(task.stage)} c-stage`}>{task.stage}</span>
       <span className="trow-title">{task.title}</span>
