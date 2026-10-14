@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 1 | F07 | NFR-04, NFR-05 |
+| Đang làm | 1 | F07 | NFR-04, NFR-05 |
 
 ## Mục tiêu
 Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu đi qua DB thật nên cần: khung chờ khi tải, thông báo lỗi có thể thử lại (đặc biệt khi Postgres chưa chạy), màn rỗng có hướng dẫn, 404 đẹp cho project sai, và thao tác được bằng bàn phím.
@@ -18,7 +18,7 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F10.1 | `loading.tsx` + skeleton cho 5 màn | S | — | Chưa làm |
+| F10.1 | `loading.tsx` + skeleton cho 5 màn | S | — | Xong — 2026-10-14 |
 | F10.2 | `error.tsx` cho `[project]`, nhận diện lỗi mất kết nối DB | S | — | Chưa làm |
 | F10.3 | `not-found.tsx` cho project không tồn tại | S | — | Chưa làm |
 | F10.4 | Empty state cho từng màn | S | — | Chưa làm |
@@ -26,9 +26,9 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 
 ### F10.1 — Loading skeleton
 **Làm gì**: `app/[project]/<screen>/loading.tsx` cho 5 màn (sidebar/header nằm ở layout nên vẫn hiện). Skeleton dùng class mới `.skeleton` trong `globals.css` (nền `--color-surface`, hiệu ứng nhạt dần, tôn trọng `prefers-reduced-motion`). Hình dạng gần với nội dung thật (vd màn work: 3 khối feature section).
-**File**: `app/[project]/*/loading.tsx`, `app/globals.css`
+**File**: `app/[project]/*/loading.tsx`, `components/ui/Skeleton.tsx`, `app/globals.css` (`.skeleton`, `.sr-only`)
 **Hoàn thành khi**:
-- [ ] Throttle mạng/thêm delay giả ở `lib/data` thấy skeleton; không dịch layout khi dữ liệu về
+- [x] Thêm delay giả thấy skeleton được stream trước nội dung; không dịch layout khi dữ liệu về (skeleton dùng lại đúng class layout của từng màn)
 
 ### F10.2 — Error boundary
 **Làm gì**: `app/[project]/error.tsx` (client component, nhận `error`, `reset`): thông báo tiếng Việt + nút "Thử lại". Nếu lỗi là Prisma không kết nối được DB (`PrismaClientInitializationError` / mã `P1001`) → hiển thị hướng dẫn "Chưa kết nối được database — chạy `docker compose up -d`". Lưu ý: ở production Next ẩn message lỗi server, nhận diện qua `error.digest` hoặc ném lỗi có message an toàn từ `lib/data`.
@@ -55,3 +55,4 @@ Spec gốc ghi rõ "chưa có loading state, error state" — giờ dữ liệu 
 
 ## Quyết định / ghi chú
 - Component dùng chung nhiều màn đặt ở `components/ui/` (tạo mới ở task này).
+- F10.1: kiểm chứng bằng cách tạm thêm 2,5s delay vào `work/page.tsx` → HTML stream trong 1,5s đầu chỉ có skeleton + "Đang tải…" (`role=status`, `aria-busy`), chưa có nội dung; đã gỡ delay. Thêm tiện ích `.sr-only` dùng chung.
