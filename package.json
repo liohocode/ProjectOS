@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:test:prepare": "tsx scripts/test-db-prepare.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

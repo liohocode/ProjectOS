@@ -19,7 +19,7 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | F08.1 | Vitest + unit test hàm thuần | S | — | Xong — 2026-10-14 |
-| F08.2 | DB test riêng (`meridian_test`) + script chuẩn bị | S | — | Chưa làm |
+| F08.2 | DB test riêng (`meridian_test`) + script chuẩn bị | S | — | Xong — 2026-10-14 |
 | F08.3 | Integration test `lib/data/*` và `lib/actions/docs.ts` | M | F08.1, F08.2 | Chưa làm |
 | F08.4 | Playwright e2e smoke 5 màn | M | F08.2 | Chưa làm |
 | F08.5 | npm scripts `typecheck`, `test`, `test:e2e`; cập nhật Definition of Done | S | F08.1 | Chưa làm |
@@ -35,9 +35,9 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 ### F08.2 — DB test riêng + script chuẩn bị
 **Làm gì**: tạo database `meridian_test` trong cùng container Postgres (idempotent: `CREATE DATABASE` nếu chưa có). Script `scripts/test-db-prepare.sh` (hoặc npm script `db:test:prepare`): với `DATABASE_URL` trỏ `meridian_test` → `prisma migrate deploy` → `prisma db seed`. Thêm `DATABASE_URL_TEST` vào `.env.example`.
 **Lưu ý**: **không** dùng `prisma migrate reset` trong script chạy bởi agent (Prisma chặn lệnh phá dữ liệu khi phát hiện AI agent — xem `.agents/skills/prisma-cli/references/agent-safety.md`); seed đã tự xoá sạch nên không cần reset.
-**File**: `scripts/test-db-prepare.sh`, `package.json`, `.env.example`
+**File**: `scripts/test-db-prepare.ts`, `package.json` (`npm run db:test:prepare`), `.env.example`
 **Hoàn thành khi**:
-- [ ] Chạy script 2 lần liên tiếp đều thành công, DB dev `meridian` không bị đụng tới
+- [x] Chạy script 2 lần liên tiếp đều thành công, DB dev `meridian` không bị đụng tới
 
 ### F08.3 — Integration test tầng dữ liệu
 **Làm gì**: Vitest project/config riêng (`vitest.integration.config.ts` hoặc `test.projects`) chạy với `DATABASE_URL=$DATABASE_URL_TEST`. Kiểm tra số liệu khớp seed (`data-model.md`): `getProjects` = 3; `getTeamByProject('rv-web')` đúng thành viên; `getFeaturesByProject('rv-web')` = 4 feature, đếm task đúng, `docs` count đúng; `getTasksByProject` + `blocked`; `getDocGroupsByProject` có nhóm "Kho tri thức chung" theo từng project; `getKnowledgeStripStats('rv-web').pendingRevisions` = 2; `getPortfolioSummaries` cho tổng 3 task block; `getMcpSessions` map đúng enum tiếng Việt. Test `approveRevision` (cần mock `revalidatePath` từ `next/cache` bằng `vi.mock`) → revision hết pending, có `approvedById`; reseed trước mỗi file test ghi dữ liệu.
@@ -69,3 +69,4 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 ## Quyết định / ghi chú
 - Chọn Vitest (nhanh, ESM, hợp TS) và Playwright (chuẩn e2e cho Next). Nếu đổi, ghi ADR mới.
 - F08.1: Vitest 5 yêu cầu `@types/node` ≥ 22 → nâng lên `^24` (khớp runtime Node 24). Config đặt đuôi `.mts` (repo không phải `"type": "module"`, tránh cảnh báo Vite). Bảng map enum MCP tách ra `lib/data/mcpLabels.ts` (thuần, không import Prisma) để unit test được; test đối chiếu với enum sinh ra ở `lib/generated/prisma/enums.ts` → thêm giá trị enum mới mà quên nhãn sẽ fail. `fsevents` (chỉ macOS) bị `deny` install script — có binary dựng sẵn, không cần. Script `npm test` = `vitest run` đã thêm sớm.
+- F08.2: viết bằng TypeScript + `pg` (không dùng `docker exec`) để chạy được cả local lẫn CI (Postgres là service container). Tên DB test bắt buộc chứa `test` — chặn nhầm sang DB thật. Không có `DATABASE_URL_TEST` thì suy ra từ `DATABASE_URL` với tên `meridian_test`.
