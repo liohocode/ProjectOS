@@ -23,7 +23,7 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 | F08.3 | Integration test `lib/data/*` và `lib/actions/docs.ts` | M | F08.1, F08.2 | Xong — 2026-10-14 |
 | F08.4 | Playwright e2e smoke 5 màn | M | F08.2 | Xong — 2026-10-14 |
 | F08.5 | npm scripts `typecheck`, `test`, `test:e2e`; cập nhật Definition of Done | S | F08.1 | Xong — 2026-10-14 |
-| F08.6 | GitHub Actions CI | M | F08.3, F08.5 | Chưa làm |
+| F08.6 | GitHub Actions CI | M | F08.3, F08.5 | Đang làm — Claude, 2026-10-14 (workflow đã viết, chờ push để xác nhận CI xanh) |
 
 ### F08.1 — Vitest + unit test hàm thuần
 **Làm gì**: cài `vitest` (devDependency), tạo `vitest.config.ts` hỗ trợ alias `@/*` (theo `tsconfig.json`). Viết test cho: `formatRelativeVi` (dùng fake timers: giây/phút/giờ/"Hôm qua"/ngày/tuần), `taskRowStyle` + `stageTagClass` + `initials` (`components/work/taskStyle.ts`), bảng map enum trong `lib/data/mcp.ts` (có thể cần export `SESSION_RESULT_LABEL`/`COMMAND_RESULT_LABEL` — chỉ export, không đổi logic).
@@ -73,3 +73,4 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 - F08.3: global setup chạy `scripts/test-db-prepare.ts` một lần (bỏ qua bằng `SKIP_TEST_DB_PREPARE=1`); `test/integration-env.ts` trỏ `DATABASE_URL` sang `DATABASE_URL_TEST` trước khi file test import `lib/prisma.ts` và mock `next/cache`. Chạy tuần tự (`fileParallelism: false`). Test ghi dữ liệu phải tự trả lại trạng thái seed trong `afterAll` — xem `lib/actions/docs.integration.test.ts` làm mẫu cho các action sau (F11+). Lưu ý: `Feature.docs` giờ tính từ quan hệ nên khác số trong mock gốc (FEAT-118: 4, FEAT-119: 2, FEAT-120: 2, FEAT-124: 0).
 - F08.4: e2e chạy **bản build production ở cổng 3100** (`npm run build && next start`) trỏ vào DB test — không đụng dev server cổng 3000 và DB dev. Global setup reseed DB test mỗi lần chạy. Phát hiện lỗi UX: bấm "Duyệt" không có phản hồi (nút chỉ biến mất) → ghi vào F12.4; test hiện kiểm tra nút biến mất + số "Revision chờ duyệt" giảm và giữ sau reload.
 - F08.5: `typecheck` = `next typegen && tsc --noEmit` — helper type `PageProps`/`LayoutProps` của Next 16 sinh ở `.next/types`, máy sạch (CI) cần `next typegen` trước `tsc`.
+- F08.6: 3 job — `check` (lint, typecheck, unit, build; không cần DB), `integration` và `e2e` (Postgres service container; script tự tạo `meridian_test`). Approval install script đã nằm trong `allowScripts` của `package.json` nên `npm ci` chạy được. Cú pháp YAML đã kiểm tra ở local; cần push để xác nhận chạy thật.
