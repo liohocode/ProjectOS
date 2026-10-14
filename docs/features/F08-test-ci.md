@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 1 | F07 | NFR-07 |
+| Đang làm | 1 | F07 | NFR-07 |
 
 ## Mục tiêu
 Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặc biệt thao tác ghi, MCP server) cần lưới an toàn: unit test cho hàm thuần, integration test cho `lib/data/*` + `lib/actions/*` trên DB thật, e2e smoke cho 5 màn, và CI chạy tất cả trên mỗi push.
@@ -18,7 +18,7 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F08.1 | Vitest + unit test hàm thuần | S | — | Chưa làm |
+| F08.1 | Vitest + unit test hàm thuần | S | — | Xong — 2026-10-14 |
 | F08.2 | DB test riêng (`meridian_test`) + script chuẩn bị | S | — | Chưa làm |
 | F08.3 | Integration test `lib/data/*` và `lib/actions/docs.ts` | M | F08.1, F08.2 | Chưa làm |
 | F08.4 | Playwright e2e smoke 5 màn | M | F08.2 | Chưa làm |
@@ -27,10 +27,10 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 
 ### F08.1 — Vitest + unit test hàm thuần
 **Làm gì**: cài `vitest` (devDependency), tạo `vitest.config.ts` hỗ trợ alias `@/*` (theo `tsconfig.json`). Viết test cho: `formatRelativeVi` (dùng fake timers: giây/phút/giờ/"Hôm qua"/ngày/tuần), `taskRowStyle` + `stageTagClass` + `initials` (`components/work/taskStyle.ts`), bảng map enum trong `lib/data/mcp.ts` (có thể cần export `SESSION_RESULT_LABEL`/`COMMAND_RESULT_LABEL` — chỉ export, không đổi logic).
-**File**: `vitest.config.ts`, `lib/relativeTime.test.ts`, `components/work/taskStyle.test.ts`, `lib/data/mcp.test.ts`, `package.json`
+**File**: `vitest.config.mts`, `lib/relativeTime.test.ts`, `components/work/taskStyle.test.ts`, `lib/data/mcpLabels.ts` + `lib/data/mcpLabels.test.ts`, `package.json`
 **Hoàn thành khi**:
-- [ ] `npx vitest run` chạy xanh, không cần DB
-- [ ] Unit test không import `lib/prisma.ts` (tách khỏi integration)
+- [x] `npx vitest run` chạy xanh, không cần DB (13 test)
+- [x] Unit test không import `lib/prisma.ts` (tách khỏi integration)
 
 ### F08.2 — DB test riêng + script chuẩn bị
 **Làm gì**: tạo database `meridian_test` trong cùng container Postgres (idempotent: `CREATE DATABASE` nếu chưa có). Script `scripts/test-db-prepare.sh` (hoặc npm script `db:test:prepare`): với `DATABASE_URL` trỏ `meridian_test` → `prisma migrate deploy` → `prisma db seed`. Thêm `DATABASE_URL_TEST` vào `.env.example`.
@@ -68,3 +68,4 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 
 ## Quyết định / ghi chú
 - Chọn Vitest (nhanh, ESM, hợp TS) và Playwright (chuẩn e2e cho Next). Nếu đổi, ghi ADR mới.
+- F08.1: Vitest 5 yêu cầu `@types/node` ≥ 22 → nâng lên `^24` (khớp runtime Node 24). Config đặt đuôi `.mts` (repo không phải `"type": "module"`, tránh cảnh báo Vite). Bảng map enum MCP tách ra `lib/data/mcpLabels.ts` (thuần, không import Prisma) để unit test được; test đối chiếu với enum sinh ra ở `lib/generated/prisma/enums.ts` → thêm giá trị enum mới mà quên nhãn sẽ fail. `fsevents` (chỉ macOS) bị `deny` install script — có binary dựng sẵn, không cần. Script `npm test` = `vitest run` đã thêm sớm.

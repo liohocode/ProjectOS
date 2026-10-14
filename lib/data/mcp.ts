@@ -1,6 +1,7 @@
-import type { CommandResult, McpLogEntry, McpServer, McpSession, SessionResult } from "@/lib/types";
+import type { McpLogEntry, McpServer, McpSession } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
+import { COMMAND_RESULT_LABEL, SESSION_RESULT_LABEL } from "./mcpLabels";
 
 export async function getMcpServers(): Promise<McpServer[]> {
   const rows = await prisma.mcpServer.findMany({ orderBy: { id: "asc" } });
@@ -15,21 +16,6 @@ export async function getMcpServers(): Promise<McpServer[]> {
     lastCommandAgo: formatRelativeVi(row.lastCommandAt),
   }));
 }
-
-// Prisma enum (tên identifier ASCII, @map giữ giá trị DB tiếng Việt) ↔ chuỗi
-// hiển thị dùng trong lib/types — đảo ngược lại từ bảng map trong prisma/seed.ts.
-const SESSION_RESULT_LABEL: Record<string, SessionResult> = {
-  Xong: "Xong",
-  DangChay: "Đang chạy",
-  ChoReview: "Chờ review",
-  BiChan: "Bị chặn",
-};
-
-const COMMAND_RESULT_LABEL: Record<string, CommandResult> = {
-  OK: "OK",
-  ChoReview: "Chờ review",
-  BiChan: "Bị chặn",
-};
 
 export async function getMcpSessions(): Promise<McpSession[]> {
   const rows = await prisma.mcpSession.findMany({

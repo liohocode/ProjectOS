@@ -22,7 +22,7 @@
 | FXX.1 | … | S | — | Chưa làm |
 
 Cỡ: **S** ≤ 2 giờ · **M** ~ nửa ngày · **L** ≥ 1 ngày (nên tách nhỏ trước khi làm).
-Trạng thái: `Chưa làm` · `Đang làm — <agent>, <YYYY-MM-DD>` · `Xong — <commit>` · `Chặn — <lý do>`.
+Trạng thái: `Chưa làm` · `Đang làm — <agent>, <YYYY-MM-DD>` · `Xong — <YYYY-MM-DD>` · `Chặn — <lý do>`.
 
 ### FXX.1 — <tiêu đề>
 **Làm gì**: <mô tả đủ để agent khác làm mà không cần hỏi lại>

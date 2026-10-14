@@ -29,7 +29,7 @@ Một task chỉ `Xong` khi:
 - [ ] Không commit secret (`.env` đã gitignore — kiểm tra `git status` trước khi commit)
 
 ## 5. Đóng task
-1. Đổi trạng thái task thành `Xong — <commit hash ngắn>`; ghi chú quyết định phát sinh vào mục cuối file feature.
+1. Đổi trạng thái task thành `Xong — <YYYY-MM-DD>` (commit tự chứa thay đổi trạng thái nên không ghi được hash của chính nó — tìm commit bằng `git log --grep "<task-id>:"`); đánh dấu `[x]` các mục "Hoàn thành khi"; ghi chú quyết định phát sinh vào mục cuối file feature.
 2. Cập nhật `docs/ROADMAP.md`: cột "Task xong" của feature, tổng số task xong, trạng thái feature (`Xong` khi mọi task xong).
 3. Cập nhật trạng thái yêu cầu liên quan trong `docs/product/requirements.md` (⬜ → 🟡 → ✅) nếu task làm thay đổi mức đáp ứng.
 4. Thêm 1 dòng vào "Nhật ký" của ROADMAP khi xong cả feature (không cần cho từng task).
