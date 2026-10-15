@@ -21,7 +21,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | F11.1 | Gom "người dùng hiện tại" về `lib/auth/currentUser.ts` | S | — | Xong — 2026-10-15 |
-| F11.2 | Server actions `lib/actions/tasks.ts` (stage, assign, status) + validation | M | F11.1 | Chưa làm |
+| F11.2 | Server actions `lib/actions/tasks.ts` (stage, assign, status) + validation | M | F11.1 | Xong — 2026-10-15 |
 | F11.3 | Nối task drawer với server actions, bỏ state sửa tạm ở client | S | F11.2 | Chưa làm |
 | F11.4 | Khuôn mẫu "hành động chính ở header" + dialog; "Task mới" | M | F11.2 | Chưa làm |
 | F11.5 | Đặt / gỡ block cho task | S | F11.2 | Chưa làm |
@@ -37,7 +37,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 **Làm gì**: `lib/actions/tasks.ts` (`"use server"`): `updateTaskStage(taskId, stage)`, `assignTask(taskId, memberId)`, `updateTaskStatus(taskId, status)`. Validate input ở biên (khuyến nghị thêm `zod`): stage/status thuộc enum, task tồn tại, member thuộc project của task (qua `ProjectMember`). Trả về `{ ok: true } | { ok: false, error: string }` thay vì throw cho lỗi nghiệp vụ. Gọi `revalidatePath('/<projectId>/work')` (và `/team`, `/portfolio` nếu ảnh hưởng số liệu).
 **File**: `lib/actions/tasks.ts`, `package.json` (nếu thêm zod)
 **Hoàn thành khi**:
-- [ ] Integration test (nếu F08 xong) cho từng action: thành công + giao cho member ngoài project bị từ chối
+- [x] Integration test (nếu F08 xong) cho từng action: thành công + giao cho member ngoài project bị từ chối
 
 ### F11.3 — Drawer ghi DB thật
 **Làm gì**: `TaskDrawer` gọi `updateTaskStage` / `assignTask` (truyền **member id**, không phải tên). Dùng `useOptimistic` hoặc `useTransition` + trạng thái đang lưu. Xoá cơ chế sửa tạm ở client trong `WorkScreen` (`useState(initialFeatures)`, `updateTask`, `cycleStage`, `assignAgent`) — dữ liệu lấy lại từ server sau `revalidatePath`. Lỗi → hiện thông báo trong drawer.

@@ -89,3 +89,12 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 - Cold start: cả Cloud Run và Neon đều "ngủ" khi không ai dùng → request đầu tiên sau thời gian nghỉ chậm vài giây — chấp nhận được cho tool nội bộ.
 - Phải gắn thẻ thanh toán cho Google Cloud → đặt **budget alert** ngay từ đầu.
 - Container chuẩn → nếu sau này cần (SSE dài, job nền nặng, hết hạn mức free) có thể chuyển sang VPS với cùng image, gần như không sửa code.
+
+### ADR-017 — Quy ước server action: zod + ActionResult (2026-10-15)
+**Bối cảnh**: F11 bắt đầu có nhiều action ghi dữ liệu do người dùng gửi lên; cần validate ở biên và báo lỗi nghiệp vụ cho UI mà không rơi vào error boundary.
+**Quyết định**:
+- Validate input bằng **zod** (`z.object(...).safeParse`) ở đầu mỗi action; thông báo lỗi tiếng Việt viết trong schema.
+- Action trả `ActionResult` (`lib/actions/result.ts`): `{ ok: true } | { ok: false, error }` cho lỗi nghiệp vụ (input sai, không tìm thấy, vi phạm ràng buộc như giao task cho người ngoài dự án). Chỉ lỗi bất ngờ (mất DB, bug) mới throw.
+- Thay đổi task revalidate cả cây: `revalidatePath("/[project]", "layout")` — vì task ảnh hưởng badge nav ở layout, màn work/team và portfolio (liệt kê mọi dự án).
+- Đầu mỗi action có `// TODO(F15.4): kiểm tra quyền` cho tới khi có phân quyền.
+**Hệ quả**: client gọi action trong `useTransition`, đọc `result.ok` để hiện lỗi tại chỗ (drawer/dialog).
