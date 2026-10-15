@@ -145,3 +145,29 @@ test.describe("sửa nhanh task", () => {
     await expect(page.getByRole("dialog").locator(".drawer-meta-row", { hasText: "Hạn" })).toContainText("30/09");
   });
 });
+
+test.describe("ghi hoạt động cho người thao tác", () => {
+  // T-412 seed: stage TA.
+  test.afterAll(async () => {
+    await withDb(async (db) => {
+      await db.query("UPDATE tasks SET stage = 'TA' WHERE id = 'T-412'");
+      await db.query("DELETE FROM member_activity WHERE text = 'Chuyển T-412 sang Dev'");
+    });
+  });
+
+  test("chuyển stage ở màn work → dòng mới trong panel của Trung Hiếu ở màn team", async ({ page }) => {
+    await page.goto("/rv-web/work");
+    await page.waitForLoadState("networkidle");
+    const row = page.locator(".trow", { hasText: "T-412" });
+    await row.click();
+    await page.getByRole("dialog").getByRole("button", { name: "Chuyển stage" }).click();
+    await expect(row.locator(".c-stage")).toHaveText("Dev");
+
+    await page.goto("/rv-web/team");
+    await page.waitForLoadState("networkidle");
+    await page.locator(".mrow", { hasText: "Trung Hiếu" }).click();
+    const first = page.locator(".panel-activity-item").first();
+    await expect(first).toContainText("Chuyển T-412 sang Dev");
+    await expect(first).toContainText(/giây trước|phút trước/);
+  });
+});

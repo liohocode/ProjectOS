@@ -1,11 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { assignTask, createTask, setTaskBlocked, updateTask, updateTaskStage, updateTaskStatus, type NewTaskInput } from "./tasks";
 
 // Task mẫu T-401 (rv-web). Lưu trạng thái seed để trả lại sau khi test ghi.
 const TASK_ID = "T-401";
 let seed: { stage: string; status: string; assigneeId: string };
+
+// Action ghi MemberActivity (F11.7) — xoá các dòng sinh ra trong lúc chạy file này.
+const startedAt = new Date(Date.now() - 5_000);
 
 beforeAll(async () => {
   const task = await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } });
@@ -13,6 +17,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await prisma.memberActivity.deleteMany({ where: { at: { gte: startedAt } } });
   await prisma.task.update({
     where: { id: TASK_ID },
     data: { stage: seed.stage as never, status: seed.status as never, assigneeId: seed.assigneeId },
@@ -20,15 +25,20 @@ afterAll(async () => {
 });
 
 describe("updateTaskStage", () => {
-  it("đổi stage và revalidate cây /[project]", async () => {
+  it("đổi stage, ghi hoạt động cho người thao tác và revalidate cây /[project]", async () => {
     expect(await updateTaskStage(TASK_ID, "Review")).toEqual({ ok: true });
     expect((await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).stage).toBe("Review");
     expect(revalidatePath).toHaveBeenCalledWith("/[project]", "layout");
+
+    const latest = await prisma.memberActivity.findFirstOrThrow({ where: { memberId: await getCurrentUserId() }, orderBy: { at: "desc" } });
+    expect(latest).toMatchObject({ icon: "ph-arrow-right", text: `Chuyển ${TASK_ID} sang Review` });
   });
 
-  it("từ chối stage lạ và task không tồn tại", async () => {
+  it("từ chối stage lạ và task không tồn tại (không ghi hoạt động)", async () => {
+    const before = await prisma.memberActivity.count();
     expect(await updateTaskStage(TASK_ID, "QA")).toEqual({ ok: false, error: "Stage không hợp lệ" });
     expect(await updateTaskStage("T-999999", "Dev")).toEqual({ ok: false, error: "Không tìm thấy task T-999999" });
+    expect(await prisma.memberActivity.count()).toBe(before);
   });
 });
 
@@ -56,6 +66,9 @@ describe("assignTask", () => {
     });
     expect(await assignTask(TASK_ID, member.memberId)).toEqual({ ok: true });
     expect((await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).assigneeId).toBe(member.memberId);
+    const name = (await prisma.member.findUniqueOrThrow({ where: { id: member.memberId } })).name;
+    const latest = await prisma.memberActivity.findFirstOrThrow({ orderBy: { at: "desc" } });
+    expect(latest.text).toBe(`Giao ${TASK_ID} cho ${name}`);
   });
 
   it("từ chối giao cho người ngoài dự án", async () => {

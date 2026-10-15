@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { parseTaskStatus, TASK_STATUS_LABEL } from "@/lib/taskFormat";
 import { fail, ok, type ActionResult } from "./result";
+import { recordActivity } from "./_activity";
 
 const TASK_STAGES = ["BA", "TA", "Dev", "Review", "Done"] as const;
 
@@ -32,6 +33,7 @@ export async function updateTaskStage(taskId: string, stage: string): Promise<Ac
 
   if (!(await findTaskProject(input.data.taskId))) return fail(`Không tìm thấy task ${input.data.taskId}`);
   await prisma.task.update({ where: { id: input.data.taskId }, data: { stage: input.data.stage } });
+  await recordActivity("ph-arrow-right", `Chuyển ${input.data.taskId} sang ${input.data.stage}`);
   revalidateTaskViews();
   return ok();
 }
@@ -43,6 +45,7 @@ export async function updateTaskStatus(taskId: string, status: string): Promise<
 
   if (!(await findTaskProject(input.data.taskId))) return fail(`Không tìm thấy task ${input.data.taskId}`);
   await prisma.task.update({ where: { id: input.data.taskId }, data: { status: parseTaskStatus(input.data.status) } });
+  await recordActivity("ph-check-circle", `Đổi trạng thái ${input.data.taskId} → ${input.data.status}`);
   revalidateTaskViews();
   return ok();
 }
@@ -57,10 +60,12 @@ export async function assignTask(taskId: string, memberId: string): Promise<Acti
   if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
   const membership = await prisma.projectMember.findUnique({
     where: { projectId_memberId: { projectId, memberId: input.data.memberId } },
+    include: { member: { select: { name: true } } },
   });
   if (!membership) return fail("Người/agent này không thuộc dự án của task");
 
   await prisma.task.update({ where: { id: input.data.taskId }, data: { assigneeId: input.data.memberId } });
+  await recordActivity("ph-share-network", `Giao ${input.data.taskId} cho ${membership.member.name}`);
   revalidateTaskViews();
   return ok();
 }
@@ -124,6 +129,7 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
     return id;
   });
 
+  await recordActivity("ph-plus-circle", `Tạo ${taskId} — ${data.title}`);
   revalidateTaskViews();
   return { ok: true, taskId };
 }
@@ -147,6 +153,10 @@ export async function setTaskBlocked(taskId: string, block: { short: string; ful
     where: { id: input.data.taskId },
     data: { blocked: value?.short ?? null, blockedFull: value ? value.full || null : null },
   });
+  await recordActivity(
+    value ? "ph-warning" : "ph-check",
+    value ? `Đánh dấu ${input.data.taskId} bị block: ${value.short}` : `Gỡ block ${input.data.taskId}`,
+  );
   revalidateTaskViews();
   return ok();
 }
@@ -173,6 +183,8 @@ export async function updateTask(taskId: string, patch: TaskPatch): Promise<Acti
       ...(dueDate !== undefined && { dueDate: toDueDate(dueDate) }),
     },
   });
+  const changed = [title !== undefined && "tiêu đề", estimatePoints !== undefined && "ước lượng", dueDate !== undefined && "hạn"].filter(Boolean);
+  await recordActivity("ph-pencil-simple", `Sửa ${input.data.taskId} (${changed.join(", ")})`);
   revalidateTaskViews();
   return ok();
 }

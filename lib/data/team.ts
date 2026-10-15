@@ -5,7 +5,8 @@ import { MEMBER_STATUS_LABEL } from "@/lib/memberFormat";
 
 const memberInclude = {
   skillRows: { orderBy: { sortOrder: "asc" } },
-  activity: { orderBy: { at: "desc" } },
+  // Panel "Hoạt động gần đây" — action ghi thêm liên tục (F11.7) nên chỉ lấy các dòng mới nhất.
+  activity: { orderBy: { at: "desc" }, take: 10 },
 } as const;
 
 type MemberRow = Awaited<ReturnType<typeof prisma.member.findFirstOrThrow<{ include: typeof memberInclude }>>>;

@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Đang làm | 2 | F07 (khuyến nghị F09.2 trước) | FR-WK-08, FR-WK-09, FR-SH-05 |
+| Xong | 2 | F07 (khuyến nghị F09.2 trước) | FR-WK-08, FR-WK-09, FR-SH-05 |
 
 ## Mục tiêu
 Lead điều phối được công việc thật: chuyển stage, giao task, tạo task, đặt/gỡ block — mọi thay đổi ghi xuống Postgres. Đồng thời dựng **khuôn mẫu dùng chung** cho nút hành động chính ở header + dialog, để F12/F13 tái sử dụng.
@@ -26,7 +26,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 | F11.4 | Khuôn mẫu "hành động chính ở header" + dialog; "Task mới" | M | F11.2 | Xong — 2026-10-15 |
 | F11.5 | Đặt / gỡ block cho task | S | F11.2 | Xong — 2026-10-15 |
 | F11.6 | Sửa nhanh task trong drawer (tiêu đề, ước lượng, hạn) | S | F11.2, F09.2 | Xong — 2026-10-15 |
-| F11.7 | Ghi `MemberActivity` cho người thao tác | S | F11.2 | Chưa làm |
+| F11.7 | Ghi `MemberActivity` cho người thao tác | S | F11.2 | Xong — 2026-10-15 |
 
 ### F11.1 — Người dùng hiện tại
 **Làm gì**: tạo `lib/auth/currentUser.ts` export `getCurrentUserId()` và `getCurrentUser()` (trả `Member`), tạm thời trả `"hieu"`. Thay 2 chỗ hardcode: `app/[project]/layout.tsx` (`getMemberById("hieu")`) và `lib/actions/docs.ts` (`CURRENT_USER_ID`).
@@ -65,7 +65,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 ### F11.7 — Ghi hoạt động
 **Làm gì**: mỗi action ở F11.2–F11.6 ghi một dòng `MemberActivity` cho người thao tác (icon + mô tả, vd "Chuyển T-401 sang Review") để panel "Hoạt động gần đây" ở màn team phản ánh thao tác thật. Viết helper `recordActivity(memberId, icon, text)` trong `lib/actions/_activity.ts`. (F17 sẽ thay bằng bảng sự kiện đầy đủ — giữ helper là điểm duy nhất cần sửa.)
 **Hoàn thành khi**:
-- [ ] Thao tác ở màn work → thấy dòng mới trong panel của Trung Hiếu ở màn team
+- [x] Thao tác ở màn work → thấy dòng mới trong panel của Trung Hiếu ở màn team
 
 ## Quyết định / ghi chú
 - Trước F15, mọi người đều có quyền thao tác; ghi chú `// TODO(F15.4): kiểm tra quyền` tại đầu mỗi action để F15 dễ tìm.
