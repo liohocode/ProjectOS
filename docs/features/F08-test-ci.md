@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Đang làm | 1 | F07 | NFR-07 |
+| Xong | 1 | F07 | NFR-07 |
 
 ## Mục tiêu
 Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặc biệt thao tác ghi, MCP server) cần lưới an toàn: unit test cho hàm thuần, integration test cho `lib/data/*` + `lib/actions/*` trên DB thật, e2e smoke cho 5 màn, và CI chạy tất cả trên mỗi push.
@@ -23,7 +23,7 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 | F08.3 | Integration test `lib/data/*` và `lib/actions/docs.ts` | M | F08.1, F08.2 | Xong — 2026-10-14 |
 | F08.4 | Playwright e2e smoke 5 màn | M | F08.2 | Xong — 2026-10-14 |
 | F08.5 | npm scripts `typecheck`, `test`, `test:e2e`; cập nhật Definition of Done | S | F08.1 | Xong — 2026-10-14 |
-| F08.6 | GitHub Actions CI | M | F08.3, F08.5 | Đang làm — Claude, 2026-10-14 (workflow đã viết, chờ push để xác nhận CI xanh) |
+| F08.6 | GitHub Actions CI | M | F08.3, F08.5 | Xong — 2026-10-15 |
 
 ### F08.1 — Vitest + unit test hàm thuần
 **Làm gì**: cài `vitest` (devDependency), tạo `vitest.config.ts` hỗ trợ alias `@/*` (theo `tsconfig.json`). Viết test cho: `formatRelativeVi` (dùng fake timers: giây/phút/giờ/"Hôm qua"/ngày/tuần), `taskRowStyle` + `stageTagClass` + `initials` (`components/work/taskStyle.ts`), bảng map enum trong `lib/data/mcp.ts` (có thể cần export `SESSION_RESULT_LABEL`/`COMMAND_RESULT_LABEL` — chỉ export, không đổi logic).

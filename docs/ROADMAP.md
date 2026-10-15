@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-14 · Tổng: **44/102 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-15 · Tổng: **45/102 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -18,7 +18,7 @@ Cập nhật lần cuối: 2026-10-14 · Tổng: **44/102 task xong** (Phase 0 h
 ## Phase 1 — Nền tảng (làm trước để các phase sau an toàn)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F08](features/F08-test-ci.md) | Test tự động (unit, integration, e2e) + CI | F07 | Đang làm | 5/6 |
+| [F08](features/F08-test-ci.md) | Test tự động (unit, integration, e2e) + CI | F07 | Xong | 6/6 |
 | [F09](features/F09-data-model-hardening.md) | Chuẩn hoá data model: bỏ field chuỗi hiển thị, Sprint, timeline vào DB | F07 | Xong | 5/5 |
 | [F10](features/F10-ux-states-a11y.md) | Loading / error / empty / 404, thao tác bàn phím | F07 | Xong | 5/5 |
 
@@ -51,15 +51,12 @@ Cập nhật lần cuối: 2026-10-14 · Tổng: **44/102 task xong** (Phase 0 h
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
 | Task | Vì sao |
 |---|---|
-| [F08.1](features/F08-test-ci.md) Vitest + unit test | Mở khoá toàn bộ F08 |
-| [F08.2](features/F08-test-ci.md) DB test riêng | Mở khoá integration + e2e |
 | [F11.1](features/F11-task-mutations.md) Gom "người dùng hiện tại" | Nhỏ; mở khoá F11.2 và F15 |
-| [F10.3](features/F10-ux-states-a11y.md) 404 project | Nhỏ, độc lập |
 | [F14.1](features/F14-search-filter.md) Deep link màn work | Độc lập, mở khoá F14.2 |
 | [F19.2](features/F19-deployment.md) Dockerfile production | Độc lập; xác nhận sớm app build được thành container (Next 16 standalone + Prisma 7) — nền cho cả F19 |
 | [F19.3](features/F19-deployment.md) Thiết lập Google Cloud + budget alert | **Người dùng tự làm** theo hướng dẫn; dùng chung project cho OAuth (F15.2) |
 
-Thứ tự khuyến nghị sau đó: F08 → F09 → F11 → F12 → F13/F14 → F15 → F16 → F17 → F19 (phần còn lại). F10 làm xen kẽ bất cứ lúc nào; F18 đang hoãn.
+Phase 1 (F08, F09, F10) đã xong. Thứ tự khuyến nghị sau đó: F11 → F12 → F13/F14 → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Ghi chú |
