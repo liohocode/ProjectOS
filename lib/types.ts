@@ -21,6 +21,10 @@ export interface Task {
   status: string;
   est: string;
   due: string;
+  /** Giá trị gốc để sửa (F11.6): story point, null = chưa ước lượng */
+  estimatePoints: number | null;
+  /** Giá trị gốc để sửa (F11.6): "YYYY-MM-DD", null = chưa có hạn */
+  dueIso: string | null;
   blocked?: string;
   blockedFull?: string;
   running?: string;

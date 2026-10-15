@@ -65,15 +65,25 @@ export async function assignTask(taskId: string, memberId: string): Promise<Acti
   return ok();
 }
 
+const titleSchema = z.string().trim().min(1, "Nhập tiêu đề task").max(200, "Tiêu đề tối đa 200 ký tự");
+const estimateSchema = z
+  .number({ error: "Ước lượng phải là số" })
+  .int("Ước lượng là số nguyên")
+  .min(0, "Ước lượng không âm")
+  .max(100, "Ước lượng tối đa 100 điểm")
+  .nullable();
+/** "YYYY-MM-DD" từ <input type="date">; null = chưa có hạn */
+const dueDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Hạn không hợp lệ").nullable();
+const toDueDate = (iso: string | null) => (iso ? new Date(`${iso}T00:00:00Z`) : null);
+
 const newTaskSchema = z.object({
   projectId: z.string().trim().min(1, "Thiếu dự án"),
   featureId: z.string().trim().min(1, "Chọn feature"),
-  title: z.string().trim().min(1, "Nhập tiêu đề task").max(200, "Tiêu đề tối đa 200 ký tự"),
+  title: titleSchema,
   stage: stageSchema,
   assigneeId: memberIdSchema,
-  estimatePoints: z.number({ error: "Ước lượng phải là số" }).int("Ước lượng là số nguyên").min(0).max(100, "Ước lượng tối đa 100 điểm").nullable(),
-  /** "YYYY-MM-DD" từ <input type="date">; null = chưa có hạn */
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Hạn không hợp lệ").nullable(),
+  estimatePoints: estimateSchema,
+  dueDate: dueDateSchema,
 });
 export type NewTaskInput = z.input<typeof newTaskSchema>;
 
@@ -108,7 +118,7 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
         assigneeId: data.assigneeId,
         status: "Cho",
         estimatePoints: data.estimatePoints,
-        dueDate: data.dueDate ? new Date(`${data.dueDate}T00:00:00Z`) : null,
+        dueDate: toDueDate(data.dueDate),
       },
     });
     return id;
@@ -136,6 +146,32 @@ export async function setTaskBlocked(taskId: string, block: { short: string; ful
   await prisma.task.update({
     where: { id: input.data.taskId },
     data: { blocked: value?.short ?? null, blockedFull: value ? value.full || null : null },
+  });
+  revalidateTaskViews();
+  return ok();
+}
+
+const taskPatchSchema = z
+  .object({ title: titleSchema, estimatePoints: estimateSchema, dueDate: dueDateSchema })
+  .partial()
+  .refine((patch) => Object.keys(patch).length > 0, "Không có gì để cập nhật");
+export type TaskPatch = z.input<typeof taskPatchSchema>;
+
+/** Sửa nhanh tiêu đề / ước lượng / hạn (field không có trong patch giữ nguyên). */
+export async function updateTask(taskId: string, patch: TaskPatch): Promise<ActionResult> {
+  // TODO(F15.4): kiểm tra quyền
+  const input = z.object({ taskId: taskIdSchema, patch: taskPatchSchema }).safeParse({ taskId, patch });
+  if (!input.success) return fail(input.error.issues[0].message);
+
+  if (!(await findTaskProject(input.data.taskId))) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const { title, estimatePoints, dueDate } = input.data.patch;
+  await prisma.task.update({
+    where: { id: input.data.taskId },
+    data: {
+      ...(title !== undefined && { title }),
+      ...(estimatePoints !== undefined && { estimatePoints }),
+      ...(dueDate !== undefined && { dueDate: toDueDate(dueDate) }),
+    },
   });
   revalidateTaskViews();
   return ok();

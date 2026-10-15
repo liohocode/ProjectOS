@@ -11,6 +11,8 @@ const baseTask: Task = {
   status: "Đang làm",
   est: "1đ",
   due: "01/01",
+  estimatePoints: 1,
+  dueIso: "2026-01-01",
 };
 
 describe("initials", () => {

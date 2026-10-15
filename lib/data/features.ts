@@ -1,6 +1,6 @@
 import type { Feature, Task } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
-import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning } from "@/lib/taskFormat";
+import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning, toIsoDate } from "@/lib/taskFormat";
 
 export const UNASSIGNED_OWNER = "Chưa giao";
 
@@ -34,6 +34,8 @@ export async function getFeaturesByProject(projectId: string): Promise<Feature[]
         status: TASK_STATUS_LABEL[t.status],
         est: formatEstimate(t.estimatePoints),
         due: formatDue(t.dueDate),
+        estimatePoints: t.estimatePoints,
+        dueIso: toIsoDate(t.dueDate),
         blocked: t.blocked ?? undefined,
         blockedFull: t.blockedFull ?? undefined,
         running: t.runningSince ? formatRunning(t.runningSince, now) : undefined,

@@ -26,6 +26,11 @@ export function formatDue(date: Date | null): string {
   return date ? `${pad(date.getUTCDate())}/${pad(date.getUTCMonth() + 1)}` : "—";
 }
 
+/** Cột DATE → "YYYY-MM-DD" (giá trị của <input type="date">); null → null */
+export function toIsoDate(date: Date | null): string | null {
+  return date ? date.toISOString().slice(0, 10) : null;
+}
+
 // ── Thời gian đang chạy ───────────────────────────────────────────────────
 /** "chạy 14 phút" → thời điểm bắt đầu = now − 14 phút; không khớp → null */
 export function parseRunning(label: string, now: Date): Date | null {

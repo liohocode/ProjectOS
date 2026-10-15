@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { assignTask, createTask, setTaskBlocked, updateTaskStage, updateTaskStatus, type NewTaskInput } from "./tasks";
+import { assignTask, createTask, setTaskBlocked, updateTask, updateTaskStage, updateTaskStatus, type NewTaskInput } from "./tasks";
 
 // Task mẫu T-401 (rv-web). Lưu trạng thái seed để trả lại sau khi test ghi.
 const TASK_ID = "T-401";
@@ -134,5 +134,31 @@ describe("setTaskBlocked", () => {
     expect(await setTaskBlocked(TASK_ID, { short: "chờ ADR", full: "  " })).toEqual({ ok: true });
     expect((await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).blockedFull).toBeNull();
     expect(await setTaskBlocked(TASK_ID, { short: " ", full: "" })).toEqual({ ok: false, error: "Nhập lý do ngắn" });
+  });
+});
+
+describe("updateTask", () => {
+  let original: { title: string; estimatePoints: number | null; dueDate: Date | null };
+  beforeAll(async () => {
+    original = await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID }, select: { title: true, estimatePoints: true, dueDate: true } });
+  });
+  afterAll(async () => {
+    await prisma.task.update({ where: { id: TASK_ID }, data: original });
+  });
+
+  it("sửa cả 3 field; xoá ước lượng/hạn bằng null", async () => {
+    expect(await updateTask(TASK_ID, { title: "  Tiêu đề mới  ", estimatePoints: 8, dueDate: "2026-12-01" })).toEqual({ ok: true });
+    const task = await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } });
+    expect(task).toMatchObject({ title: "Tiêu đề mới", estimatePoints: 8 });
+    expect(task.dueDate?.toISOString().slice(0, 10)).toBe("2026-12-01");
+
+    expect(await updateTask(TASK_ID, { estimatePoints: null, dueDate: null })).toEqual({ ok: true });
+    expect(await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).toMatchObject({ title: "Tiêu đề mới", estimatePoints: null, dueDate: null });
+  });
+
+  it("từ chối patch rỗng, tiêu đề trống, ước lượng âm", async () => {
+    expect(await updateTask(TASK_ID, {})).toEqual({ ok: false, error: "Không có gì để cập nhật" });
+    expect(await updateTask(TASK_ID, { title: "" })).toEqual({ ok: false, error: "Nhập tiêu đề task" });
+    expect(await updateTask(TASK_ID, { estimatePoints: -1 })).toEqual({ ok: false, error: "Ước lượng không âm" });
   });
 });

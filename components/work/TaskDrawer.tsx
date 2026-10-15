@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
 import { trapTab, useDismiss } from "@/components/ui/a11y";
-import { assignTask, setTaskBlocked, updateTaskStage } from "@/lib/actions/tasks";
+import { assignTask, setTaskBlocked, updateTask, updateTaskStage } from "@/lib/actions/tasks";
 import { Field } from "@/components/ui/Field";
 import type { ActionResult } from "@/lib/actions/result";
 import type { Feature, Member, Task, TaskDrawerInfo } from "@/lib/types";
@@ -21,7 +21,8 @@ export function TaskDrawer({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [blockFormOpen, setBlockFormOpen] = useState(false);
+  // Form phụ mở trong drawer: sửa nhanh (F11.6) hoặc đặt block (F11.5) — mỗi lúc một form.
+  const [form, setForm] = useState<"edit" | "block" | null>(null);
   const [isPending, startTransition] = useTransition();
   const panelRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -50,14 +51,27 @@ export function TaskDrawer({
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const block = { short: String(form.get("short") ?? ""), full: String(form.get("full") ?? "") };
-    run(() => setTaskBlocked(task.id, block), () => setBlockFormOpen(false));
+    run(() => setTaskBlocked(task.id, block), () => setForm(null));
+  }
+
+  function submitEdit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    const estimate = String(data.get("estimate") ?? "").trim();
+    const due = String(data.get("due") ?? "");
+    const patch = {
+      title: String(data.get("title") ?? ""),
+      estimatePoints: estimate === "" ? null : Number(estimate),
+      dueDate: due === "" ? null : due,
+    };
+    run(() => updateTask(task.id, patch), () => setForm(null));
   }
 
   function onKeyDown(e: KeyboardEvent) {
     if (e.key === "Escape") {
       e.stopPropagation();
       if (pickerOpen) setPickerOpen(false);
-      else if (blockFormOpen) setBlockFormOpen(false);
+      else if (form) setForm(null);
       else onClose();
       return;
     }
@@ -149,7 +163,32 @@ export function TaskDrawer({
           </div>
         )}
 
-        {blockFormOpen && (
+        {form === "edit" && (
+          <form className="drawer-section dialog-form" onSubmit={submitEdit} aria-label="Sửa task">
+            <div className="drawer-section-title">Sửa task</div>
+            <Field label="Tiêu đề" htmlFor="edit-title">
+              <input id="edit-title" name="title" className="input" required maxLength={200} defaultValue={task.title} autoFocus />
+            </Field>
+            <div className="field-row">
+              <Field label="Ước lượng (điểm)" htmlFor="edit-estimate" hint="Bỏ trống = chưa ước lượng">
+                <input id="edit-estimate" name="estimate" type="number" min={0} max={100} step={1} className="input" defaultValue={task.estimatePoints ?? ""} />
+              </Field>
+              <Field label="Hạn" htmlFor="edit-due">
+                <input id="edit-due" name="due" type="date" className="input" defaultValue={task.dueIso ?? ""} />
+              </Field>
+            </div>
+            <div className="dialog-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setForm(null)} disabled={isPending}>
+                Huỷ
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={isPending}>
+                {isPending ? "Đang lưu…" : "Lưu"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {form === "block" && (
           <form className="drawer-section dialog-form" onSubmit={submitBlock} aria-label="Đánh dấu bị block">
             <div className="drawer-section-title">Đánh dấu bị block</div>
             <Field label="Lý do ngắn (hiện ở hàng task)" htmlFor="block-short">
@@ -159,7 +198,7 @@ export function TaskDrawer({
               <textarea id="block-full" name="full" className="input" rows={3} maxLength={500} placeholder="Bị chặn bởi gì, cần ai làm gì để gỡ" />
             </Field>
             <div className="dialog-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setBlockFormOpen(false)} disabled={isPending}>
+              <button type="button" className="btn btn-secondary" onClick={() => setForm(null)} disabled={isPending}>
                 Huỷ
               </button>
               <button type="submit" className="btn btn-primary" disabled={isPending}>
@@ -178,13 +217,18 @@ export function TaskDrawer({
           >
             {isPending ? "Đang lưu…" : "Chuyển stage"}
           </button>
+          {form !== "edit" && (
+            <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => setForm("edit")}>
+              <i className="ph ph-pencil-simple" aria-hidden /> Sửa
+            </button>
+          )}
           {task.blocked ? (
             <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => run(() => setTaskBlocked(task.id, null))}>
               Gỡ block
             </button>
           ) : (
-            !blockFormOpen && (
-              <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => setBlockFormOpen(true)}>
+            form !== "block" && (
+              <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => setForm("block")}>
                 Đánh dấu bị block
               </button>
             )

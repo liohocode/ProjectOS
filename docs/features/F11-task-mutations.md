@@ -25,7 +25,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 | F11.3 | Nối task drawer với server actions, bỏ state sửa tạm ở client | S | F11.2 | Xong — 2026-10-15 |
 | F11.4 | Khuôn mẫu "hành động chính ở header" + dialog; "Task mới" | M | F11.2 | Xong — 2026-10-15 |
 | F11.5 | Đặt / gỡ block cho task | S | F11.2 | Xong — 2026-10-15 |
-| F11.6 | Sửa nhanh task trong drawer (tiêu đề, ước lượng, hạn) | S | F11.2, F09.2 | Chưa làm |
+| F11.6 | Sửa nhanh task trong drawer (tiêu đề, ước lượng, hạn) | S | F11.2, F09.2 | Xong — 2026-10-15 |
 | F11.7 | Ghi `MemberActivity` cho người thao tác | S | F11.2 | Chưa làm |
 
 ### F11.1 — Người dùng hiện tại
@@ -60,7 +60,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 ### F11.6 — Sửa nhanh task
 **Làm gì**: trong drawer cho sửa tiêu đề, ước lượng (điểm), hạn (date input) — inline hoặc dialog nhỏ. Action `updateTask(taskId, patch)`.
 **Hoàn thành khi**:
-- [ ] Sửa xong hiển thị đúng ở task row và drawer sau reload
+- [x] Sửa xong hiển thị đúng ở task row và drawer sau reload
 
 ### F11.7 — Ghi hoạt động
 **Làm gì**: mỗi action ở F11.2–F11.6 ghi một dòng `MemberActivity` cho người thao tác (icon + mô tả, vd "Chuyển T-401 sang Review") để panel "Hoạt động gần đây" ở màn team phản ánh thao tác thật. Viết helper `recordActivity(memberId, icon, text)` trong `lib/actions/_activity.ts`. (F17 sẽ thay bằng bảng sự kiện đầy đủ — giữ helper là điểm duy nhất cần sửa.)

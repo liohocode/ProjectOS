@@ -9,6 +9,7 @@ import {
   parseEstimate,
   parseRunning,
   parseTaskStatus,
+  toIsoDate,
 } from "./taskFormat";
 
 const NOW = new Date("2026-10-14T12:00:00Z");
@@ -67,5 +68,12 @@ describe("trạng thái task", () => {
 
   it("nhãn lạ báo lỗi", () => {
     expect(() => parseTaskStatus("Không rõ")).toThrow(/không hợp lệ/);
+  });
+});
+
+describe("toIsoDate", () => {
+  it("DATE → YYYY-MM-DD cho <input type=date>", () => {
+    expect(toIsoDate(parseDue("02/11", 2026))).toBe("2026-11-02");
+    expect(toIsoDate(null)).toBeNull();
   });
 });

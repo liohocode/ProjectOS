@@ -105,3 +105,43 @@ test.describe("block / gỡ block", () => {
     await expect(row.locator(".trow-flag.is-blocked")).toHaveCount(0);
   });
 });
+
+test.describe("sửa nhanh task", () => {
+  // T-409 (rv-web): lưu giá trị seed để trả lại sau khi sửa.
+  let seed: { title: string; estimatePoints: number | null; dueDate: string | null };
+  test.beforeAll(async () => {
+    const { rows } = await withDb((db) =>
+      db.query(`SELECT title, "estimatePoints", to_char("dueDate", 'YYYY-MM-DD') AS "dueDate" FROM tasks WHERE id = 'T-409'`),
+    );
+    seed = rows[0];
+  });
+  test.afterAll(async () => {
+    await withDb((db) =>
+      db.query(`UPDATE tasks SET title = $1, "estimatePoints" = $2, "dueDate" = $3 WHERE id = 'T-409'`, [seed.title, seed.estimatePoints, seed.dueDate]),
+    );
+  });
+
+  test("sửa tiêu đề, ước lượng, hạn → hiện đúng ở hàng và drawer, reload vẫn còn", async ({ page }) => {
+    await page.goto("/rv-web/work");
+    await page.waitForLoadState("networkidle");
+    const row = page.locator(".trow", { hasText: "T-409" });
+    await row.click();
+    const drawer = page.getByRole("dialog");
+    await drawer.getByRole("button", { name: "Sửa" }).click();
+    await drawer.getByLabel("Tiêu đề").fill("Chốt chỉ số p95 (đã sửa)");
+    await drawer.getByLabel("Ước lượng (điểm)").fill("13");
+    await drawer.getByLabel("Hạn").fill("2026-09-30");
+    await drawer.getByRole("button", { name: "Lưu" }).click();
+
+    await expect(drawer.getByRole("form", { name: "Sửa task" })).toHaveCount(0);
+    await expect(drawer.locator("h4")).toHaveText("Chốt chỉ số p95 (đã sửa)");
+    await expect(row.locator(".trow-title")).toHaveText("Chốt chỉ số p95 (đã sửa)");
+    await expect(row.locator(".c-est")).toHaveText("13đ");
+
+    await page.reload();
+    const reloaded = page.locator(".trow", { hasText: "T-409" });
+    await expect(reloaded.locator(".trow-title")).toHaveText("Chốt chỉ số p95 (đã sửa)");
+    await reloaded.click();
+    await expect(page.getByRole("dialog").locator(".drawer-meta-row", { hasText: "Hạn" })).toContainText("30/09");
+  });
+});
