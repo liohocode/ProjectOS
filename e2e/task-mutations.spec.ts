@@ -73,3 +73,35 @@ test.describe("Task mới (dialog điều khiển bằng URL)", () => {
     await expect(page.locator(".trow", { hasText: NEW_TASK_TITLE })).toHaveCount(1);
   });
 });
+
+test.describe("block / gỡ block", () => {
+  // T-401 seed không bị block (rv-web có sẵn 2 task bị block: T-418, T-402).
+  test.afterAll(async () => {
+    await withDb((db) => db.query("UPDATE tasks SET blocked = NULL, \"blockedFull\" = NULL WHERE id = 'T-401'"));
+  });
+
+  test("đặt block → banner + cờ ở hàng cập nhật; gỡ → biến mất", async ({ page }) => {
+    await page.goto("/rv-web/work");
+    await page.waitForLoadState("networkidle");
+    const banner = page.locator(".banner-block");
+    await expect(banner).toContainText("2 task đang bị block");
+
+    const row = page.locator(".trow", { hasText: "T-401" });
+    await row.click();
+    const drawer = page.getByRole("dialog");
+    await drawer.getByRole("button", { name: "Đánh dấu bị block" }).click();
+    await drawer.getByLabel("Lý do ngắn (hiện ở hàng task)").fill("chờ API");
+    await drawer.getByLabel("Mô tả đầy đủ").fill("Chờ backend mở endpoint lọc theo khu vực.");
+    await drawer.getByRole("button", { name: "Lưu block" }).click();
+
+    await expect(banner).toContainText("3 task đang bị block");
+    await expect(banner).toContainText("T-401 (chờ API)");
+    await expect(row.locator(".trow-flag.is-blocked")).toContainText("chờ API");
+    await expect(drawer.locator(".drawer-warning")).toContainText("Chờ backend mở endpoint lọc theo khu vực.");
+
+    await drawer.getByRole("button", { name: "Gỡ block" }).click();
+    await expect(banner).toContainText("2 task đang bị block");
+    await expect(banner).not.toContainText("T-401");
+    await expect(row.locator(".trow-flag.is-blocked")).toHaveCount(0);
+  });
+});

@@ -48,7 +48,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-WK-06 | Activity rail "Agent đang làm gì", tự ẩn khi vùng làm việc < 1120px | 🟡 suy ra từ task/doc, chưa phải log sự kiện thật | F02 → F17 |
 | FR-WK-07 | Task drawer: meta, cảnh báo block, context agent đã pull, log phiên chạy | 🟡 log sinh theo mẫu | F02 → F17 |
 | FR-WK-08 | Drawer: "Chuyển stage", "Giao cho agent" | ✅ ghi DB qua server action (F11.3) | F11 |
-| FR-WK-09 | Tạo task ("Task mới"); đặt/gỡ trạng thái block | 🟡 đã tạo task được (F11.4); còn block/unblock | F11 |
+| FR-WK-09 | Tạo task ("Task mới"); đặt/gỡ trạng thái block | ✅ tạo task (F11.4), block/gỡ block (F11.5) | F11 |
 
 ### Dev & AI agents
 | Mã | Yêu cầu | TT | Feature |

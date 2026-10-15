@@ -117,3 +117,26 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
   revalidateTaskViews();
   return { ok: true, taskId };
 }
+
+const blockSchema = z
+  .object({
+    short: z.string().trim().min(1, "Nhập lý do ngắn").max(40, "Lý do ngắn tối đa 40 ký tự"),
+    full: z.string().trim().max(500, "Mô tả tối đa 500 ký tự"),
+  })
+  .nullable();
+
+/** Đặt block (lý do ngắn hiện ở hàng task/banner, mô tả đầy đủ trong drawer) hoặc gỡ block khi `block = null`. */
+export async function setTaskBlocked(taskId: string, block: { short: string; full: string } | null): Promise<ActionResult> {
+  // TODO(F15.4): kiểm tra quyền
+  const input = z.object({ taskId: taskIdSchema, block: blockSchema }).safeParse({ taskId, block });
+  if (!input.success) return fail(input.error.issues[0].message);
+
+  if (!(await findTaskProject(input.data.taskId))) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const value = input.data.block;
+  await prisma.task.update({
+    where: { id: input.data.taskId },
+    data: { blocked: value?.short ?? null, blockedFull: value ? value.full || null : null },
+  });
+  revalidateTaskViews();
+  return ok();
+}

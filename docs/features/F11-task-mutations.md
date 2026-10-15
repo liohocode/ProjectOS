@@ -24,7 +24,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 | F11.2 | Server actions `lib/actions/tasks.ts` (stage, assign, status) + validation | M | F11.1 | Xong — 2026-10-15 |
 | F11.3 | Nối task drawer với server actions, bỏ state sửa tạm ở client | S | F11.2 | Xong — 2026-10-15 |
 | F11.4 | Khuôn mẫu "hành động chính ở header" + dialog; "Task mới" | M | F11.2 | Xong — 2026-10-15 |
-| F11.5 | Đặt / gỡ block cho task | S | F11.2 | Chưa làm |
+| F11.5 | Đặt / gỡ block cho task | S | F11.2 | Xong — 2026-10-15 |
 | F11.6 | Sửa nhanh task trong drawer (tiêu đề, ước lượng, hạn) | S | F11.2, F09.2 | Chưa làm |
 | F11.7 | Ghi `MemberActivity` cho người thao tác | S | F11.2 | Chưa làm |
 
@@ -55,7 +55,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 ### F11.5 — Block / unblock
 **Làm gì**: trong drawer thêm nút "Đánh dấu bị block" (nhập lý do ngắn + lý do đầy đủ) và "Gỡ block". Action `setTaskBlocked(taskId, { short, full } | null)`.
 **Hoàn thành khi**:
-- [ ] Block 1 task → banner + viền amber + badge nav cập nhật; gỡ → biến mất
+- [x] Block 1 task → banner + viền amber + badge nav cập nhật; gỡ → biến mất
 
 ### F11.6 — Sửa nhanh task
 **Làm gì**: trong drawer cho sửa tiêu đề, ước lượng (điểm), hạn (date input) — inline hoặc dialog nhỏ. Action `updateTask(taskId, patch)`.

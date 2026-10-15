@@ -101,6 +101,7 @@ export function WorkScreen({
 
       {activeTask && (
         <TaskDrawer
+          key={activeTask.task.id}
           task={activeTask.task}
           feature={activeTask.feature}
           info={taskDrawerInfo[activeTask.task.id]}

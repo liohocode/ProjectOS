@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { assignTask, createTask, updateTaskStage, updateTaskStatus, type NewTaskInput } from "./tasks";
+import { assignTask, createTask, setTaskBlocked, updateTaskStage, updateTaskStatus, type NewTaskInput } from "./tasks";
 
 // Task mẫu T-401 (rv-web). Lưu trạng thái seed để trả lại sau khi test ghi.
 const TASK_ID = "T-401";
@@ -113,5 +113,26 @@ describe("createTask", () => {
     expect(await createTask({ ...input, featureId: otherFeature.id })).toEqual({ ok: false, error: "Feature không thuộc dự án này" });
     expect(await createTask({ ...input, assigneeId: "khong-ton-tai" })).toEqual({ ok: false, error: "Người/agent này không thuộc dự án" });
     expect(await createTask({ ...input, title: "   " })).toEqual({ ok: false, error: "Nhập tiêu đề task" });
+  });
+});
+
+describe("setTaskBlocked", () => {
+  // T-401 seed không bị block; afterAll của file đã trả stage/status/assignee — ở đây tự gỡ block.
+  afterAll(async () => {
+    await prisma.task.update({ where: { id: TASK_ID }, data: { blocked: null, blockedFull: null } });
+  });
+
+  it("đặt block với lý do ngắn + đầy đủ, rồi gỡ", async () => {
+    expect(await setTaskBlocked(TASK_ID, { short: "chờ API", full: "Chờ team backend mở endpoint lọc." })).toEqual({ ok: true });
+    expect(await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).toMatchObject({ blocked: "chờ API", blockedFull: "Chờ team backend mở endpoint lọc." });
+
+    expect(await setTaskBlocked(TASK_ID, null)).toEqual({ ok: true });
+    expect(await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).toMatchObject({ blocked: null, blockedFull: null });
+  });
+
+  it("mô tả rỗng lưu null; lý do ngắn bắt buộc", async () => {
+    expect(await setTaskBlocked(TASK_ID, { short: "chờ ADR", full: "  " })).toEqual({ ok: true });
+    expect((await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).blockedFull).toBeNull();
+    expect(await setTaskBlocked(TASK_ID, { short: " ", full: "" })).toEqual({ ok: false, error: "Nhập lý do ngắn" });
   });
 });

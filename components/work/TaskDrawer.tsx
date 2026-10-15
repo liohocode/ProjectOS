@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState, useTransition, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
 import { trapTab, useDismiss } from "@/components/ui/a11y";
-import { assignTask, updateTaskStage } from "@/lib/actions/tasks";
+import { assignTask, setTaskBlocked, updateTaskStage } from "@/lib/actions/tasks";
+import { Field } from "@/components/ui/Field";
 import type { ActionResult } from "@/lib/actions/result";
 import type { Feature, Member, Task, TaskDrawerInfo } from "@/lib/types";
 import { initials, nextStage, stageTagClass } from "./taskStyle";
@@ -20,11 +21,12 @@ export function TaskDrawer({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [blockFormOpen, setBlockFormOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const panelRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const closePicker = useCallback(() => setPickerOpen(false), []);
-  // Esc do drawer xử lý (đóng picker trước, rồi mới đóng drawer) → picker chỉ dùng click-ra-ngoài.
+  // Esc do drawer xử lý (đóng picker / form block trước, rồi mới đóng drawer) → picker chỉ dùng click-ra-ngoài.
   useDismiss(pickerOpen, closePicker, pickerRef, { escape: false });
 
   // Mở drawer: focus vào panel; đóng: trả focus về phần tử đã mở drawer (hàng task).
@@ -35,18 +37,27 @@ export function TaskDrawer({
   }, []);
 
   // Ghi qua server action; dữ liệu mới về theo props sau revalidatePath (không sửa tạm ở client).
-  function run(action: () => Promise<ActionResult>) {
+  function run(action: () => Promise<ActionResult>, onSuccess?: () => void) {
     setError(null);
     startTransition(async () => {
       const result = await action();
-      if (!result.ok) setError(result.error);
+      if (result.ok) onSuccess?.();
+      else setError(result.error);
     });
+  }
+
+  function submitBlock(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const block = { short: String(form.get("short") ?? ""), full: String(form.get("full") ?? "") };
+    run(() => setTaskBlocked(task.id, block), () => setBlockFormOpen(false));
   }
 
   function onKeyDown(e: KeyboardEvent) {
     if (e.key === "Escape") {
       e.stopPropagation();
       if (pickerOpen) setPickerOpen(false);
+      else if (blockFormOpen) setBlockFormOpen(false);
       else onClose();
       return;
     }
@@ -138,6 +149,26 @@ export function TaskDrawer({
           </div>
         )}
 
+        {blockFormOpen && (
+          <form className="drawer-section dialog-form" onSubmit={submitBlock} aria-label="Đánh dấu bị block">
+            <div className="drawer-section-title">Đánh dấu bị block</div>
+            <Field label="Lý do ngắn (hiện ở hàng task)" htmlFor="block-short">
+              <input id="block-short" name="short" className="input" required maxLength={40} autoFocus placeholder="vd: chờ ADR-11" />
+            </Field>
+            <Field label="Mô tả đầy đủ" htmlFor="block-full">
+              <textarea id="block-full" name="full" className="input" rows={3} maxLength={500} placeholder="Bị chặn bởi gì, cần ai làm gì để gỡ" />
+            </Field>
+            <div className="dialog-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setBlockFormOpen(false)} disabled={isPending}>
+                Huỷ
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={isPending}>
+                {isPending ? "Đang lưu…" : "Lưu block"}
+              </button>
+            </div>
+          </form>
+        )}
+
         <div className="drawer-footer" style={{ flexWrap: "wrap" }}>
           <button
             type="button"
@@ -147,6 +178,17 @@ export function TaskDrawer({
           >
             {isPending ? "Đang lưu…" : "Chuyển stage"}
           </button>
+          {task.blocked ? (
+            <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => run(() => setTaskBlocked(task.id, null))}>
+              Gỡ block
+            </button>
+          ) : (
+            !blockFormOpen && (
+              <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => setBlockFormOpen(true)}>
+                Đánh dấu bị block
+              </button>
+            )
+          )}
           <div ref={pickerRef} style={{ position: "relative" }}>
             <button
               type="button"
