@@ -15,14 +15,15 @@ export default defineConfig({
   workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
-  globalSetup: "./e2e/global-setup.ts",
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: "retain-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } }],
   webServer: {
-    command: `npm run build && npx next start -p ${PORT}`,
+    // Tạo/migrate/reseed DB test TRƯỚC khi start server: Playwright khởi động webServer trước globalSetup,
+    // nên nếu DB test chưa tồn tại (CI, máy mới clone) server sẽ lỗi ngay khi được probe.
+    command: `npx tsx scripts/test-db-prepare.ts && npm run build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}/rv-web/work`,
     timeout: 180_000,
     reuseExistingServer: false,

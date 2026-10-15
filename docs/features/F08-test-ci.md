@@ -48,7 +48,7 @@ Hiện repo **không có test nào và không có CI**. Mọi feature sau (đặ
 
 ### F08.4 — Playwright e2e smoke
 **Làm gì**: cài `@playwright/test` + Chromium. `playwright.config.ts` khởi động `npm run dev` (hoặc `build && start`) với DB test. Kịch bản: mở `/` → về `/rv-web/work`; 5 màn của `rv-web` đều render tiêu đề header đúng (`components/layout/screenMeta.ts`); mở task drawer T-418 thấy cảnh báo block; đổi project qua switcher sang `rv-app` giữ nguyên màn; màn docs `?doc=prd-listing` bấm "Duyệt" → reload vẫn "Đã duyệt"/không còn nút.
-**File**: `playwright.config.ts`, `e2e/global-setup.ts`, `e2e/smoke.spec.ts`, `package.json`, `.gitignore` (`test-results/`, `playwright-report/`)
+**File**: `playwright.config.ts` (webServer chạy `scripts/test-db-prepare.ts` trước khi build/start), `e2e/smoke.spec.ts`, `package.json`, `.gitignore` (`test-results/`, `playwright-report/`)
 **Hoàn thành khi**:
 - [x] `npm run test:e2e` xanh ở local (9 test)
 
