@@ -54,7 +54,7 @@ Ghi dữ liệu (hiện chỉ có duyệt revision):
 - Hàm trong `lib/data/*` luôn `async`, trả về type trong `lib/types.ts` (đã map, đã format chuỗi hiển thị như "2 giờ trước"). Chữ ký hàm là hợp đồng với UI — đổi chữ ký phải sửa mọi nơi gọi.
 - Chuyển đổi enum Prisma ↔ chuỗi tiếng Việt hiển thị nằm ở biên `lib/data/*` và `prisma/seed.ts` (xem `data-model.md`).
 - Thao tác ghi đặt ở `lib/actions/<domain>.ts`, file-level `"use server"`, gọi `revalidatePath` cho route bị ảnh hưởng.
-- Người dùng hiện tại đang hardcode `"hieu"` ở `app/[project]/layout.tsx` và `lib/actions/docs.ts` — sẽ gom về một chỗ ở F11.1 và thay bằng auth thật ở F15.
+- Người dùng hiện tại lấy qua `lib/auth/currentUser.ts` (`getCurrentUserId()` / `getCurrentUser()`) — tạm trả `hieu` (ADR-011); F15 thay thân hàm bằng session Google, nơi gọi giữ nguyên. Không hardcode id người dùng ở chỗ khác.
 
 ### Các module "suy ra" (tạm thời)
 | File | Hiện tại | Đích |

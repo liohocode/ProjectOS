@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { getProjectById, getProjects } from "@/lib/data/projects";
 import { getTasksByProject } from "@/lib/data/features";
 import { getDocCountByProject, getPendingRevisionCount } from "@/lib/data/docs";
-import { getMemberById, getPipelineAgents, getTeamByProject } from "@/lib/data/team";
+import { getPipelineAgents, getTeamByProject } from "@/lib/data/team";
+import { getCurrentUser } from "@/lib/auth/currentUser";
 import { getMcpServers } from "@/lib/data/mcp";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -22,7 +23,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
       getTeamByProject(projectId),
       getPipelineAgents(),
       getMcpServers(),
-      getMemberById("hieu"),
+      getCurrentUser(),
     ]);
 
   const navCounts: Record<ScreenId, number> = {
@@ -50,7 +51,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
         pipeline={pipeline}
         mcpOnline={mcpServers.filter((s) => s.status === "online").length}
         mcpTotal={mcpServers.length}
-        currentUser={currentUser!}
+        currentUser={currentUser}
       />
       <div className="main-area">
         <Header project={project} />

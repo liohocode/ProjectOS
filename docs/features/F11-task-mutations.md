@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 2 | F07 (khuyến nghị F09.2 trước) | FR-WK-08, FR-WK-09, FR-SH-05 |
+| Đang làm | 2 | F07 (khuyến nghị F09.2 trước) | FR-WK-08, FR-WK-09, FR-SH-05 |
 
 ## Mục tiêu
 Lead điều phối được công việc thật: chuyển stage, giao task, tạo task, đặt/gỡ block — mọi thay đổi ghi xuống Postgres. Đồng thời dựng **khuôn mẫu dùng chung** cho nút hành động chính ở header + dialog, để F12/F13 tái sử dụng.
@@ -20,7 +20,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F11.1 | Gom "người dùng hiện tại" về `lib/auth/currentUser.ts` | S | — | Chưa làm |
+| F11.1 | Gom "người dùng hiện tại" về `lib/auth/currentUser.ts` | S | — | Xong — 2026-10-15 |
 | F11.2 | Server actions `lib/actions/tasks.ts` (stage, assign, status) + validation | M | F11.1 | Chưa làm |
 | F11.3 | Nối task drawer với server actions, bỏ state sửa tạm ở client | S | F11.2 | Chưa làm |
 | F11.4 | Khuôn mẫu "hành động chính ở header" + dialog; "Task mới" | M | F11.2 | Chưa làm |
@@ -31,7 +31,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 ### F11.1 — Người dùng hiện tại
 **Làm gì**: tạo `lib/auth/currentUser.ts` export `getCurrentUserId()` và `getCurrentUser()` (trả `Member`), tạm thời trả `"hieu"`. Thay 2 chỗ hardcode: `app/[project]/layout.tsx` (`getMemberById("hieu")`) và `lib/actions/docs.ts` (`CURRENT_USER_ID`).
 **Hoàn thành khi**:
-- [ ] `grep -rn '"hieu"' app lib components` chỉ còn trong `lib/auth/currentUser.ts`
+- [x] `grep -rn '"hieu"' app lib components` chỉ còn trong `lib/auth/currentUser.ts`
 
 ### F11.2 — Server actions cho task
 **Làm gì**: `lib/actions/tasks.ts` (`"use server"`): `updateTaskStage(taskId, stage)`, `assignTask(taskId, memberId)`, `updateTaskStatus(taskId, status)`. Validate input ở biên (khuyến nghị thêm `zod`): stage/status thuộc enum, task tồn tại, member thuộc project của task (qua `ProjectMember`). Trả về `{ ok: true } | { ok: false, error: string }` thay vì throw cho lỗi nghiệp vụ. Gọi `revalidatePath('/<projectId>/work')` (và `/team`, `/portfolio` nếu ảnh hưởng số liệu).

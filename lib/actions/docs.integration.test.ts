@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { approveRevision } from "./docs";
 import { getPendingRevisionCount } from "@/lib/data/docs";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 
 describe("approveRevision", () => {
   let revisionId: string;
@@ -25,7 +26,7 @@ describe("approveRevision", () => {
 
     const rev = await prisma.docRevision.findUniqueOrThrow({ where: { id: revisionId } });
     expect(rev.pending).toBe(false);
-    expect(rev.approvedById).toBe("hieu");
+    expect(rev.approvedById).toBe(await getCurrentUserId());
     expect(rev.approvedAt).toBeInstanceOf(Date);
     expect(await getPendingRevisionCount("rv-web")).toBe(1);
     expect(revalidatePath).toHaveBeenCalledWith("/rv-web/docs");
