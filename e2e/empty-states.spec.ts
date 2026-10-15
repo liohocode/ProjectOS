@@ -1,18 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { Client } from "pg";
+import { withDb } from "./db";
 
 // Dự án rỗng tạo tạm trong DB test để kiểm tra empty state; tự xoá sau khi chạy.
 const PROJECT_ID = "e2e-empty";
-
-async function withDb<T>(fn: (db: Client) => Promise<T>): Promise<T> {
-  const db = new Client({ connectionString: process.env.DATABASE_URL_TEST });
-  await db.connect();
-  try {
-    return await fn(db);
-  } finally {
-    await db.end();
-  }
-}
 
 test.beforeAll(async () => {
   await withDb((db) =>

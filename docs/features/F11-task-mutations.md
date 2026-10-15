@@ -22,7 +22,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 |---|---|---|---|---|
 | F11.1 | Gom "người dùng hiện tại" về `lib/auth/currentUser.ts` | S | — | Xong — 2026-10-15 |
 | F11.2 | Server actions `lib/actions/tasks.ts` (stage, assign, status) + validation | M | F11.1 | Xong — 2026-10-15 |
-| F11.3 | Nối task drawer với server actions, bỏ state sửa tạm ở client | S | F11.2 | Chưa làm |
+| F11.3 | Nối task drawer với server actions, bỏ state sửa tạm ở client | S | F11.2 | Xong — 2026-10-15 |
 | F11.4 | Khuôn mẫu "hành động chính ở header" + dialog; "Task mới" | M | F11.2 | Chưa làm |
 | F11.5 | Đặt / gỡ block cho task | S | F11.2 | Chưa làm |
 | F11.6 | Sửa nhanh task trong drawer (tiêu đề, ước lượng, hạn) | S | F11.2, F09.2 | Chưa làm |
@@ -42,8 +42,8 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 ### F11.3 — Drawer ghi DB thật
 **Làm gì**: `TaskDrawer` gọi `updateTaskStage` / `assignTask` (truyền **member id**, không phải tên). Dùng `useOptimistic` hoặc `useTransition` + trạng thái đang lưu. Xoá cơ chế sửa tạm ở client trong `WorkScreen` (`useState(initialFeatures)`, `updateTask`, `cycleStage`, `assignAgent`) — dữ liệu lấy lại từ server sau `revalidatePath`. Lỗi → hiện thông báo trong drawer.
 **Hoàn thành khi**:
-- [ ] Chuyển stage / giao agent rồi reload trang → thay đổi vẫn còn
-- [ ] Badge nav, banner block, activity rail cập nhật theo
+- [x] Chuyển stage / giao agent rồi reload trang → thay đổi vẫn còn
+- [x] Badge nav, banner block, activity rail cập nhật theo (revalidate cả cây `/[project]`, ADR-017)
 
 ### F11.4 — Khuôn mẫu hành động chính + "Task mới"
 **Làm gì**: header nằm ở layout nên không nhận props từ page. Khuôn mẫu chọn: **dialog điều khiển bằng URL** — nút chính ở `Header` đặt query `?new=1` (giữ query khác); `page.tsx` của màn đọc `searchParams.new` và render dialog tương ứng với dữ liệu lựa chọn tải sẵn ở server; đóng dialog = bỏ `new` khỏi URL. Tạo component dùng chung `components/ui/Dialog.tsx` (dùng class `.dialog-backdrop`, `.dialog` đã có trong `globals.css`, Esc/click ngoài để đóng, focus trap cơ bản) và `components/ui/Field.tsx` (label + input/select theo `.input`). Áp dụng cho màn work: form "Task mới" (feature, tiêu đề, stage, người/agent thực hiện, ước lượng, hạn) → action `createTask`; sinh id `T-<số lớn nhất + 1>` trong transaction (ADR-006).

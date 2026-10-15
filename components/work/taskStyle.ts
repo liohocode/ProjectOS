@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { Task } from "@/lib/types";
+import type { Task, TaskStage } from "@/lib/types";
 
 export function initials(name: string) {
   return name
@@ -21,4 +21,11 @@ export function taskRowStyle(task: Task): CSSProperties {
 
 export function stageTagClass(stage: string) {
   return stage === "Done" ? "tag tag-neutral nowrap" : "tag tag-outline nowrap";
+}
+
+const STAGE_ORDER: TaskStage[] = ["BA", "TA", "Dev", "Review", "Done"];
+
+/** Stage kế tiếp khi bấm "Chuyển stage" — xoay vòng BA → TA → Dev → Review → Done → BA. */
+export function nextStage(stage: TaskStage): TaskStage {
+  return STAGE_ORDER[(STAGE_ORDER.indexOf(stage) + 1) % STAGE_ORDER.length];
 }

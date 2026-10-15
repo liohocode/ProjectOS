@@ -47,7 +47,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-WK-05 | View Timeline theo tuần T1–T8, bar phân biệt người / agent / chưa bắt đầu, legend | ✅ đọc từ DB (F09.3) | F02, F09 |
 | FR-WK-06 | Activity rail "Agent đang làm gì", tự ẩn khi vùng làm việc < 1120px | 🟡 suy ra từ task/doc, chưa phải log sự kiện thật | F02 → F17 |
 | FR-WK-07 | Task drawer: meta, cảnh báo block, context agent đã pull, log phiên chạy | 🟡 log sinh theo mẫu | F02 → F17 |
-| FR-WK-08 | Drawer: "Chuyển stage", "Giao cho agent" | 🟡 chỉ đổi state client, chưa ghi DB | F11 |
+| FR-WK-08 | Drawer: "Chuyển stage", "Giao cho agent" | ✅ ghi DB qua server action (F11.3) | F11 |
 | FR-WK-09 | Tạo task ("Task mới"); đặt/gỡ trạng thái block | ⬜ | F11 |
 
 ### Dev & AI agents

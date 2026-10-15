@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Task } from "@/lib/types";
-import { initials, stageTagClass, taskRowStyle } from "./taskStyle";
+import { initials, nextStage, stageTagClass, taskRowStyle } from "./taskStyle";
 
 const baseTask: Task = {
   id: "T-1",
@@ -41,5 +41,13 @@ describe("taskRowStyle", () => {
     const style = taskRowStyle({ ...baseTask, kind: "agent", blocked: "chờ ADR" });
     expect(style.boxShadow).toContain("var(--color-warning)");
     expect(style.boxShadow).not.toContain("inset 2px 0 0 var(--color-accent)");
+  });
+});
+
+describe("nextStage", () => {
+  it("xoay vòng BA → TA → Dev → Review → Done → BA", () => {
+    expect(nextStage("BA")).toBe("TA");
+    expect(nextStage("Review")).toBe("Done");
+    expect(nextStage("Done")).toBe("BA");
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ActivityItem, Feature, Member, TaskDrawerInfo, TaskStage, TimelineRow } from "@/lib/types";
+import type { ActivityItem, Feature, Member, TaskDrawerInfo, TimelineRow } from "@/lib/types";
 import { FeatureSection } from "./FeatureSection";
 import { TimelineView } from "./TimelineView";
 import { ActivityRail } from "./ActivityRail";
@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 type View = "list" | "timeline";
 
 export function WorkScreen({
-  features: initialFeatures,
+  features,
   timeline,
   activity,
   taskDrawerInfo,
@@ -23,7 +23,6 @@ export function WorkScreen({
   taskDrawerInfo: Record<string, TaskDrawerInfo>;
   projectAgents: Member[];
 }) {
-  const [features, setFeatures] = useState(initialFeatures);
   const [view, setView] = useState<View>("list");
   const [closed, setClosed] = useState<Record<string, boolean>>({});
   const [railOpen, setRailOpen] = useState(true);
@@ -35,20 +34,6 @@ export function WorkScreen({
   const activeTask = openTaskId
     ? features.flatMap((f) => f.tasks.map((t) => ({ task: t, feature: f }))).find((x) => x.task.id === openTaskId)
     : undefined;
-
-  function updateTask(taskId: string, patch: Partial<Feature["tasks"][number]>) {
-    setFeatures((prev) => prev.map((f) => ({ ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, ...patch } : t)) })));
-  }
-
-  function cycleStage(taskId: string, current: TaskStage) {
-    const order: TaskStage[] = ["BA", "TA", "Dev", "Review", "Done"];
-    const next = order[(order.indexOf(current) + 1) % order.length];
-    updateTask(taskId, { stage: next });
-  }
-
-  function assignAgent(taskId: string, agent: Member) {
-    updateTask(taskId, { who: agent.name, kind: "agent" });
-  }
 
   return (
     <div className="work-shell">
@@ -121,8 +106,6 @@ export function WorkScreen({
           info={taskDrawerInfo[activeTask.task.id]}
           agents={projectAgents}
           onClose={() => setOpenTaskId(null)}
-          onCycleStage={() => cycleStage(activeTask.task.id, activeTask.task.stage)}
-          onAssignAgent={(agent) => assignAgent(activeTask.task.id, agent)}
         />
       )}
     </div>

@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type KeyboardEvent } from "react";
 import { trapTab, useDismiss } from "@/components/ui/a11y";
+import { assignTask, updateTaskStage } from "@/lib/actions/tasks";
+import type { ActionResult } from "@/lib/actions/result";
 import type { Feature, Member, Task, TaskDrawerInfo } from "@/lib/types";
-import { initials, stageTagClass } from "./taskStyle";
+import { initials, nextStage, stageTagClass } from "./taskStyle";
 
 export function TaskDrawer({
   task,
@@ -9,18 +11,16 @@ export function TaskDrawer({
   info,
   agents,
   onClose,
-  onCycleStage,
-  onAssignAgent,
 }: {
   task: Task;
   feature: Feature;
   info: TaskDrawerInfo | undefined;
   agents: Member[];
   onClose: () => void;
-  onCycleStage: () => void;
-  onAssignAgent: (agent: Member) => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const panelRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const closePicker = useCallback(() => setPickerOpen(false), []);
@@ -33,6 +33,15 @@ export function TaskDrawer({
     panelRef.current?.focus();
     return () => opener?.focus?.();
   }, []);
+
+  // Ghi qua server action; dữ liệu mới về theo props sau revalidatePath (không sửa tạm ở client).
+  function run(action: () => Promise<ActionResult>) {
+    setError(null);
+    startTransition(async () => {
+      const result = await action();
+      if (!result.ok) setError(result.error);
+    });
+  }
 
   function onKeyDown(e: KeyboardEvent) {
     if (e.key === "Escape") {
@@ -69,6 +78,11 @@ export function TaskDrawer({
         <h4 id="task-drawer-title">{task.title}</h4>
 
         {task.blocked && <div className="drawer-warning">{task.blockedFull ?? task.blocked}</div>}
+        {error && (
+          <div className="drawer-warning" role="alert">
+            <i className="ph ph-warning-circle" aria-hidden /> Không lưu được: {error}
+          </div>
+        )}
 
         <div className="drawer-meta">
           <div className="drawer-meta-row">
@@ -125,13 +139,19 @@ export function TaskDrawer({
         )}
 
         <div className="drawer-footer" style={{ flexWrap: "wrap" }}>
-          <button type="button" className="btn btn-secondary" onClick={onCycleStage}>
-            Chuyển stage
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={isPending}
+            onClick={() => run(() => updateTaskStage(task.id, nextStage(task.stage)))}
+          >
+            {isPending ? "Đang lưu…" : "Chuyển stage"}
           </button>
           <div ref={pickerRef} style={{ position: "relative" }}>
             <button
               type="button"
               className="btn btn-primary"
+              disabled={isPending}
               aria-haspopup="menu"
               aria-expanded={pickerOpen}
               onClick={() => setPickerOpen((v) => !v)}
@@ -145,10 +165,10 @@ export function TaskDrawer({
                   <button
                     key={agent.id}
                     type="button"
-                    className="switcher-item"
+                    className={`switcher-item${agent.name === task.who ? " is-active" : ""}`}
                     onClick={() => {
-                      onAssignAgent(agent);
                       setPickerOpen(false);
+                      run(() => assignTask(task.id, agent.id));
                     }}
                   >
                     <span className="avatar avatar-agent" style={{ width: 20, height: 20, fontSize: 8.5 }}>
