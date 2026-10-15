@@ -98,3 +98,12 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 - Thay đổi task revalidate cả cây: `revalidatePath("/[project]", "layout")` — vì task ảnh hưởng badge nav ở layout, màn work/team và portfolio (liệt kê mọi dự án).
 - Đầu mỗi action có `// TODO(F15.4): kiểm tra quyền` cho tới khi có phân quyền.
 **Hệ quả**: client gọi action trong `useTransition`, đọc `result.ok` để hiện lỗi tại chỗ (drawer/dialog).
+
+### ADR-018 — Dialog hành động chính điều khiển bằng URL (2026-10-15)
+**Bối cảnh**: nút hành động chính ("Task mới", "Tài liệu mới", "Thêm thành viên"…) nằm ở `Header` trong layout, không nhận props từ page; dialog lại cần dữ liệu lựa chọn (feature, thành viên…) tải ở server.
+**Quyết định**:
+- Nút ở header là link đặt query `?new=1` (giữ các query khác) — hook `useUrlDialog()` trong `components/ui/urlDialog.ts`.
+- `page.tsx` của màn đọc `searchParams.new === "1"` và render dialog với dữ liệu đã tải sẵn; đóng dialog (Huỷ, Esc, click nền, tạo xong) = `router.replace` bỏ `new` khỏi URL.
+- Khung dùng chung: `components/ui/Dialog.tsx` (Esc/click nền, focus trap, trả focus) + `components/ui/Field.tsx` (nhãn + `.input`).
+- Màn chưa có dialog để `primaryDialog: false` trong `components/layout/screenMeta.ts`; bật lên khi page của màn đã render dialog.
+**Hệ quả**: dialog mở được bằng link/bookmark, nút Back đóng dialog; F12 ("Tài liệu mới") và F13 ("Thêm thành viên") chỉ cần thêm component dialog + đọc `searchParams` ở page.

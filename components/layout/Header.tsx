@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUrlDialog } from "@/components/ui/urlDialog";
 import type { Project, ScreenId } from "@/lib/types";
 import { SCREEN_META } from "./screenMeta";
 
@@ -8,6 +10,7 @@ export function Header({ project }: { project: Project }) {
   const pathname = usePathname();
   const screen = (pathname.split("/")[2] as ScreenId | undefined) ?? "work";
   const meta = SCREEN_META[screen];
+  const { openHref } = useUrlDialog();
 
   return (
     <header className="header">
@@ -23,9 +26,15 @@ export function Header({ project }: { project: Project }) {
         <button type="button" className="btn btn-secondary">
           <i className="ph ph-funnel" aria-hidden /> Lọc
         </button>
-        <button type="button" className="btn btn-primary">
-          {meta.primaryAction}
-        </button>
+        {meta.primaryDialog ? (
+          <Link href={openHref} scroll={false} className="btn btn-primary">
+            {meta.primaryAction}
+          </Link>
+        ) : (
+          <button type="button" className="btn btn-primary">
+            {meta.primaryAction}
+          </button>
+        )}
       </div>
     </header>
   );

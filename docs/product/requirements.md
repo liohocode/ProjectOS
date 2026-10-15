@@ -13,7 +13,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-SH-02 | Badge đếm trên nav; đổi màu amber khi có task block / revision chờ duyệt | ✅ | F01 |
 | FR-SH-03 | Khối pipeline agent BA/TA/Dev/Index ở sidebar | ✅ | F01 |
 | FR-SH-04 | Footer: trạng thái MCP (n/m server online) + người dùng hiện tại | 🟡 người dùng đang hardcode | F01 → F15 |
-| FR-SH-05 | Header mọi màn: kicker, tiêu đề, dòng context (dự án · sprint), ô tìm kiếm, nút "Lọc", nút hành động chính theo màn | 🟡 chỉ có UI | F01 → F11/F12/F13/F14 |
+| FR-SH-05 | Header mọi màn: kicker, tiêu đề, dòng context (dự án · sprint), ô tìm kiếm, nút "Lọc", nút hành động chính theo màn | 🟡 nút "Task mới" đã hoạt động (F11.4, ADR-018); các màn khác + tìm kiếm/lọc chưa | F01 → F11/F12/F13/F14 |
 | FR-SH-06 | Đổi dự án: reset tài liệu đang xem về tài liệu đầu tiên, đóng task drawer, mở lại mọi feature group | ✅ | F01 |
 
 ### Portfolio
@@ -48,7 +48,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-WK-06 | Activity rail "Agent đang làm gì", tự ẩn khi vùng làm việc < 1120px | 🟡 suy ra từ task/doc, chưa phải log sự kiện thật | F02 → F17 |
 | FR-WK-07 | Task drawer: meta, cảnh báo block, context agent đã pull, log phiên chạy | 🟡 log sinh theo mẫu | F02 → F17 |
 | FR-WK-08 | Drawer: "Chuyển stage", "Giao cho agent" | ✅ ghi DB qua server action (F11.3) | F11 |
-| FR-WK-09 | Tạo task ("Task mới"); đặt/gỡ trạng thái block | ⬜ | F11 |
+| FR-WK-09 | Tạo task ("Task mới"); đặt/gỡ trạng thái block | 🟡 đã tạo task được (F11.4); còn block/unblock | F11 |
 
 ### Dev & AI agents
 | Mã | Yêu cầu | TT | Feature |

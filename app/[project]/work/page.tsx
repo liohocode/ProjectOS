@@ -4,9 +4,11 @@ import { getActivityFeed } from "@/lib/data/activity";
 import { getTaskDrawerInfo } from "@/lib/data/taskDrawer";
 import { getTeamByProject } from "@/lib/data/team";
 import { WorkScreen } from "@/components/work/WorkScreen";
+import { NewTaskDialog } from "@/components/work/NewTaskDialog";
 
 export default async function WorkPage(props: PageProps<"/[project]/work">) {
   const { project: projectId } = await props.params;
+  const { new: newParam } = await props.searchParams;
 
   const [features, timeline, activity, projectTeam] = await Promise.all([
     getFeaturesByProject(projectId),
@@ -25,12 +27,18 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
   );
 
   return (
-    <WorkScreen
-      features={features}
-      timeline={timeline}
-      activity={activity}
-      taskDrawerInfo={taskDrawerInfo}
-      projectAgents={projectAgents}
-    />
+    <>
+      <WorkScreen
+        features={features}
+        timeline={timeline}
+        activity={activity}
+        taskDrawerInfo={taskDrawerInfo}
+        projectAgents={projectAgents}
+      />
+      {/* "Task mới" ở header đặt ?new=1 (ADR-018) */}
+      {newParam === "1" && (
+        <NewTaskDialog projectId={projectId} features={features.map(({ id, name }) => ({ id, name }))} members={projectTeam} />
+      )}
+    </>
   );
 }

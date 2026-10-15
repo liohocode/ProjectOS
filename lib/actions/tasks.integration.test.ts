@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { assignTask, updateTaskStage, updateTaskStatus } from "./tasks";
+import { assignTask, createTask, updateTaskStage, updateTaskStatus, type NewTaskInput } from "./tasks";
 
 // Task mẫu T-401 (rv-web). Lưu trạng thái seed để trả lại sau khi test ghi.
 const TASK_ID = "T-401";
@@ -70,5 +70,48 @@ describe("assignTask", () => {
     } finally {
       await prisma.member.delete({ where: { id: outsider.id } });
     }
+  });
+});
+
+describe("createTask", () => {
+  const created: string[] = [];
+  afterAll(async () => {
+    await prisma.task.deleteMany({ where: { id: { in: created } } });
+  });
+
+  const base = async (): Promise<NewTaskInput> => {
+    const feature = await prisma.feature.findFirstOrThrow({ where: { projectId: "rv-web" }, orderBy: { id: "asc" } });
+    return { projectId: "rv-web", featureId: feature.id, title: "Task tạo bởi test", stage: "BA", assigneeId: "nam", estimatePoints: 3, dueDate: "2026-11-02" };
+  };
+
+  it("tạo task với id T-<lớn nhất + 1>, lưu đúng kiểu", async () => {
+    const before = await prisma.task.findMany({ select: { id: true } });
+    const maxBefore = Math.max(...before.map((t) => Number(t.id.slice(2))));
+
+    const result = await createTask(await base());
+    expect(result).toEqual({ ok: true, taskId: `T-${maxBefore + 1}` });
+    if (!result.ok) return;
+    created.push(result.taskId);
+
+    const task = await prisma.task.findUniqueOrThrow({ where: { id: result.taskId } });
+    expect(task).toMatchObject({ stage: "BA", status: "Cho", assigneeId: "nam", estimatePoints: 3 });
+    expect(task.dueDate?.toISOString().slice(0, 10)).toBe("2026-11-02");
+  });
+
+  it("tạo đồng thời không trùng id", async () => {
+    const input = await base();
+    const results = await Promise.all(Array.from({ length: 5 }, () => createTask(input)));
+    const ids = results.map((r) => (r.ok ? r.taskId : r.error));
+    created.push(...ids.filter((id) => id.startsWith("T-")));
+    expect(results.every((r) => r.ok)).toBe(true);
+    expect(new Set(ids).size).toBe(5);
+  });
+
+  it("từ chối feature của dự án khác, người ngoài dự án và tiêu đề rỗng", async () => {
+    const input = await base();
+    const otherFeature = await prisma.feature.findFirstOrThrow({ where: { projectId: { not: "rv-web" } } });
+    expect(await createTask({ ...input, featureId: otherFeature.id })).toEqual({ ok: false, error: "Feature không thuộc dự án này" });
+    expect(await createTask({ ...input, assigneeId: "khong-ton-tai" })).toEqual({ ok: false, error: "Người/agent này không thuộc dự án" });
+    expect(await createTask({ ...input, title: "   " })).toEqual({ ok: false, error: "Nhập tiêu đề task" });
   });
 });

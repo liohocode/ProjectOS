@@ -64,3 +64,56 @@ export async function assignTask(taskId: string, memberId: string): Promise<Acti
   revalidateTaskViews();
   return ok();
 }
+
+const newTaskSchema = z.object({
+  projectId: z.string().trim().min(1, "Thiếu dự án"),
+  featureId: z.string().trim().min(1, "Chọn feature"),
+  title: z.string().trim().min(1, "Nhập tiêu đề task").max(200, "Tiêu đề tối đa 200 ký tự"),
+  stage: stageSchema,
+  assigneeId: memberIdSchema,
+  estimatePoints: z.number({ error: "Ước lượng phải là số" }).int("Ước lượng là số nguyên").min(0).max(100, "Ước lượng tối đa 100 điểm").nullable(),
+  /** "YYYY-MM-DD" từ <input type="date">; null = chưa có hạn */
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Hạn không hợp lệ").nullable(),
+});
+export type NewTaskInput = z.input<typeof newTaskSchema>;
+
+/**
+ * Tạo task mới với id `T-<số lớn nhất + 1>` (ADR-006). Sinh id trong transaction có advisory lock
+ * để hai request tạo cùng lúc không lấy trùng số.
+ */
+export async function createTask(input: NewTaskInput): Promise<ActionResult<{ taskId: string }>> {
+  // TODO(F15.4): kiểm tra quyền
+  const parsed = newTaskSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+  const data = parsed.data;
+
+  const feature = await prisma.feature.findUnique({ where: { id: data.featureId }, select: { projectId: true } });
+  if (!feature || feature.projectId !== data.projectId) return fail("Feature không thuộc dự án này");
+  const membership = await prisma.projectMember.findUnique({
+    where: { projectId_memberId: { projectId: data.projectId, memberId: data.assigneeId } },
+  });
+  if (!membership) return fail("Người/agent này không thuộc dự án");
+
+  const taskId = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('meridian:task-id'))`;
+    const [{ max }] = await tx.$queryRaw<{ max: number }[]>`
+      SELECT COALESCE(MAX(CAST(SUBSTRING(id FROM 3) AS INTEGER)), 0) AS max FROM tasks WHERE id ~ '^T-[0-9]+$'`;
+    const id = `T-${max + 1}`;
+    await tx.task.create({
+      data: {
+        id,
+        featureId: data.featureId,
+        title: data.title,
+        stage: data.stage,
+        assigneeId: data.assigneeId,
+        status: "Cho",
+        estimatePoints: data.estimatePoints,
+        dueDate: data.dueDate ? new Date(`${data.dueDate}T00:00:00Z`) : null,
+      },
+    });
+    return id;
+  });
+
+  revalidateTaskViews();
+  return { ok: true, taskId };
+}

@@ -23,7 +23,7 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 | F11.1 | Gom "người dùng hiện tại" về `lib/auth/currentUser.ts` | S | — | Xong — 2026-10-15 |
 | F11.2 | Server actions `lib/actions/tasks.ts` (stage, assign, status) + validation | M | F11.1 | Xong — 2026-10-15 |
 | F11.3 | Nối task drawer với server actions, bỏ state sửa tạm ở client | S | F11.2 | Xong — 2026-10-15 |
-| F11.4 | Khuôn mẫu "hành động chính ở header" + dialog; "Task mới" | M | F11.2 | Chưa làm |
+| F11.4 | Khuôn mẫu "hành động chính ở header" + dialog; "Task mới" | M | F11.2 | Xong — 2026-10-15 |
 | F11.5 | Đặt / gỡ block cho task | S | F11.2 | Chưa làm |
 | F11.6 | Sửa nhanh task trong drawer (tiêu đề, ước lượng, hạn) | S | F11.2, F09.2 | Chưa làm |
 | F11.7 | Ghi `MemberActivity` cho người thao tác | S | F11.2 | Chưa làm |
@@ -49,8 +49,8 @@ Lead điều phối được công việc thật: chuyển stage, giao task, t�
 **Làm gì**: header nằm ở layout nên không nhận props từ page. Khuôn mẫu chọn: **dialog điều khiển bằng URL** — nút chính ở `Header` đặt query `?new=1` (giữ query khác); `page.tsx` của màn đọc `searchParams.new` và render dialog tương ứng với dữ liệu lựa chọn tải sẵn ở server; đóng dialog = bỏ `new` khỏi URL. Tạo component dùng chung `components/ui/Dialog.tsx` (dùng class `.dialog-backdrop`, `.dialog` đã có trong `globals.css`, Esc/click ngoài để đóng, focus trap cơ bản) và `components/ui/Field.tsx` (label + input/select theo `.input`). Áp dụng cho màn work: form "Task mới" (feature, tiêu đề, stage, người/agent thực hiện, ước lượng, hạn) → action `createTask`; sinh id `T-<số lớn nhất + 1>` trong transaction (ADR-006).
 **File**: `components/layout/Header.tsx`, `components/ui/Dialog.tsx`, `components/ui/Field.tsx`, `components/work/NewTaskDialog.tsx`, `app/[project]/work/page.tsx`, `lib/actions/tasks.ts`
 **Hoàn thành khi**:
-- [ ] Tạo task mới → xuất hiện đúng feature, id không trùng kể cả khi tạo liên tiếp nhanh
-- [ ] Ghi ADR mới (số tiếp theo) "Dialog điều khiển bằng URL" vào `docs/architecture/decisions.md` để F12/F13 dùng lại
+- [x] Tạo task mới → xuất hiện đúng feature, id không trùng kể cả khi tạo liên tiếp nhanh
+- [x] Ghi ADR mới (ADR-018) "Dialog điều khiển bằng URL" vào `docs/architecture/decisions.md` để F12/F13 dùng lại
 
 ### F11.5 — Block / unblock
 **Làm gì**: trong drawer thêm nút "Đánh dấu bị block" (nhập lý do ngắn + lý do đầy đủ) và "Gỡ block". Action `setTaskBlocked(taskId, { short, full } | null)`.
