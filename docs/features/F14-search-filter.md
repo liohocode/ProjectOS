@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 2 | F07 | FR-SH-05, NFR-06 |
+| Đang làm | 2 | F07 | FR-SH-05, NFR-06 |
 
 ## Mục tiêu
 Ô "Tìm feature, task, docs…" và nút "Lọc" ở header hiện chỉ là giao diện. Feature này cho chúng hoạt động, đưa trạng thái quan trọng của màn vào URL (chia sẻ link được), và phân trang các bảng có thể dài vô hạn (nhật ký lệnh).
@@ -19,7 +19,7 @@
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F14.1 | Deep link màn work: `?task=`, `?view=` | S | — | Chưa làm |
+| F14.1 | Deep link màn work: `?task=`, `?view=` | S | — | Xong — 2026-10-28 |
 | F14.2 | Tìm kiếm trong dự án từ ô header | M | F14.1 | Chưa làm |
 | F14.3 | Bộ lọc "Lọc" theo từng màn | M | — | Chưa làm |
 | F14.4 | Phân trang phiên chạy + nhật ký lệnh | S | — | Chưa làm |
@@ -27,7 +27,7 @@
 ### F14.1 — Deep link màn work
 **Làm gì**: `/<project>/work?task=T-401` mở sẵn drawer; `?view=timeline` mở view timeline. Đồng bộ state ↔ URL bằng `router.replace` (không thêm lịch sử cho mỗi lần đổi). Banner "Xem tất cả", task row, activity rail đều dùng URL này.
 **Hoàn thành khi**:
-- [ ] Copy URL khi drawer đang mở, mở tab mới → đúng task; nút Back đóng drawer hợp lý
+- [x] Copy URL khi drawer đang mở, mở tab mới → đúng task; nút Back đóng drawer hợp lý (e2e `deeplink.spec.ts`)
 
 ### F14.2 — Tìm kiếm
 **Làm gì**: ô tìm kiếm header: gõ (debounce ~250ms) → gọi server action `searchProject(projectId, q)` tìm trong task (id, tiêu đề), feature (id, tên), doc (tiêu đề, tóm tắt) — Prisma `contains` + `mode: 'insensitive'`. Tiếng Việt có dấu: cân nhắc extension Postgres `unaccent` để "tieu chi" khớp "Tiêu chí" (ghi quyết định). Dropdown kết quả nhóm theo loại; chọn → task: `/work?task=`, doc: `/docs?doc=`, feature: `/work` + cuộn tới feature. Phím: ↑↓ Enter Esc; `/` để focus ô tìm kiếm.
@@ -50,3 +50,4 @@
 - [ ] Seed thêm >50 log trong DB test → phân trang đúng thứ tự thời gian
 
 ## Quyết định / ghi chú
+- **F14.1 (2026-10-28)**: hook `components/work/workUrl.ts` (`useWorkUrl`). **Mở task = `router.push`** (lệch mô tả "replace": để nút Back đóng drawer như tiêu chí yêu cầu); đóng drawer / đổi view = `router.replace` (không thêm lịch sử). `?task=` không tồn tại → không mở drawer. Activity rail: mục gắn task (đang chạy / bị block / chờ review) thành link `?task=` (`ActivityItem.taskId`); mục revision chờ duyệt giữ dạng tĩnh. Reload khi drawer đang mở → drawer mở lại (e2e sửa nhanh task cập nhật theo).

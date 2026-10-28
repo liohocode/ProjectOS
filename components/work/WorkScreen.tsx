@@ -7,8 +7,7 @@ import { TimelineView } from "./TimelineView";
 import { ActivityRail } from "./ActivityRail";
 import { TaskDrawer } from "./TaskDrawer";
 import { EmptyState } from "@/components/ui/EmptyState";
-
-type View = "list" | "timeline";
+import { useWorkUrl } from "./workUrl";
 
 export function WorkScreen({
   features,
@@ -23,10 +22,10 @@ export function WorkScreen({
   taskDrawerInfo: Record<string, TaskDrawerInfo>;
   projectAgents: Member[];
 }) {
-  const [view, setView] = useState<View>("list");
   const [closed, setClosed] = useState<Record<string, boolean>>({});
   const [railOpen, setRailOpen] = useState(true);
-  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  // Task đang mở và view nằm trong URL (F14.1) — copy link là mở lại đúng chỗ.
+  const { taskId: openTaskId, view, taskHref, openTask, closeTask, setView } = useWorkUrl();
 
   const allTasks = useMemo(() => features.flatMap((f) => f.tasks), [features]);
   const blockedTasks = useMemo(() => allTasks.filter((t) => t.blocked), [allTasks]);
@@ -62,7 +61,7 @@ export function WorkScreen({
             <span className="banner-block-text">
               {blockedTasks.length} task đang bị block — {blockedTasks.map((t) => `${t.id} (${t.blocked})`).join(", ")}
             </span>
-            <button type="button" className="btn btn-ghost" onClick={() => setOpenTaskId(blockedTasks[0].id)}>
+            <button type="button" className="btn btn-ghost" onClick={() => openTask(blockedTasks[0].id)}>
               Xem tất cả
             </button>
           </div>
@@ -82,7 +81,7 @@ export function WorkScreen({
                 feature={feature}
                 open={!closed[feature.id]}
                 onToggle={() => setClosed((c) => ({ ...c, [feature.id]: !c[feature.id] }))}
-                onOpenTask={setOpenTaskId}
+                onOpenTask={openTask}
               />
             ))}
           </div>
@@ -97,7 +96,7 @@ export function WorkScreen({
         )}
       </div>
 
-      {railOpen && <ActivityRail items={activity} onClose={() => setRailOpen(false)} />}
+      {railOpen && <ActivityRail items={activity} taskHref={taskHref} onClose={() => setRailOpen(false)} />}
 
       {activeTask && (
         <TaskDrawer
@@ -106,7 +105,7 @@ export function WorkScreen({
           feature={activeTask.feature}
           info={taskDrawerInfo[activeTask.task.id]}
           agents={projectAgents}
-          onClose={() => setOpenTaskId(null)}
+          onClose={closeTask}
         />
       )}
     </div>

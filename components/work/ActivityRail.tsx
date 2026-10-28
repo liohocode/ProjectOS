@@ -1,8 +1,18 @@
+import Link from "next/link";
 import type { ActivityItem } from "@/lib/types";
 import { initials } from "./taskStyle";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-export function ActivityRail({ items, onClose }: { items: ActivityItem[]; onClose: () => void }) {
+export function ActivityRail({
+  items,
+  taskHref,
+  onClose,
+}: {
+  items: ActivityItem[];
+  /** Link mở task trong drawer (`?task=`, F14.1). */
+  taskHref: (taskId: string) => string;
+  onClose: () => void;
+}) {
   return (
     <aside className="rail">
       <div className="rail-header">
@@ -14,22 +24,34 @@ export function ActivityRail({ items, onClose }: { items: ActivityItem[]; onClos
       {items.length === 0 && (
         <EmptyState compact icon="ph-activity" title="Chưa có hoạt động nào" description="Việc agent đang chạy, task bị block và revision chờ duyệt sẽ hiện ở đây." />
       )}
-      {items.map((item, i) => (
-        <div className={`rail-item tone-${item.tone}`} key={i}>
-          <span
-            className={`avatar ${item.kind === "agent" ? "avatar-agent" : "avatar-human"}`}
-            style={{ width: 20, height: 20, fontSize: 8.5 }}
-          >
-            {initials(item.who)}
-          </span>
-          <div>
-            <div className="rail-item-text">{item.text}</div>
-            <div className="rail-item-meta">
-              {item.tool} · <span className="rail-item-when">{item.when}</span>
+      {items.map((item, i) => {
+        const body = (
+          <>
+            <span
+              className={`avatar ${item.kind === "agent" ? "avatar-agent" : "avatar-human"}`}
+              style={{ width: 20, height: 20, fontSize: 8.5 }}
+            >
+              {initials(item.who)}
+            </span>
+            <div>
+              <div className="rail-item-text">{item.text}</div>
+              <div className="rail-item-meta">
+                {item.tool} · <span className="rail-item-when">{item.when}</span>
+              </div>
             </div>
+          </>
+        );
+        // Mục gắn task → link mở drawer task đó; mục khác (revision chờ duyệt) giữ dạng tĩnh.
+        return item.taskId ? (
+          <Link href={taskHref(item.taskId)} scroll={false} className={`rail-item rail-item-link tone-${item.tone}`} key={i}>
+            {body}
+          </Link>
+        ) : (
+          <div className={`rail-item tone-${item.tone}`} key={i}>
+            {body}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </aside>
   );
 }

@@ -123,6 +123,8 @@ export interface ActivityItem {
   tool: string;
   when: string;
   tone: ActivityTone;
+  /** Mục gắn với một task → rail mở task đó qua `?task=` (F14.1). */
+  taskId?: string;
 }
 
 export interface TaskDrawerInfo {

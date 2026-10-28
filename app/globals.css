@@ -633,6 +633,8 @@ img { display: block; max-width: 100%; }
   border-radius: var(--radius-md);
   margin-bottom: 2px;
 }
+.rail-item-link { color: inherit; text-decoration: none; }
+.rail-item-link:hover { box-shadow: var(--shadow-sm); }
 .rail-item.tone-run { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
 .rail-item.tone-block { background: color-mix(in srgb, var(--color-warning) 10%, transparent); }
 .rail-item-text { font-size: 12px; }
