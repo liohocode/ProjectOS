@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import type { DocSection } from "@/lib/types";
 import { fail, type ActionResult } from "@/lib/actions/result";
+import { bumpMinorVersion } from "@/lib/docVersion";
 
 // Nghiệp vụ tài liệu dùng chung giữa server action (người, F12) và MCP `docs.append` (agent, F16.5).
 // Không có "use server": client không gọi thẳng được; nơi gọi tự kiểm tra danh tính/quyền.
@@ -68,4 +69,53 @@ export async function createRevision(
     select: { id: true },
   });
   return { ok: true, revisionId: revision.id };
+}
+
+/** Lỗi nghiệp vụ trong transaction → rollback và trả `fail(message)`. */
+class RevisionConflict extends Error {}
+
+/**
+ * Duyệt revision (F12.2): trong một transaction — đánh dấu approved, áp nội dung đề xuất vào tài liệu,
+ * tăng version phụ, `updatedAt = now`. Từ chối nếu tài liệu đã đổi version từ khi revision được tạo
+ * (`baseVersion` khác) hoặc revision không còn chờ. Ghi tài liệu có điều kiện `version = baseVersion`
+ * → hai revision của cùng tài liệu duyệt đồng thời: cái sau bị từ chối, không ghi đè.
+ * Revision cũ không có nội dung đề xuất: chỉ đánh dấu approved, tài liệu giữ nguyên.
+ */
+export async function applyRevision(revisionId: string, approverId: string): Promise<ActionResult<{ version: string | null }>> {
+  try {
+    const version = await prisma.$transaction(async (tx) => {
+      const rev = await tx.docRevision.findUnique({ where: { id: revisionId }, include: { doc: { select: { version: true } } } });
+      if (!rev) throw new RevisionConflict("Không tìm thấy revision");
+      if (rev.status !== "pending") throw new RevisionConflict("Revision này không còn chờ duyệt");
+
+      const hasContent = rev.proposedSummary !== null || rev.proposedSections !== null;
+      if (hasContent && rev.baseVersion !== rev.doc.version) {
+        throw new RevisionConflict("Tài liệu đã thay đổi từ khi revision được tạo");
+      }
+
+      const marked = await tx.docRevision.updateMany({
+        where: { id: revisionId, status: "pending" },
+        data: { status: "approved", approvedById: approverId, approvedAt: new Date() },
+      });
+      if (marked.count === 0) throw new RevisionConflict("Revision này không còn chờ duyệt");
+      if (!hasContent) return null;
+
+      const nextVersion = bumpMinorVersion(rev.baseVersion);
+      const written = await tx.doc.updateMany({
+        where: { id: rev.docId, version: rev.baseVersion },
+        data: {
+          ...(rev.proposedSummary !== null && { summary: rev.proposedSummary }),
+          ...(rev.proposedSections !== null && { sections: rev.proposedSections as object }),
+          version: nextVersion,
+          updatedAt: new Date(),
+        },
+      });
+      if (written.count === 0) throw new RevisionConflict("Tài liệu đã thay đổi từ khi revision được tạo");
+      return nextVersion;
+    });
+    return { ok: true, version };
+  } catch (error) {
+    if (error instanceof RevisionConflict) return fail(error.message);
+    throw error;
+  }
 }

@@ -52,8 +52,11 @@ test("đổi dự án qua switcher giữ nguyên màn", async ({ page }) => {
   await expect(page.locator(".switcher-name")).toHaveText("Rever Mobile App");
 });
 
-test("duyệt revision ghi xuống DB", async ({ page }) => {
+test("duyệt revision ghi xuống DB: áp nội dung đề xuất, tăng version (F12.2)", async ({ page }) => {
   await page.goto("/rv-web/docs?doc=prd-listing");
+  const body = page.locator(".doc-body-area");
+  await expect(body.getByText("v4.2", { exact: true })).toBeVisible();
+  await expect(body.getByText(/Benchmark ngày 22\/08/)).toHaveCount(0);
   // Skeleton loading (docs/loading.tsx) dùng lại class .kb-strip để giữ bố cục → lọc theo chữ của strip thật.
   const strip = page.locator(".kb-strip", { hasText: "KHO TRI THỨC" });
   await expect(strip).toContainText("Revision chờ duyệt 2");
@@ -67,9 +70,15 @@ test("duyệt revision ghi xuống DB", async ({ page }) => {
   await expect(approve).toHaveCount(0);
   await expect(strip).toContainText("Revision chờ duyệt 1");
 
+  // Nội dung đề xuất (đoạn benchmark ở "Tiêu chí hoàn thành") vào bản chính, version v4.2 → v4.3.
+  await expect(body.getByText("v4.3", { exact: true })).toBeVisible();
+  await expect(body.getByText(/Benchmark ngày 22\/08/)).toBeVisible();
+
   await page.reload();
   await expect(page.getByRole("button", { name: "Duyệt" })).toHaveCount(0);
   await expect(strip).toContainText("Revision chờ duyệt 1");
+  await expect(body.getByText("v4.3", { exact: true })).toBeVisible();
+  await expect(body.getByText(/Benchmark ngày 22\/08/)).toBeVisible();
 });
 
 test("dự án không tồn tại → trang 404 có danh sách dự án để chọn", async ({ page }) => {

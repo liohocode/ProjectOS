@@ -32,7 +32,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-DC-03 | Cây tài liệu group theo feature + "Kho tri thức chung"; icon sparkle cho doc do agent ghi; doc đang chọn highlight | ✅ | F03 |
 | FR-DC-04 | Thân tài liệu: meta (version, trạng thái, sửa lần cuối), tóm tắt, 3 ô info (feature, index, agent đã đọc), các section | ✅ | F03 |
 | FR-DC-05 | Khối "Revision chờ duyệt và lịch sử"; nút "Duyệt" chỉ hiện với revision đang chờ | ✅ duyệt ghi DB | F03 |
-| FR-DC-06 | Duyệt revision **áp nội dung đề xuất vào bản chính** (hiện revision chỉ có mô tả, chưa có nội dung) | ⬜ | F12 |
+| FR-DC-06 | Duyệt revision **áp nội dung đề xuất vào bản chính** | ✅ transaction, tăng version phụ, chặn ghi đè khi tài liệu đã đổi (F12.1–F12.2) | F12 |
 | FR-DC-07 | Từ chối revision; xem diff trước khi duyệt | ⬜ | F12 |
 | FR-DC-08 | Nút "Tài liệu mới"; người sửa trực tiếp tài liệu | ⬜ | F12 |
 | FR-DC-09 | "Agent đã đọc" lấy từ nhật ký `docs.read` thật | ⬜ | F18 |
