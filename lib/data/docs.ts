@@ -2,6 +2,7 @@ import { cache } from "react";
 import type { DocBody, DocGroup, DocSection } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
+import { diffSections } from "@/lib/diffSections";
 
 const GENERAL_GROUP_NAME = "Kho tri thức chung";
 
@@ -150,6 +151,13 @@ export const getDocBody = cache(async (id: string): Promise<DocBody> => {
       what: rev.what,
       when: formatRelativeVi(rev.createdAt),
       status: rev.status,
+      // F12.3 — "Xem thay đổi": so với bản hiện tại, chỉ cho revision đang chờ có nội dung đề xuất.
+      ...(rev.status === "pending" &&
+        rev.proposedSections !== null && { diff: diffSections(row.sections as unknown as DocSection[], rev.proposedSections as unknown as DocSection[]) }),
+      ...(rev.status === "pending" &&
+        rev.proposedSummary !== null &&
+        rev.proposedSummary !== row.summary && { summaryChange: { from: row.summary, to: rev.proposedSummary } }),
+      ...(rev.rejectedReason && { rejectedReason: rev.rejectedReason }),
     })),
   };
 });

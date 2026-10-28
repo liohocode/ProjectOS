@@ -1,3 +1,5 @@
+import type { SectionDiff } from "@/lib/diffSections";
+
 export type ScreenId = "portfolio" | "docs" | "work" | "team" | "mcp";
 
 export interface Project {
@@ -66,6 +68,10 @@ export interface DocRevision {
   when: string;
   /** F12.1 — pending: chờ duyệt (hiện nút Duyệt), approved, rejected */
   status: RevisionStatus;
+  /** F12.3 — chỉ revision đang chờ có nội dung đề xuất: thay đổi so với bản hiện tại */
+  diff?: SectionDiff[];
+  summaryChange?: { from: string; to: string };
+  rejectedReason?: string;
 }
 
 export interface DocSection {

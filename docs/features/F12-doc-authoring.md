@@ -21,7 +21,7 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 |---|---|---|---|---|
 | F12.1 | Schema revision: nội dung đề xuất + trạng thái | M | — | Xong — 2026-10-28 |
 | F12.2 | Duyệt = áp nội dung vào bản chính, tăng version | S | F12.1 | Xong — 2026-10-28 |
-| F12.3 | Từ chối revision + xem diff trước khi duyệt | M | F12.1 | Chưa làm |
+| F12.3 | Từ chối revision + xem diff trước khi duyệt | M | F12.1 | Xong |
 | F12.4 | Lịch sử hiển thị người duyệt / bị từ chối | S | F12.1 | Chưa làm |
 | F12.5 | "Tài liệu mới" | M | F11.4 | Chưa làm |
 | F12.6 | Người sửa tài liệu trực tiếp | M | F12.1, F11.4 | Chưa làm |
@@ -40,8 +40,8 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 ### F12.3 — Từ chối + diff
 **Làm gì**: nút "Từ chối" (nhập lý do) → `rejectRevision`. Nút/khu "Xem thay đổi" mở rộng dưới dòng revision: so sánh theo section — section mới, section bị xoá, đoạn thay đổi (diff theo đoạn là đủ, không cần diff ký tự). Viết hàm thuần `diffSections(current, proposed)` + unit test.
 **Hoàn thành khi**:
-- [ ] Từ chối → revision rời khỏi trạng thái chờ, badge nav "Docs" giảm
-- [ ] Diff hiển thị đúng cho 2 revision mẫu
+- [x] Từ chối → revision rời khỏi trạng thái chờ, badge nav "Docs" giảm (e2e `revision-review.spec.ts`)
+- [x] Diff hiển thị đúng cho 2 revision mẫu
 
 ### F12.4 — Lịch sử
 **Làm gì**: mỗi dòng lịch sử hiện trạng thái: "Đã duyệt bởi Trung Hiếu · 2 giờ trước", "Bị từ chối: <lý do>", hoặc nút Duyệt/Từ chối nếu đang chờ. Bỏ cơ chế `approved` state cục bộ trong `ApproveButton` (dữ liệu lấy lại từ server).
@@ -65,6 +65,7 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 - [x] Integration test: duyệt lại, revision dự án khác, revision không tồn tại, input rỗng → `{ ok: false }` và không ghi DB
 
 ## Quyết định / ghi chú
+- **F12.3 (2026-10-28)**: `lib/diffSections.ts` (hàm thuần, LCS theo đoạn; mục ghép theo tiêu đề, mục bị xoá chèn lại đúng vị trí cũ) — `getDocBody` tính sẵn `diff`/`summaryChange` cho revision đang chờ (so với bản hiện tại, không phải `baseVersion`: người duyệt cần biết duyệt thì bản chính đổi thế nào). `rejectRevision` domain ở `lib/domain/docs.ts` (`updateMany where status=pending`, lý do 1–500 ký tự; F16 dùng lại được), action ở `lib/actions/docs.ts`. UI: `RevisionItem` (client) thay cho dòng revision — "Xem thay đổi" (chỉ hiện mục có đổi), "Từ chối" mở form lý do tại chỗ, "Duyệt". Dòng bị từ chối hiện "— Từ chối: <lý do>" (F12.4 làm đầy đủ trạng thái lịch sử). Cả duyệt và từ chối giờ `revalidatePath("/<dự án>", "layout")` để badge "Docs" ở sidebar cập nhật (trước chỉ revalidate `/docs`). Badge nav "Docs" đếm số tài liệu, revision chờ thể hiện bằng màu cảnh báo — e2e kiểm tra cảnh báo tắt khi hết revision chờ.
 - **F12.2 (2026-10-28)**: logic nằm ở `lib/domain/docs.ts` → `applyRevision(revisionId, approverId)` (F12.6 người sửa trực tiếp dùng lại); `approveRevision` (server action) chỉ kiểm tra dự án rồi gọi. Ghi tài liệu bằng `updateMany where { version: baseVersion }` (khoá lạc quan) → hai revision cùng gốc duyệt đồng thời: đúng một thành công, cái còn lại "Tài liệu đã thay đổi từ khi revision được tạo" và vẫn chờ (test integration chạy song song). Version: `lib/docVersion.ts` `bumpMinorVersion` (`v4.2` → `v4.3`, `v1.9` → `v1.10`). Revision cũ không có nội dung đề xuất: chỉ đánh dấu approved, không đổi version.
 - **F12.1 (2026-10-28, người dùng đồng ý migration đổi kiểu cột)**: migration `revision_status_content` viết tay theo quy tắc 4 CLAUDE.md — thêm cột (`baseVersion` tạm nullable) → chuyển dữ liệu (`pending=true` → `pending`, còn lại → `approved`; `baseVersion` = version hiện tại của tài liệu) → `SET NOT NULL` → xoá cột `pending`; `migrate diff` sau đó ra "empty migration" (SQL Prisma tự sinh sẽ xoá cột trước khi chuyển và thêm `NOT NULL` không giá trị). `createRevision` đặt ở **`lib/domain/docs.ts`** (không "use server" — client không gọi thẳng; F16.5 MCP `docs.append` dùng lại), kèm `docSectionsSchema` (zod) dùng chung cho F12.5/F12.6. Dữ liệu mẫu: `prisma/seed-data/revisions.ts` sinh nội dung đề xuất = bản hiện tại + thay đổi theo mô tả. Thông báo duyệt lại đổi thành "Revision này không còn chờ duyệt" (đúng cả khi đã bị từ chối).
 - Nội dung tài liệu tiếp tục lưu dạng `sections Json` (không chuyển sang markdown thô) — form chỉ chuyển đổi qua lại markdown ↔ sections ở biên.
