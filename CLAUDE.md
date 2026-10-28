@@ -51,6 +51,25 @@ npm run test:e2e               # Playwright, build production cổng 3100 + DB t
 7. Cần `.env` có `DATABASE_URL` (+ `DATABASE_URL_TEST` cho test) và `docker compose up -d` đang chạy thì app/prisma/test mới hoạt động. Không commit `.env`.
 8. Test không bao giờ chạy trên DB dev/production: integration + e2e luôn dùng `DATABASE_URL_TEST` (tên DB bắt buộc chứa `test`).
 
+## Mức tự quyết của agent (người dùng chốt 2026-10-28)
+Người dùng muốn agent **tự làm, tự quyết, chỉ báo kết quả** — ít hỏi, ít chờ. Mặc định: làm luôn, ghi lý do vào commit / file feature / PR; chỉ dừng hỏi ở mục "Phải hỏi".
+
+**Tự quyết, không hỏi**
+- Chọn task kế tiếp theo `docs/ROADMAP.md` ("Việc nên nhận tiếp theo", thứ tự đường deploy), tách task, thêm task phát hiện được vào file feature.
+- Lựa chọn kỹ thuật trong khuôn ADR hiện có (thư viện nhỏ, cách hiện thực, cấu trúc file, test); lệch spec UI nhỏ → ghi vào "Quyết định / ghi chú" của feature.
+- Git trên branch của mình: commit, push, mở PR, cập nhật mô tả PR, rebase/cherry-pick lên `main` mới sau khi PR trước đã merge.
+- **Merge PR do chính agent mở** khi CI xanh hết, không conflict, không có review yêu cầu sửa — kiểu **rebase merge** (giữ mỗi task một commit trên `main`). Sau merge: dựng lại branch trên `main` mới rồi làm tiếp.
+- Sửa CI đỏ, lỗi test, lỗi lint trong phạm vi PR của mình.
+- Chạy migration **chỉ thêm** (thêm bảng/cột/index) trên DB dev/test; seed lại DB dev/test.
+
+**Phải hỏi (một lần, gom câu hỏi lại, kèm khuyến nghị)**
+- Quyết định kiến trúc mới hoặc đổi ADR đã chốt (nhà cung cấp, thư viện lớn, mô hình dữ liệu, bảo mật/phân quyền), và mục "Quyết định đang mở" trong ROADMAP.
+- Thao tác làm mất dữ liệu: migration xoá/đổi kiểu cột, `migrate reset`, bất cứ thao tác nào trên **DB production (Neon)** hay hạ tầng Google Cloud.
+- Thứ tốn tiền hoặc ra ngoài: tạo tài nguyên cloud, đổi billing, gửi tin/email, mời người.
+- Việc chỉ người dùng làm được (tạo OAuth client, secret, bấm duyệt trên console) — nói rõ bước cần làm rồi **làm tiếp phần khác**, không đứng chờ.
+
+**Cách báo cáo**: cuối mỗi lượt chỉ tóm tắt kết quả (PR, CI, việc người dùng cần làm nếu có) — ngắn gọn, không kể lại từng bước.
+
 ## Trạng thái hiện tại (2026-10)
 Phase 0 xong: 5 màn + app shell chạy trên Postgres thật (F01–F07). Kế hoạch tiếp theo đã chia thành feature F08–F19 với task chi tiết — xem `docs/ROADMAP.md`.
 
