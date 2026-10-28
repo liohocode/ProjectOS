@@ -2,6 +2,8 @@ import { getMcpLog, getMcpServers, getMcpSessions } from "@/lib/data/mcp";
 import { getProjects } from "@/lib/data/projects";
 import { ServerCard } from "@/components/mcp/ServerCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SESSION_RESULT_LABEL } from "@/lib/data/mcpLabels";
+import { filterLog, filterSessions, parseMcpFilter } from "@/lib/filters";
 
 const RESULT_TAG_CLASS: Record<string, string> = {
   Xong: "tag-neutral",
@@ -11,13 +13,17 @@ const RESULT_TAG_CLASS: Record<string, string> = {
   OK: "tag-neutral",
 };
 
-export default async function McpPage() {
-  const [servers, sessions, log, projects] = await Promise.all([
+export default async function McpPage(props: PageProps<"/[project]/mcp">) {
+  const filter = parseMcpFilter(await props.searchParams);
+  const filtered = Boolean(filter.agent || filter.project || filter.result);
+  const [servers, allSessions, allLog, projects] = await Promise.all([
     getMcpServers(),
     getMcpSessions(),
     getMcpLog(),
     getProjects(),
   ]);
+  const sessions = filterSessions(allSessions, filter, SESSION_RESULT_LABEL);
+  const log = filterLog(allLog, filter);
   const projectName = (id: string) => projects.find((p) => p.id === id)?.name ?? id;
 
   return (
@@ -30,7 +36,7 @@ export default async function McpPage() {
 
       <h5 className="mcp-section-title">Phiên chạy của agent</h5>
       {sessions.length === 0 ? (
-        <EmptyState compact icon="ph-plugs" title="Chưa có phiên chạy nào" description="Khi agent kết nối MCP server của Meridian, mỗi phiên sẽ được ghi lại ở đây." />
+        <EmptyState compact icon={filtered ? "ph-funnel" : "ph-plugs"} title={filtered ? "Không có phiên nào khớp bộ lọc" : "Chưa có phiên chạy nào"} description="Khi agent kết nối MCP server của Meridian, mỗi phiên sẽ được ghi lại ở đây." />
       ) : (
         <table className="table">
           <thead>
@@ -66,7 +72,7 @@ export default async function McpPage() {
 
       <h5 className="mcp-section-title">Nhật ký lệnh</h5>
       {log.length === 0 ? (
-        <EmptyState compact icon="ph-terminal-window" title="Chưa có lệnh nào" description="Mọi lệnh agent gọi qua MCP (kèm kết quả OK / Chờ review / Bị chặn) sẽ hiện ở đây." />
+        <EmptyState compact icon={filtered ? "ph-funnel" : "ph-terminal-window"} title={filtered ? "Không có lệnh nào khớp bộ lọc" : "Chưa có lệnh nào"} description="Mọi lệnh agent gọi qua MCP (kèm kết quả OK / Chờ review / Bị chặn) sẽ hiện ở đây." />
       ) : (
         <table className="table">
           <thead>

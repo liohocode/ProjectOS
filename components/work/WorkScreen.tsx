@@ -11,12 +11,15 @@ import { useWorkUrl } from "./workUrl";
 
 export function WorkScreen({
   features,
+  filtered = false,
   timeline,
   activity,
   taskDrawerInfo,
   projectAgents,
 }: {
   features: Feature[];
+  /** Đang áp bộ lọc "Lọc" (F14.3) — features đã lọc ở server. */
+  filtered?: boolean;
   timeline: TimelineRow[];
   activity: ActivityItem[];
   taskDrawerInfo: Record<string, TaskDrawerInfo>;
@@ -73,7 +76,13 @@ export function WorkScreen({
           </div>
         )}
 
-        {features.length === 0 ? (
+        {features.length === 0 && filtered && view === "list" ? (
+          <EmptyState
+            icon="ph-funnel"
+            title="Không có task nào khớp bộ lọc"
+            description="Đổi tiêu chí hoặc bấm “Xoá lọc” trong nút Lọc ở header."
+          />
+        ) : features.length === 0 && view === "list" ? (
           <EmptyState
             icon="ph-cube"
             title="Dự án chưa có feature nào"

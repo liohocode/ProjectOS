@@ -27,6 +27,7 @@ export const getMcpSessions = cache(async (): Promise<McpSession[]> => {
   const now = new Date();
   return rows.map((row) => ({
     id: row.id,
+    agentId: row.agentId,
     agent: row.agent.name,
     projectId: row.projectId,
     taskId: row.taskId ?? "",
@@ -48,6 +49,7 @@ export const getMcpLog = cache(async (): Promise<McpLogEntry[]> => {
   });
   return rows.map((row) => ({
     at: toHHMMSS(row.at),
+    agentId: row.agentId,
     agent: row.agent.name,
     tool: row.tool,
     target: row.target,

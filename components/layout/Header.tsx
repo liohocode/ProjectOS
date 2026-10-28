@@ -6,8 +6,9 @@ import { useUrlDialog } from "@/components/ui/urlDialog";
 import type { Project, ScreenId } from "@/lib/types";
 import { SCREEN_META } from "./screenMeta";
 import { HeaderSearch } from "./HeaderSearch";
+import { FilterMenu, type FilterOptions } from "./FilterMenu";
 
-export function Header({ project }: { project: Project }) {
+export function Header({ project, filterOptions }: { project: Project; filterOptions: FilterOptions }) {
   const pathname = usePathname();
   const screen = (pathname.split("/")[2] as ScreenId | undefined) ?? "work";
   const meta = SCREEN_META[screen];
@@ -24,9 +25,7 @@ export function Header({ project }: { project: Project }) {
       </div>
       <div className="header-actions">
         <HeaderSearch projectId={project.id} placeholder={meta.searchPlaceholder} />
-        <button type="button" className="btn btn-secondary">
-          <i className="ph ph-funnel" aria-hidden /> Lọc
-        </button>
+        <FilterMenu options={filterOptions} />
         {meta.primaryDialog ? (
           <Link href={openHref} scroll={false} className="btn btn-primary">
             {meta.primaryAction}

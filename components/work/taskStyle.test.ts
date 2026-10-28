@@ -5,6 +5,7 @@ import { initials, nextStage, stageTagClass, taskRowStyle } from "./taskStyle";
 const baseTask: Task = {
   id: "T-1",
   stage: "Dev",
+  assigneeId: "nam",
   title: "Task",
   who: "Trần Mỹ Linh",
   kind: "human",
