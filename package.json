@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "postbuild": "node -e \"require('fs').cpSync('.next/static', '.next/standalone/.next/static', { recursive: true })\"",
+    "start": "node .next/standalone/server.js",
     "lint": "eslint",
     "test": "vitest run",
     "db:test:prepare": "tsx scripts/test-db-prepare.ts",

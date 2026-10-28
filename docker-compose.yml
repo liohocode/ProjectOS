@@ -16,5 +16,18 @@ services:
       timeout: 5s
       retries: 10
 
+  # Chạy thử image production ở local (F19.2): docker compose --profile app up --build
+  # → http://localhost:8080. Migrate/seed DB trước bằng lệnh prisma ở máy (CLAUDE.md).
+  app:
+    profiles: ["app"]
+    build: .
+    environment:
+      DATABASE_URL: postgresql://meridian:meridian@db:5432/meridian
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   pgdata:
