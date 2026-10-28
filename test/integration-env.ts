@@ -11,3 +11,5 @@ process.env.DATABASE_URL = testUrl;
 
 // Server action gọi revalidatePath — ngoài request Next.js thì không có context, mock đi.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }));
+// Ngoài request Next không có headers()/cookie session → người đang thao tác = Trung Hiếu (tech lead mẫu).
+vi.mock("@/lib/auth/session", () => ({ getSessionMemberId: vi.fn(async () => "hieu") }));

@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { E2E_GOOGLE_CLIENT_ID } from "./env";
 
 // F15.2 — không gọi Google thật: kiểm tra trang /login và URL Better Auth chuyển sang Google.
 // Client ID/secret giả đặt trong playwright.config.ts (webServer.env).
+
+// Các test ở đây xem /login khi CHƯA đăng nhập.
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test("trang /login có nút đăng nhập Google", async ({ page }) => {
   await page.goto("/login");
@@ -27,7 +31,7 @@ test("bắt đầu đăng nhập → chuyển sang Google với callback đúng 
   const { url } = (await res.json()) as { url: string };
   const google = new URL(url);
   expect(google.host).toBe("accounts.google.com");
-  expect(google.searchParams.get("client_id")).toBe("e2e-google-client-id");
+  expect(google.searchParams.get("client_id")).toBe(E2E_GOOGLE_CLIENT_ID);
   expect(google.searchParams.get("redirect_uri")).toBe(`${baseURL}/api/auth/callback/google`);
   expect(google.searchParams.get("prompt")).toBe("select_account");
 });

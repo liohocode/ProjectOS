@@ -12,13 +12,17 @@ test.beforeAll(async () => {
       [PROJECT_ID],
     ),
   );
+  // F15.3: chỉ thành viên xem được dự án → thêm Trung Hiếu (người đăng nhập e2e) làm thành viên duy nhất.
+  await withDb((db) =>
+    db.query(`INSERT INTO project_members ("projectId", "memberId") VALUES ($1, 'hieu') ON CONFLICT DO NOTHING`, [PROJECT_ID]),
+  );
 });
 
 test.afterAll(async () => {
   await withDb((db) => db.query("DELETE FROM projects WHERE id = $1", [PROJECT_ID]));
 });
 
-test("dự án rỗng: work, docs, team đều có empty state; header báo chưa có sprint", async ({ page }) => {
+test("dự án rỗng: work, docs có empty state; team chỉ có người xem; header báo chưa có sprint", async ({ page }) => {
   await page.goto(`/${PROJECT_ID}/work`);
   await expect(page.locator(".header-context")).toContainText("Chưa có sprint");
   await expect(page.locator(".empty-state", { hasText: "Dự án chưa có feature nào" })).toBeVisible();
@@ -28,7 +32,8 @@ test("dự án rỗng: work, docs, team đều có empty state; header báo chư
   await expect(page.locator(".empty-state", { hasText: "Dự án chưa có tài liệu nào" })).toBeVisible();
 
   await page.goto(`/${PROJECT_ID}/team`);
-  await expect(page.locator(".empty-state", { hasText: "Dự án chưa có thành viên nào" })).toBeVisible();
+  // Người xem luôn là thành viên (F15.3) → màn team của dự án rỗng có đúng 1 người.
+  await expect(page.locator(".mrow")).toHaveCount(1);
   await page.locator(".seg-opt", { hasText: "Toàn tổ chức" }).click();
   await expect(page.locator(".mrow")).toHaveCount(7);
 });

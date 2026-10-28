@@ -16,7 +16,7 @@ env:
   DATABASE_URL: postgresql://meridian:meridian@localhost:5432/meridian
   DATABASE_URL_TEST: postgresql://meridian:meridian@localhost:5432/meridian_test
   # Better Auth (ADR-020) từ chối chạy ở production nếu thiếu secret — giá trị giả chỉ cho CI (build + e2e).
-  BETTER_AUTH_SECRET: ci-only-secret-not-used-anywhere-else-0000
+  BETTER_AUTH_SECRET: "Fr0V6WcHd28ztqTUmpvIE9DNGJr38jTUtuKSc4bPNBU="
 
 jobs:
   check:

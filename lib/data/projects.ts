@@ -25,3 +25,13 @@ export const getProjectById = cache(async (id: string): Promise<Project | undefi
   const row = await prisma.project.findUnique({ where: { id }, include: { currentSprint: true } });
   return row ? toProject(row) : undefined;
 });
+
+/** Dự án mà thành viên được phân bổ (ProjectMember) — để chặn truy cập dự án khác và lọc project switcher. */
+export const getProjectsByMember = cache(async (memberId: string): Promise<Project[]> => {
+  const rows = await prisma.project.findMany({
+    where: { members: { some: { memberId } } },
+    include: { currentSprint: true },
+    orderBy: { id: "asc" },
+  });
+  return rows.map(toProject);
+});

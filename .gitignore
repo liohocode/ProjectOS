@@ -48,3 +48,5 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+# phiên đăng nhập e2e (cookie) — e2e/auth.setup.ts sinh lại mỗi lần chạy
+/e2e/.auth/
