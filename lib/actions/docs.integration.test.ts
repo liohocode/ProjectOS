@@ -13,12 +13,20 @@ describe("approveRevision", () => {
     revisionId = rev.id;
   });
 
+  // Duyệt áp nội dung vào tài liệu (F12.2) → lưu bản seed của tài liệu để trả lại.
+  let seedDoc: { summary: string; sections: unknown; version: string; updatedAt: Date };
+  beforeAll(async () => {
+    const doc = await prisma.doc.findUniqueOrThrow({ where: { id: "prd-listing" } });
+    seedDoc = { summary: doc.summary, sections: doc.sections, version: doc.version, updatedAt: doc.updatedAt };
+  });
+
   // Trả lại trạng thái seed để test đọc ở file khác không phụ thuộc thứ tự chạy.
   afterAll(async () => {
     await prisma.docRevision.update({
       where: { id: revisionId },
       data: { status: "pending", approvedById: null, approvedAt: null },
     });
+    await prisma.doc.update({ where: { id: "prd-listing" }, data: { ...seedDoc, sections: seedDoc.sections as object } });
   });
 
   it("đánh dấu revision đã duyệt bởi người dùng hiện tại và revalidate màn docs", async () => {
