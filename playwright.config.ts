@@ -23,10 +23,11 @@ export default defineConfig({
   webServer: {
     // Tạo/migrate/reseed DB test TRƯỚC khi start server: Playwright khởi động webServer trước globalSetup,
     // nên nếu DB test chưa tồn tại (CI, máy mới clone) server sẽ lỗi ngay khi được probe.
-    command: `npx tsx scripts/test-db-prepare.ts && npm run build && npx next start -p ${PORT}`,
+    // `npm start` = server.js của bản standalone — cùng cách container production chạy (F19.2).
+    command: "npx tsx scripts/test-db-prepare.ts && npm run build && npm start",
     url: `http://localhost:${PORT}/rv-web/work`,
     timeout: 180_000,
     reuseExistingServer: false,
-    env: { DATABASE_URL: testDbUrl },
+    env: { DATABASE_URL: testDbUrl, PORT: String(PORT), HOSTNAME: "0.0.0.0" },
   },
 });

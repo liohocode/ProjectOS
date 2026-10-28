@@ -29,6 +29,7 @@ npx prisma migrate dev         # áp migration; sửa schema thì thêm --name <
 npx prisma db seed             # nạp lại dữ liệu mẫu (tự xoá sạch rồi seed — an toàn chạy nhiều lần trên DB dev)
 npx prisma studio              # GUI xem/sửa dữ liệu
 npm run dev                    # http://localhost:3000
+docker compose --profile app up --build   # chạy thử image production ở :8080 (Dockerfile, F19.2)
 
 # Kiểm tra trước khi commit (chi tiết: Definition of Done trong docs/WORKFLOW.md)
 npm run lint && npm run typecheck && npm run build
