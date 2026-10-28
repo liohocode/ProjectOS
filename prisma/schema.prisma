@@ -10,6 +10,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum RevisionStatus {
+  pending
+  approved
+  rejected
+}
+
 enum MemberKind {
   human
   agent
@@ -225,17 +231,24 @@ model Doc {
 }
 
 model DocRevision {
-  id           String    @id @default(cuid())
-  docId        String
-  doc          Doc       @relation(fields: [docId], references: [id], onDelete: Cascade)
-  authorId     String
-  author       Member    @relation("RevisionAuthor", fields: [authorId], references: [id])
-  what         String
-  createdAt    DateTime  @default(now())
-  pending      Boolean   @default(false)
-  approvedById String?
-  approvedBy   Member?   @relation("RevisionApprover", fields: [approvedById], references: [id])
-  approvedAt   DateTime?
+  id               String         @id @default(cuid())
+  docId            String
+  doc              Doc            @relation(fields: [docId], references: [id], onDelete: Cascade)
+  authorId         String
+  author           Member         @relation("RevisionAuthor", fields: [authorId], references: [id])
+  what             String
+  createdAt        DateTime       @default(now())
+  /// pending = chờ duyệt; approved = đã áp vào bản chính (F12.2); rejected = bị từ chối (F12.3)
+  status           RevisionStatus @default(pending)
+  /// Nội dung đề xuất — null = giữ nguyên phần đó của tài liệu. Cùng shape với Doc.summary / Doc.sections.
+  proposedSummary  String?
+  proposedSections Json?
+  rejectedReason   String?
+  /// Doc.version lúc tạo revision — F12.2 từ chối duyệt nếu tài liệu đã đổi version (tránh ghi đè)
+  baseVersion      String
+  approvedById     String?
+  approvedBy       Member?        @relation("RevisionApprover", fields: [approvedById], references: [id])
+  approvedAt       DateTime?
 
   @@index([docId, createdAt(sort: Desc)])
   @@map("doc_revisions")

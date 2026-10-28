@@ -21,12 +21,12 @@ export async function approveRevision(revisionId: string, projectId: string): Pr
   const revision = await prisma.docRevision.findUnique({ where: { id }, select: { doc: { select: { projectId: true } } } });
   if (!revision || revision.doc.projectId !== project) return fail("Không tìm thấy revision trong dự án này");
 
-  // Điều kiện pending=true nằm trong câu UPDATE → hai lần duyệt cùng lúc chỉ một lần ghi.
+  // Điều kiện status=pending nằm trong câu UPDATE → hai lần duyệt cùng lúc chỉ một lần ghi.
   const { count } = await prisma.docRevision.updateMany({
-    where: { id, pending: true },
-    data: { pending: false, approvedById: await getCurrentUserId(), approvedAt: new Date() },
+    where: { id, status: "pending" },
+    data: { status: "approved", approvedById: await getCurrentUserId(), approvedAt: new Date() },
   });
-  if (count === 0) return fail("Revision này đã được duyệt");
+  if (count === 0) return fail("Revision này không còn chờ duyệt");
 
   revalidatePath(`/${project}/docs`);
   return ok();

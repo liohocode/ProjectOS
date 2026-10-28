@@ -48,7 +48,7 @@ export function DocBodyView({ body, projectId }: { body: DocBody; projectId: str
               <span className={`tag ${rev.agent ? "tag-accent" : "tag-neutral"} nowrap revision-tag`}>{rev.who}</span>
               <span className="revision-what">{rev.what}</span>
               <span className="revision-when">{rev.when}</span>
-              {rev.pending && <ApproveButton revisionId={rev.id} projectId={projectId} />}
+              {rev.status === "pending" && <ApproveButton revisionId={rev.id} projectId={projectId} />}
             </div>
           ))}
         </div>
