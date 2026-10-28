@@ -969,6 +969,13 @@ img { display: block; max-width: 100%; }
 .error-state code { font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300); }
 .error-state-actions { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
 .error-state-digest { margin: var(--space-4) 0 0; font-size: 11px; color: var(--color-neutral-600); font-family: ui-monospace, monospace; }
+/* ══════════════ Đăng nhập (F15.2) — dựng trên khung .error-page/.error-state ══════════════ */
+.login-card { width: 100%; max-width: 400px; }
+.login-brand { padding: 0; margin-bottom: var(--space-6); }
+.login-error { margin: var(--space-4) 0 0; }
+.login-google { width: 100%; margin-top: var(--space-4); }
+.login-hint { margin-top: var(--space-3); }
+.login-hint code { font-family: ui-monospace, monospace; font-size: inherit; color: var(--color-content-muted); }
 .not-found-projects { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .not-found-project {
   display: flex; align-items: center; gap: var(--space-3);

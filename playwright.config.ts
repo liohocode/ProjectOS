@@ -28,6 +28,15 @@ export default defineConfig({
     url: `http://localhost:${PORT}/rv-web/work`,
     timeout: 180_000,
     reuseExistingServer: false,
-    env: { DATABASE_URL: testDbUrl, PORT: String(PORT), HOSTNAME: "0.0.0.0" },
+    env: {
+      DATABASE_URL: testDbUrl,
+      PORT: String(PORT),
+      HOSTNAME: "0.0.0.0",
+      // Đăng nhập (F15.2): giá trị giả cố định — e2e không gọi Google thật, chỉ kiểm tra URL chuyển hướng.
+      BETTER_AUTH_SECRET: "e2e-only-secret-not-used-anywhere-else-0000",
+      BETTER_AUTH_URL: `http://localhost:${PORT}`,
+      GOOGLE_CLIENT_ID: "e2e-google-client-id",
+      GOOGLE_CLIENT_SECRET: "e2e-google-client-secret",
+    },
   },
 });

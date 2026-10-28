@@ -44,6 +44,8 @@ export interface SeedMember {
   name: string;
   handle: string;
   kind: SeedMemberKind;
+  /** Email đăng nhập Google — chỉ người (F15.2). Dữ liệu mẫu dùng @example.com; DEV_LOGIN_EMAIL thay cho "hieu". */
+  email?: string;
   role: string;
   skills: string[];
   current: string;

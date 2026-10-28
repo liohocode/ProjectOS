@@ -33,7 +33,7 @@ Cập nhật lần cuối: 2026-10-28 · Tổng: **55/104 task xong** (Phase 0 h
 ## Phase 3 — Danh tính
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F15](features/F15-auth-permissions.md) | Đăng nhập **Google**, phân quyền, token cho agent | F11.1 | Chưa bắt đầu | 1/6 |
+| [F15](features/F15-auth-permissions.md) | Đăng nhập **Google** (Better Auth), phân quyền, token cho agent | F11.1 | Đang làm — F15.2 chờ OAuth client | 1/6 |
 
 ## Phase 4 — Nền tảng agent (lõi sản phẩm)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -54,7 +54,8 @@ Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhi�
 | [F12.1](features/F12-doc-authoring.md) Revision có nội dung | Mở khoá phần còn lại của F12; dùng lại dialog URL (ADR-018) |
 | [F14.1](features/F14-search-filter.md) Deep link màn work | Độc lập, mở khoá F14.2 |
 | [F19.3](features/F19-deployment.md) Thiết lập Google Cloud + budget alert | **Người dùng tự làm** theo `docs/guides/deploy-cloud-run.md`; dùng chung project cho OAuth (F15.2) |
-| [F15.2](features/F15-auth-permissions.md) Đăng nhập Google | Bước kế tiếp trên đường deploy — cần OAuth client trong project của F19.3 |
+| [F15.2](features/F15-auth-permissions.md) Đăng nhập Google | Code xong — **người dùng tạo OAuth client** theo `docs/guides/google-oauth.md` để thử thật |
+| [F15.3](features/F15-auth-permissions.md) Chặn route + `getCurrentUser()` từ session | Làm được ngay (không cần Google thật để code/test); sau bước này mới chia sẻ URL |
 
 Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 → F13/F14 → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.
 
@@ -75,6 +76,7 @@ Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: 
 | Realtime dùng polling ngắn, MCP stateless (vì Cloud Run tính tiền theo thời gian request mở) | 2026-10-14 | ADR-016 |
 | Embedding / kho tri thức ngữ nghĩa: để sau | 2026-10-14 | — (F18 hoãn) |
 | Feature chưa giao vẫn hiện ở list view | 2026-10-14 | — (ghi trong F09.3) |
+| Thư viện đăng nhập: **Better Auth** thay Auth.js (Auth.js chỉ còn vá bảo mật, v5 vẫn beta); consent screen External | 2026-10-28 | ADR-020 |
 | Giữ Neon Free (không Cloud SQL); một môi trường deploy từ `main`; làm F15.2–F15.3 trước khi chia sẻ URL | 2026-10-28 | ADR-015 (xác nhận lại), F19 |
 
 ## Nhật ký

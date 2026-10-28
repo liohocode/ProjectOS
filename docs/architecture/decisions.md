@@ -60,6 +60,7 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 **Bối cảnh**: người dùng chốt phương án đăng nhập cho F15.
 **Quyết định**: Google OAuth, dùng Auth.js (NextAuth v5) với Google provider + Prisma adapter. Chỉ cho phép đăng nhập khi email Google khớp với một `Member` kind `human` đã có trong hệ thống (theo lời mời, không tự đăng ký).
 **Hệ quả**: `Member` cần thêm `email`; người dùng phải tự tạo OAuth client trên Google Cloud Console (thao tác thủ công, có hướng dẫn trong F15.2). Agent không đăng nhập Google — dùng token riêng (F15.5).
+**Cập nhật 2026-10-28**: thư viện đổi từ Auth.js sang **Better Auth** — xem ADR-020.
 
 ### ADR-014 — Deploy lên Cloudflare, ưu tiên gói miễn phí (2026-10-14) — **đã bị thay thế bởi ADR-016**
 **Bối cảnh**: người dùng chọn Cloudflare, yêu cầu "chủ yếu là free" (thay cho Vercel đã cân nhắc trước đó).
@@ -118,3 +119,13 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 - Tham số là kiểu nguyên thuỷ (id chuỗi) để cache khớp theo giá trị; không truyền object/mảng vào hàm `lib/data`.
 - Chỗ chỉ cần con số (badge sidebar) dùng hàm đếm riêng (`prisma.*.count`) thay vì tải danh sách rồi `.length`.
 **Hệ quả**: màn work 131 → 33 câu SQL, các màn khác giảm 8–10 câu. Ngoài React render (Vitest integration, script) `cache` không dedupe — hàm vẫn chạy đúng, chỉ không gộp. Giá trị trả về dùng chung giữa các nơi gọi trong request → không mutate kết quả của hàm `lib/data`.
+
+### ADR-020 — Thư viện đăng nhập: Better Auth (thay Auth.js trong ADR-013) (2026-10-28)
+**Bối cảnh**: ADR-013 chọn Auth.js (NextAuth v5). Khi làm F15.2: NextAuth v5 vẫn chỉ có bản beta (`5.0.0-beta.32`); dự án Auth.js đã nhập vào Better Auth và chỉ còn vá bảo mật — chính đội bảo trì khuyên dự án mới dùng Better Auth. Better Auth 1.7 bản ổn định, hỗ trợ Next 16 + Prisma 7. Người dùng chốt Better Auth.
+**Quyết định** (phần còn lại của ADR-013 giữ nguyên: Google, chỉ email của Member người, không tự đăng ký):
+- **Better Auth** + Google provider, adapter Prisma (`lib/auth/auth.ts`, route `app/api/auth/[...all]`). 4 bảng `auth_users`, `auth_sessions`, `auth_accounts`, `auth_verifications` — model Prisma đặt tên `Auth*` (option `modelName`) để không lẫn với `Member`.
+- `AuthUser.memberId` (unique, FK `Member`) gán **một lần lúc tạo tài khoản** từ email; F15.3 đọc `memberId` từ session thay vì dò email mỗi request.
+- Chặn 2 lớp: `user.validateUserInfo` (chạy khi tạo tài khoản, liên kết và **mỗi lần đăng nhập lại bằng Google** → gỡ email khỏi Member là chặn được) + `databaseHooks.user.create.before`. Luật chung ở `lib/auth/loginPolicy.ts` (`checkLogin`): email Google đã xác minh, trùng `Member.email` của người (không phân biệt hoa thường). Bị chặn → Better Auth chuyển về `/login?error=<mã>`.
+- Session lưu DB (bảng `auth_sessions`) + **cookie cache 5 phút** (cookie ký) → phần lớn request không đọc DB, giữ đúng tinh thần "ít query" của ADR-016/ADR-019 mà vẫn thu hồi được session (chậm tối đa 5 phút).
+- Env: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (thay tên `AUTH_*` dự kiến ở F19.5). Thiếu Google → nút đăng nhập bị khoá, app vẫn chạy (dev/CI). Thiếu `BETTER_AUTH_SECRET` ở production → Better Auth từ chối chạy (CI/e2e dùng giá trị giả).
+**Hệ quả**: thêm phụ thuộc `better-auth` (pin bản chính xác như Prisma); `telemetry` tắt. Trang `/login` không có trong spec UI gốc — dựng từ khung `.error-page` + token Nocturne. Đăng xuất tạm ở `/login`; nút ở footer sidebar thuộc F15.6.

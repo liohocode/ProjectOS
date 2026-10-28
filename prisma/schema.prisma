@@ -99,6 +99,8 @@ model Member {
   status  MemberStatus
   /// Chỉ set khi kind = agent: [["Model","claude-opus-4.1"], ...]
   config  Json?
+  /// Email Google để đăng nhập — chỉ người (kind = human). Đăng nhập chỉ chấp nhận email có ở đây (ADR-020).
+  email   String?      @unique
 
   skillRows         MemberSkillRow[]
   activity          MemberActivity[]
@@ -110,6 +112,7 @@ model Member {
   approvedRevisions DocRevision[]    @relation("RevisionApprover")
   mcpSessions       McpSession[]
   mcpLogEntries     McpLogEntry[]
+  authUser          AuthUser?
 
   @@map("members")
 }
@@ -281,4 +284,73 @@ model McpLogEntry {
 
   @@index([at(sort: Desc)])
   @@map("mcp_log_entries")
+}
+
+// ══════════════ Đăng nhập (Better Auth, ADR-020) ══════════════
+// 4 model theo schema lõi của Better Auth 1.7 (user/session/account/verification), đổi tên model qua
+// option `modelName` trong lib/auth/auth.ts để không lẫn với Member. Không đổi tên field — adapter
+// đọc đúng tên field mặc định.
+
+model AuthUser {
+  id            String        @id
+  name          String
+  email         String        @unique
+  emailVerified Boolean       @default(false)
+  image         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  /// Member (human) khớp email lúc tạo tài khoản — gán trong databaseHooks, không nhận từ client.
+  memberId      String        @unique
+  member        Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  sessions      AuthSession[]
+  accounts      AuthAccount[]
+
+  @@map("auth_users")
+}
+
+model AuthSession {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("auth_sessions")
+}
+
+model AuthAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("auth_accounts")
+}
+
+model AuthVerification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("auth_verifications")
 }
