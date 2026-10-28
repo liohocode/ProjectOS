@@ -821,6 +821,7 @@ img { display: block; max-width: 100%; }
 .revision-what { flex: 1; min-width: 0; }
 .revision-when { color: var(--color-neutral-500); font-size: 12px; }
 .revision-approve { height: 26px; }
+.revision-error { color: var(--color-warning); font-size: 12px; }
 
 /* ══════════════ Dev & AI agents (xem docs/features/F04-team.md) ══════════════ */
 
