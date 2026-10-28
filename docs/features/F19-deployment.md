@@ -52,6 +52,7 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 | F19.7 | CD: GitHub Actions build → migrate → deploy | M | F19.6, F08.6 | Chưa làm |
 | F19.8 | Sao lưu Neon định kỳ + hướng dẫn khôi phục | S | F19.4 | Chưa làm |
 | F19.9 | (Tuỳ chọn) Tên miền riêng qua Cloudflare DNS | S | F19.6 | Chưa làm |
+| F19.10 | Giảm số query mỗi request (`cache()` + hàm đếm cho badge) | S | — | Xong — 2026-10-28 (ADR-019) |
 
 ### F19.1 — Quyết định hạ tầng
 Đã chốt với người dùng: Cloud Run + Neon Free (ADR-016 thay thế phương án Cloudflare ở ADR-014). GitHub dùng cho code + CI/CD; Cloudflare chỉ tuỳ chọn cho DNS.
@@ -104,6 +105,22 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 **Làm gì**: nếu muốn dùng tên miền riêng: quản lý DNS trên Cloudflare (free), map vào Cloud Run (domain mapping nếu region hỗ trợ; nếu không, cân nhắc Firebase Hosting rewrite tới Cloud Run — vẫn free). Cập nhật redirect URI của Google OAuth (F15.2).
 **Hoàn thành khi**:
 - [ ] Truy cập qua tên miền riêng có HTTPS; đăng nhập Google hoạt động
+
+### F19.10 — Giảm số query mỗi request
+**Làm gì** (phát hiện khi rà repo 2026-10-28): không hàm `lib/data` nào được dedupe trong một request — layout, page và các hàm data gọi lại nhau tải cùng dữ liệu nhiều lần; nặng nhất là màn work: `getTaskDrawerInfo` chạy cho **từng task**, mỗi lần tải lại cả cây feature/task + nhóm docs. Layout tải toàn bộ task và hồ sơ thành viên chỉ để đếm badge. Với Neon Free (giới hạn CU-giờ, ngủ sau 5 phút) và Cloud Run cold start, mỗi query thừa là độ trễ + quota. Sửa: bọc mọi hàm đọc export của `lib/data/*` và `lib/auth/currentUser.ts` bằng `React.cache()` (ADR-019, chữ ký giữ nguyên); thêm `getTaskCountsByProject`, `getMemberCountByProject` cho badge sidebar.
+**Kết quả đo** (số câu SQL Postgres nhận cho một request `rv-web`, bản build production, `log_statement=all`):
+
+| Màn | Trước | Sau |
+|---|---|---|
+| work | 131 | 33 |
+| portfolio | 48 | 40 |
+| docs | 39 | 29 |
+| team | 31 | 22 |
+| mcp | 29 | 20 |
+
+**Hoàn thành khi**:
+- [x] Badge sidebar không đổi (integration test: hàm đếm khớp danh sách đầy đủ ở cả 3 dự án; e2e smoke xanh)
+- [x] Số query màn work không còn tăng theo số task
 
 ## Ảnh hưởng tới feature khác (đã cập nhật trong từng file)
 - **F16 MCP**: Streamable HTTP chế độ stateless, không mở stream SSE dài; rate limit + phiên lưu DB.

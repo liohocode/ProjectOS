@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Project } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatSprintLabel } from "@/lib/sprint";
@@ -15,12 +16,12 @@ function toProject(row: ProjectRow): Project {
   };
 }
 
-export async function getProjects(): Promise<Project[]> {
+export const getProjects = cache(async (): Promise<Project[]> => {
   const rows = await prisma.project.findMany({ include: { currentSprint: true }, orderBy: { id: "asc" } });
   return rows.map(toProject);
-}
+});
 
-export async function getProjectById(id: string): Promise<Project | undefined> {
+export const getProjectById = cache(async (id: string): Promise<Project | undefined> => {
   const row = await prisma.project.findUnique({ where: { id }, include: { currentSprint: true } });
   return row ? toProject(row) : undefined;
-}
+});

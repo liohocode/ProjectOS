@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { TimelineRow } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { datesToWeeks } from "@/lib/timeline";
@@ -5,7 +6,7 @@ import { UNASSIGNED_OWNER } from "./features";
 
 // View Timeline: tuần T1–T8 tính từ ngày bắt đầu sprint hiện tại của dự án.
 // Feature chưa có ngày kế hoạch hoặc nằm ngoài cửa sổ 8 tuần thì không vẽ.
-export async function getTimelineByProject(projectId: string): Promise<TimelineRow[]> {
+export const getTimelineByProject = cache(async (projectId: string): Promise<TimelineRow[]> => {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {
@@ -32,4 +33,4 @@ export async function getTimelineByProject(projectId: string): Promise<TimelineR
       },
     ];
   });
-}
+});

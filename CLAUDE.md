@@ -41,7 +41,7 @@ npm run test:e2e               # Playwright, build production cổng 3100 + DB t
 
 ## Quy tắc bắt buộc
 1. Làm theo `docs/WORKFLOW.md`: nhận task → cập nhật trạng thái trong file feature → làm đúng phạm vi → Definition of Done → cập nhật file feature + `docs/ROADMAP.md`.
-2. Page/layout chỉ gọi `lib/data/*`; component client không import `lib/data`/`lib/prisma`. Giữ chữ ký hàm `lib/data/*` (đổi thì sửa mọi nơi gọi).
+2. Page/layout chỉ gọi `lib/data/*`; component client không import `lib/data`/`lib/prisma`. Giữ chữ ký hàm `lib/data/*` (đổi thì sửa mọi nơi gọi). Hàm đọc mới trong `lib/data` bọc `cache()` của React (ADR-019).
 3. Fidelity: token từ `app/globals.css`; responsive bằng **container query**, không media query.
 4. Sửa `prisma/schema.prisma` → `npx prisma migrate dev --name <mô tả>` → `npx prisma generate` → **khởi động lại `npm run dev`** (dev server cache client cũ, triệu chứng: lỗi "Unknown argument"). Cập nhật `docs/architecture/data-model.md` cùng commit.
    - Thay đổi **làm mất dữ liệu** (xoá/đổi kiểu cột): `migrate dev` từ chối chạy không tương tác, và **không** dùng `--accept-data-loss`. Thay vào đó: `npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` → tự tạo `prisma/migrations/<timestamp>_<tên>/migration.sql`, **chèn bước chuyển dữ liệu trước khi xoá cột cũ** → `npx prisma migrate deploy` → chạy lại `migrate diff` phải ra "empty migration". Mẫu: các migration của F09.1, F09.2, F09.4.

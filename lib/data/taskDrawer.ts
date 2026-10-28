@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Task, TaskDrawerInfo } from "@/lib/types";
 import { getFeaturesByProject } from "./features";
 import { getDocGroupsByProject } from "./docs";
@@ -14,7 +15,7 @@ const STAGE_ASSIGNER: Record<string, string> = {
  * Context docs + log phiên chạy cho task drawer — suy ra từ feature/task thật
  * bằng một mẫu chung, thay vì viết tay cho từng task. Thay bằng log thật ở docs/features/F17-realtime-activity.md (F17.4).
  */
-export async function getTaskDrawerInfo(projectId: string, taskId: string): Promise<TaskDrawerInfo | null> {
+export const getTaskDrawerInfo = cache(async (projectId: string, taskId: string): Promise<TaskDrawerInfo | null> => {
   const features = await getFeaturesByProject(projectId);
   const feature = features.find((f) => f.tasks.some((t) => t.id === taskId));
   const task = feature?.tasks.find((t) => t.id === taskId);
@@ -25,7 +26,7 @@ export async function getTaskDrawerInfo(projectId: string, taskId: string): Prom
   const contextDocs = task.kind === "agent" ? featureGroup?.items.slice(0, 3).map((i) => i.title) ?? [] : [];
 
   return { contextDocs, sessionLog: buildSessionLog(task, contextDocs.length) };
-}
+});
 
 function buildSessionLog(task: Task, contextDocCount: number): { text: string; when: string }[] {
   const log: { text: string; when: string }[] = [];

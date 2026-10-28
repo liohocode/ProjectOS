@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { getProjectById, getProjects } from "@/lib/data/projects";
-import { getTasksByProject } from "@/lib/data/features";
+import { getTaskCountsByProject } from "@/lib/data/features";
 import { getDocCountByProject, getPendingRevisionCount } from "@/lib/data/docs";
-import { getPipelineAgents, getTeamByProject } from "@/lib/data/team";
+import { getMemberCountByProject, getPipelineAgents } from "@/lib/data/team";
 import { getCurrentUser } from "@/lib/auth/currentUser";
 import { getMcpServers } from "@/lib/data/mcp";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -15,12 +15,13 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   const [project, projects] = await Promise.all([getProjectById(projectId), getProjects()]);
   if (!project) notFound();
 
-  const [tasks, docCount, pendingRevisions, projectTeam, pipeline, mcpServers, currentUser] =
+  // Badge chỉ cần số → hàm đếm, không tải danh sách task/thành viên (page cần thì tự tải).
+  const [taskCounts, docCount, pendingRevisions, memberCount, pipeline, mcpServers, currentUser] =
     await Promise.all([
-      getTasksByProject(projectId),
+      getTaskCountsByProject(projectId),
       getDocCountByProject(projectId),
       getPendingRevisionCount(projectId),
-      getTeamByProject(projectId),
+      getMemberCountByProject(projectId),
       getPipelineAgents(),
       getMcpServers(),
       getCurrentUser(),
@@ -29,14 +30,14 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   const navCounts: Record<ScreenId, number> = {
     portfolio: projects.length,
     docs: docCount,
-    work: tasks.length,
-    team: projectTeam.length,
+    work: taskCounts.total,
+    team: memberCount,
     mcp: mcpServers.length,
   };
   const navAlerts: Record<ScreenId, number> = {
     portfolio: 0,
     docs: pendingRevisions,
-    work: tasks.filter((t) => t.blocked).length,
+    work: taskCounts.blocked,
     team: 0,
     mcp: 0,
   };

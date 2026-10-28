@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getProjectById, getProjects } from "./projects";
-import { getMemberById, getPipelineAgents, getTeam, getTeamByProject } from "./team";
-import { getFeaturesByProject, getTasksByProject } from "./features";
+import { getMemberById, getMemberCountByProject, getPipelineAgents, getTeam, getTeamByProject } from "./team";
+import { getFeaturesByProject, getTaskCountsByProject, getTasksByProject } from "./features";
 import { getMcpLog, getMcpServers, getMcpSessions } from "./mcp";
 
 // Số liệu mốc: docs/architecture/data-model.md → "Số lượng sau seed".
@@ -101,6 +101,19 @@ describe("features & tasks", () => {
 
   it("project không tồn tại trả mảng rỗng", async () => {
     expect(await getFeaturesByProject("khong-ton-tai")).toEqual([]);
+  });
+
+  it("hàm đếm cho badge sidebar khớp với danh sách đầy đủ ở cả 3 dự án", async () => {
+    for (const projectId of ["rv-web", "rv-app", "crm", "khong-ton-tai"]) {
+      const [counts, tasks, memberCount, team] = await Promise.all([
+        getTaskCountsByProject(projectId),
+        getTasksByProject(projectId),
+        getMemberCountByProject(projectId),
+        getTeamByProject(projectId),
+      ]);
+      expect(counts).toEqual({ total: tasks.length, blocked: tasks.filter((t) => t.blocked).length });
+      expect(memberCount).toBe(team.length);
+    }
   });
 });
 
