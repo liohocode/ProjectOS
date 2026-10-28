@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 2 | F03, F11.4 (khuôn mẫu dialog) | FR-DC-06, 07, 08 |
+| Đang làm | 2 | F03, F11.4 (khuôn mẫu dialog) | FR-DC-06, 07, 08 |
 
 ## Mục tiêu
 Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiêu chí…") — duyệt chỉ đổi cờ, không có nội dung nào được đưa vào bản chính. Feature này làm cho luồng governance — **lõi sản phẩm** — chạy thật: revision mang nội dung đề xuất, người duyệt xem diff rồi duyệt (áp vào bản chính) hoặc từ chối; người tạo và sửa tài liệu trực tiếp.
@@ -25,6 +25,7 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 | F12.4 | Lịch sử hiển thị người duyệt / bị từ chối | S | F12.1 | Chưa làm |
 | F12.5 | "Tài liệu mới" | M | F11.4 | Chưa làm |
 | F12.6 | Người sửa tài liệu trực tiếp | M | F12.1, F11.4 | Chưa làm |
+| F12.7 | `approveRevision` theo quy ước action (ADR-017) | S | — | Xong — 2026-10-28 |
 
 ### F12.1 — Schema revision
 **Làm gì**: `DocRevision`: thay `pending Boolean` bằng enum `RevisionStatus` (`pending`, `approved`, `rejected`); thêm `proposedSummary String?`, `proposedSections Json?` (cùng shape `[{heading, paras[]}]` với `Doc.sections`), `rejectedReason String?`, `baseVersion String` (version của doc lúc tạo revision). Migration chuyển dữ liệu cũ (`pending=true` → `pending`, còn lại → `approved`). Seed: 2 revision đang chờ ở `prd-listing`, `mcp-spec` có `proposedSections` = bản hiện tại + thay đổi đúng như mô tả (vd thêm đoạn vào "Tiêu chí hoàn thành"). Tách hàm `createRevision(docId, authorId, what, proposed)` trong `lib/actions/docs.ts` (hoặc `lib/domain/docs.ts` nếu cần dùng từ MCP) để F16.5 tái sử dụng. Cập nhật `lib/data/docs.ts`, `lib/types.ts` (`DocRevision.status`), `getPendingRevision*` lọc theo status.
@@ -57,6 +58,11 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 **Làm gì**: nút "Sửa" ở thân tài liệu → form (tóm tắt + nội dung markdown). Lưu: tạo revision `approved` do chính người sửa (để có lịch sử), áp nội dung, tăng version. Agent **không** có đường này (chỉ `docs.append`).
 **Hoàn thành khi**:
 - [ ] Sửa xong thấy dòng lịch sử mới "Đã duyệt bởi <người sửa>"
+
+### F12.7 — `approveRevision` theo ADR-017
+**Làm gì** (phát hiện khi rà repo 2026-10-28): action duyệt có từ F03.4, trước khi có ADR-017 — không validate, không trả `ActionResult`, không kiểm tra revision thuộc `projectId` client gửi lên (dùng luôn làm path revalidate), duyệt lại revision đã duyệt vẫn ghi đè người/thời điểm duyệt, `ApproveButton` không bắt lỗi. Sửa: zod + `ActionResult`; từ chối revision không thuộc dự án / không tồn tại; `updateMany` có điều kiện `pending=true` để hai lần duyệt đồng thời chỉ một lần ghi; `ApproveButton` hiện lỗi tại chỗ. Không đổi luồng phản hồi sau khi duyệt (lỗi "nút biến mất" vẫn để F12.4).
+**Hoàn thành khi**:
+- [x] Integration test: duyệt lại, revision dự án khác, revision không tồn tại, input rỗng → `{ ok: false }` và không ghi DB
 
 ## Quyết định / ghi chú
 - Nội dung tài liệu tiếp tục lưu dạng `sections Json` (không chuyển sang markdown thô) — form chỉ chuyển đổi qua lại markdown ↔ sections ở biên.
