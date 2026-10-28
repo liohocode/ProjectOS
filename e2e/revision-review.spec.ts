@@ -51,7 +51,7 @@ test("từ chối kèm lý do: revision rời trạng thái chờ, badge Docs h�
   await confirm.click();
 
   await expect(block.getByRole("button", { name: "Duyệt" })).toHaveCount(0);
-  await expect(block).toContainText("Từ chối: Thiếu ví dụ gọi tool");
+  await expect(block).toContainText("Bị từ chối: Thiếu ví dụ gọi tool");
   await expect(strip).toContainText("Revision chờ duyệt 1");
   await expect(navBadge).toHaveClass(/is-alert/);
 
@@ -65,5 +65,5 @@ test("từ chối kèm lý do: revision rời trạng thái chờ, badge Docs h�
   // Tài liệu giữ nguyên bản chính.
   await page.reload();
   await expect(page.locator(".doc-body-area").getByText("v4.2", { exact: true })).toBeVisible();
-  await expect(block).toContainText("Từ chối: Chưa có số liệu benchmark");
+  await expect(block).toContainText("Bị từ chối: Chưa có số liệu benchmark");
 });

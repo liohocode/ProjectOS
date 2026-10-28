@@ -113,7 +113,7 @@ export const getDocBody = cache(async (id: string): Promise<DocBody> => {
     include: {
       author: true,
       feature: true,
-      revisions: { include: { author: true }, orderBy: { createdAt: "desc" } },
+      revisions: { include: { author: true, approvedBy: true }, orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -158,6 +158,9 @@ export const getDocBody = cache(async (id: string): Promise<DocBody> => {
         rev.proposedSummary !== null &&
         rev.proposedSummary !== row.summary && { summaryChange: { from: row.summary, to: rev.proposedSummary } }),
       ...(rev.rejectedReason && { rejectedReason: rev.rejectedReason }),
+      // F12.4 — "Đã duyệt bởi … · …" (revision duyệt trước F12.2 / seed không có người duyệt).
+      ...(rev.approvedBy && { approvedBy: rev.approvedBy.name }),
+      ...(rev.approvedAt && { approvedWhen: formatRelativeVi(rev.approvedAt) }),
     })),
   };
 });

@@ -72,6 +72,9 @@ export interface DocRevision {
   diff?: SectionDiff[];
   summaryChange?: { from: string; to: string };
   rejectedReason?: string;
+  /** F12.4 — revision đã duyệt có người duyệt (revision cũ/seed có thể không có) */
+  approvedBy?: string;
+  approvedWhen?: string;
 }
 
 export interface DocSection {

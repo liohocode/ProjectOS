@@ -65,9 +65,10 @@ test("duyệt revision ghi xuống DB: áp nội dung đề xuất, tăng versio
   await expect(approve).toHaveCount(1);
   await approve.click();
 
-  // Sau revalidatePath trang render lại: revision hết chờ → nút biến mất, số đếm giảm.
-  // (Chưa có dòng "Đã duyệt bởi …" — làm ở F12.4.)
+  // Sau revalidatePath trang render lại: revision hết chờ → nút thành dòng "Đã duyệt bởi …" (F12.4), số đếm giảm.
+  const block = page.locator(".revision-block");
   await expect(approve).toHaveCount(0);
+  await expect(block).toContainText(/Đã duyệt bởi Trung Hiếu · \d+ giây trước/);
   await expect(strip).toContainText("Revision chờ duyệt 1");
 
   // Nội dung đề xuất (đoạn benchmark ở "Tiêu chí hoàn thành") vào bản chính, version v4.2 → v4.3.
@@ -76,6 +77,7 @@ test("duyệt revision ghi xuống DB: áp nội dung đề xuất, tăng versio
 
   await page.reload();
   await expect(page.getByRole("button", { name: "Duyệt" })).toHaveCount(0);
+  await expect(block).toContainText("Đã duyệt bởi Trung Hiếu");
   await expect(strip).toContainText("Revision chờ duyệt 1");
   await expect(body.getByText("v4.3", { exact: true })).toBeVisible();
   await expect(body.getByText(/Benchmark ngày 22\/08/)).toBeVisible();
