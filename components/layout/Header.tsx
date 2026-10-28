@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useUrlDialog } from "@/components/ui/urlDialog";
 import type { Project, ScreenId } from "@/lib/types";
 import { SCREEN_META } from "./screenMeta";
+import { HeaderSearch } from "./HeaderSearch";
 
 export function Header({ project }: { project: Project }) {
   const pathname = usePathname();
@@ -22,7 +23,7 @@ export function Header({ project }: { project: Project }) {
         </div>
       </div>
       <div className="header-actions">
-        <input className="input header-search" placeholder={meta.searchPlaceholder} />
+        <HeaderSearch projectId={project.id} placeholder={meta.searchPlaceholder} />
         <button type="button" className="btn btn-secondary">
           <i className="ph ph-funnel" aria-hidden /> Lọc
         </button>

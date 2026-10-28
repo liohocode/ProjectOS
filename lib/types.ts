@@ -165,3 +165,10 @@ export interface McpLogEntry {
   target: string;
   result: CommandResult;
 }
+
+/** Kết quả ô tìm kiếm header (F14.2), mỗi nhóm tối đa SEARCH_LIMIT. */
+export interface SearchResults {
+  tasks: { id: string; title: string; featureId: string }[];
+  features: { id: string; name: string }[];
+  docs: { id: string; title: string }[];
+}
