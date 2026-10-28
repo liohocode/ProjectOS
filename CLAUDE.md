@@ -54,4 +54,4 @@ npm run test:e2e               # Playwright, build production cổng 3100 + DB t
 ## Trạng thái hiện tại (2026-10)
 Phase 0 xong: 5 màn + app shell chạy trên Postgres thật (F01–F07). Kế hoạch tiếp theo đã chia thành feature F08–F19 với task chi tiết — xem `docs/ROADMAP.md`.
 
-Đã chốt (2026-10-14): đăng nhập **Google** (ADR-013); production trên **Google Cloud Run + Neon Postgres gói Free** (ADR-016, ADR-015) — code mới không được giữ request mở lâu (không SSE dài, MCP stateless) và không giữ trạng thái quan trọng trong RAM (có thể nhiều instance, scale về 0). Embedding/kho tri thức ngữ nghĩa (F18) đang hoãn.
+Đã chốt (2026-10-14): đăng nhập **Google** (ADR-013; thư viện **Better Auth** — ADR-020, `lib/auth/`); production trên **Google Cloud Run + Neon Postgres gói Free** (ADR-016, ADR-015) — code mới không được giữ request mở lâu (không SSE dài, MCP stateless) và không giữ trạng thái quan trọng trong RAM (có thể nhiều instance, scale về 0). Embedding/kho tri thức ngữ nghĩa (F18) đang hoãn.

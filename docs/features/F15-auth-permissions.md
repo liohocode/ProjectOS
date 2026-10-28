@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 3 | F11.1 | NFR-09, FR-SH-04 |
+| Đang làm | 3 | F11.1 | NFR-09, FR-SH-04 |
 
 ## Mục tiêu
 Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google**; mọi thao tác ghi kiểm tra quyền; mỗi agent có token riêng để kết nối MCP server (F16).
@@ -12,7 +12,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 - **Ngoài**: đăng nhập bằng phương thức khác, quản lý tổ chức nhiều tenant.
 
 ## Tham chiếu
-- `docs/architecture/decisions.md` → ADR-011, **ADR-013** (Google OAuth), ADR-016 (production trên Cloud Run — OAuth client tạo trong cùng Google Cloud project; redirect URI production là URL `run.app` hoặc tên miền ở F19.9)
+- `docs/architecture/decisions.md` → ADR-011, **ADR-013** (Google OAuth), **ADR-020** (Better Auth thay Auth.js), ADR-016 (production trên Cloud Run — OAuth client tạo trong cùng Google Cloud project; redirect URI production là URL `run.app` hoặc tên miền ở F19.9)
 - Next 16: `middleware.ts` **đã đổi tên thành `proxy.ts`** — đọc `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md` trước khi làm
 - Code: `lib/auth/currentUser.ts` (tạo ở F11.1), `lib/actions/*`
 
@@ -20,7 +20,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | F15.1 | Quyết định phương án đăng nhập | S | — | Xong — 2026-10-14 (ADR-013) |
-| F15.2 | Auth.js + Google: tài khoản, đăng nhập/đăng xuất, trang login | M | F15.1 | Chưa làm |
+| F15.2 | Better Auth + Google: tài khoản, đăng nhập/đăng xuất, trang login | M | F15.1 | Đang làm — code xong, chờ người dùng tạo OAuth client để thử đăng nhập thật (2026-10-28) |
 | F15.3 | Bảo vệ route bằng `proxy.ts`; `getCurrentUser()` đọc từ session | S | F15.2, F11.1 | Chưa làm |
 | F15.4 | Ma trận quyền + `can()`; áp vào mọi server action | M | F15.3 | Chưa làm |
 | F15.5 | Token cho agent (tạo / thu hồi) | M | F15.4 | Chưa làm |
@@ -29,7 +29,9 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 ### F15.1 — Quyết định phương án
 Đã chốt với người dùng: **đăng nhập bằng Google**. Xem ADR-013.
 
-### F15.2 — Auth.js + Google
+### F15.2 — Better Auth + Google
+> Đổi thư viện: Auth.js → **Better Auth** (ADR-020). Mô tả gốc bên dưới giữ để đối chiếu; phần đã làm ghi ở "Quyết định / ghi chú".
+
 **Làm gì**:
 1. **Thao tác thủ công của người dùng** (ghi hướng dẫn từng bước vào `docs/guides/google-oauth.md`): tạo OAuth client loại "Web application" trên Google Cloud Console — **trong cùng project với Cloud Run** (F19.3); cấu hình OAuth consent screen (Internal nếu dùng Google Workspace của công ty, External nếu không); Authorized redirect URI: `http://localhost:3000/api/auth/callback/google` (dev) và `https://<service>.run.app/api/auth/callback/google` (production, F19.6) hoặc tên miền riêng (F19.9); lấy Client ID/Secret.
 2. Cài Auth.js (NextAuth v5) — kiểm tra phiên bản hỗ trợ Next 16. Google provider; Prisma adapter (model `Account`, `Session`/`User` theo yêu cầu adapter) hoặc session JWT — ưu tiên JWT để mỗi request không phải đọc DB (giảm thời gian request trên Cloud Run, giữ Neon được ngủ); ghi quyết định.
@@ -37,8 +39,9 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 4. Trang `/login` theo Nocturne với nút "Đăng nhập bằng Google".
 5. Biến môi trường: `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` vào `.env.example`.
 **Hoàn thành khi**:
-- [ ] Đăng nhập bằng Google với email có trong `Member` → vào được app; email lạ → bị từ chối
-- [ ] Đăng xuất được; không commit secret
+- [ ] Đăng nhập bằng Google với email có trong `Member` → vào được app; email lạ → bị từ chối — *luật chặn đã có integration test; còn thử với Google thật khi người dùng có OAuth client (`docs/guides/google-oauth.md`)*
+- [ ] Đăng xuất được — *nút ở `/login`, chờ thử với Google thật*
+- [x] Không commit secret (`.env.example` chỉ có tên biến; e2e/CI dùng giá trị giả)
 
 ### F15.3 — Bảo vệ route
 **Làm gì**: `proxy.ts` chuyển hướng chưa đăng nhập → `/login` (trừ `/login`, asset, `/api/mcp` — route MCP xác thực bằng token agent riêng). Viết lại `getCurrentUser()` đọc session (giữ chữ ký từ F11.1). Kiểm tra người dùng thuộc dự án trong URL, không thì 404/403.
@@ -70,3 +73,9 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 - [ ] Đăng nhập bằng tài khoản không phải tech lead → không thấy nút "Duyệt"
 
 ## Quyết định / ghi chú
+- **F15.2 (2026-10-28)** — người dùng chốt: Better Auth (ADR-020); consent screen **External** (thành viên dùng Gmail cá nhân / nhiều tên miền); email thật để thử ở dev qua `DEV_LOGIN_EMAIL` (không commit email thật vào seed).
+  - Code: `lib/auth/auth.ts` (cấu hình), `lib/auth/loginPolicy.ts` (`checkLogin` — ai được vào), `lib/auth/client.ts`, `lib/auth/redirect.ts` (`safeReturnPath` chống open redirect), `app/api/auth/[...all]/route.ts`, `app/login/page.tsx`, `components/auth/LoginCard.tsx`. Schema: `Member.email` + 4 bảng `auth_*` (migration `auth_better_auth`).
+  - Session DB + cookie cache 5 phút thay cho JWT thuần (mô tả gốc ưu tiên JWT): vẫn tránh đọc DB phần lớn request, thêm khả năng thu hồi session.
+  - `/login` không có trong `design-reference.md` → dựng từ `.error-page`/`.error-state` + khối logo sidebar. Đăng xuất tạm ở `/login` (footer sidebar là F15.6).
+  - Image Docker 393 → 423 MB (Better Auth + phụ thuộc); container chạy `/login`, `/api/auth/get-session` 200.
+  - Test: unit `safeReturnPath`; integration `checkLogin` (người lạ, chưa xác minh, agent, hoa thường) + tạo tài khoản qua adapter Better Auth (gán `memberId`, chặn người lạ ở hook); e2e `/login`, thông báo lỗi, URL chuyển sang Google có `redirect_uri` đúng, chặn `callbackURL` ra ngoài.

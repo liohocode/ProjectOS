@@ -82,7 +82,7 @@ Hướng dẫn: `docs/guides/deploy-cloud-run.md` → phần 1 (lệnh chạy tr
 - [ ] `prisma migrate status` trên Neon báo đã cập nhật; app ở local trỏ tạm vào Neon chạy được
 
 ### F19.5 — Secrets + env
-**Làm gì**: `lib/env.ts` validate biến môi trường lúc khởi động (zod): `DATABASE_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` (khi F15 xong), `MCP_DEV_TOKENS` (chỉ dev). Production: lưu trong **Secret Manager**, mount vào Cloud Run bằng `--set-secrets`. `.env.example` ghi rõ biến nào dùng ở môi trường nào.
+**Làm gì**: `lib/env.ts` validate biến môi trường lúc khởi động (zod): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (tên theo ADR-020), `MCP_DEV_TOKENS` (chỉ dev). Production: lưu trong **Secret Manager**, mount vào Cloud Run bằng `--set-secrets`. `.env.example` ghi rõ biến nào dùng ở môi trường nào.
 **Hoàn thành khi**:
 - [ ] Thiếu `DATABASE_URL` → container dừng với thông báo rõ ràng
 

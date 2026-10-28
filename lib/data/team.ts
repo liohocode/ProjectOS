@@ -47,6 +47,15 @@ export const getMemberCountByProject = cache(async (projectId: string): Promise<
   return prisma.projectMember.count({ where: { projectId } });
 });
 
+/** Member người (human) có email đăng nhập này — null nếu không có (người lạ, hoặc email của agent). So khớp không phân biệt hoa thường. */
+export const getLoginMemberIdByEmail = cache(async (email: string): Promise<string | null> => {
+  const row = await prisma.member.findFirst({
+    where: { kind: "human", email: { equals: email.trim(), mode: "insensitive" } },
+    select: { id: true },
+  });
+  return row?.id ?? null;
+});
+
 export const getMemberById = cache(async (id: string): Promise<Member | undefined> => {
   const row = await prisma.member.findUnique({ where: { id }, include: memberInclude });
   return row ? toMember(row) : undefined;

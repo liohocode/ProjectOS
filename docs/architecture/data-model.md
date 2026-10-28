@@ -15,6 +15,8 @@ Member  1─n Feature (owner), Task (assignee), Doc (author)
 Member  1─n McpSession, McpLogEntry      (agent; log có thể là người, vd duyệt revision)
 Project 1─n McpSession; Task 0─n McpSession
 McpServer  (độc lập)
+Member  0..1─1 AuthUser 1─n AuthSession, AuthAccount   (đăng nhập Google, chỉ Member người — ADR-020)
+AuthVerification  (độc lập, Better Auth dùng cho token tạm)
 ```
 
 ## Bảng
@@ -22,7 +24,7 @@ McpServer  (độc lập)
 |---|---|---|
 | `Project` (`projects`) | `id` chuỗi (`rv-web`) | `currentSprintId` → sprint hiện tại; nhãn hiển thị "Sprint 14 · 12–26/08" dựng lại bằng `lib/sprint.ts` |
 | `Sprint` (`sprints`) | cuid | `name`, `startDate`, `endDate` (kiểu `DATE`) |
-| `Member` (`members`) | `id` chuỗi (`agent-atlas`, `hieu`) | `kind` = `human`/`agent`; `status` enum `MemberStatus` (nhãn ở `lib/memberFormat.ts`); `current` chuỗi tự do; `skills String[]`; `config Json?` = `[["Model","claude-sonnet-4.5"], ...]`, chỉ agent có |
+| `Member` (`members`) | `id` chuỗi (`agent-atlas`, `hieu`) | `kind` = `human`/`agent`; `status` enum `MemberStatus` (nhãn ở `lib/memberFormat.ts`); `current` chuỗi tự do; `skills String[]`; `config Json?` = `[["Model","claude-sonnet-4.5"], ...]`, chỉ agent có; `email String? @unique` — email Google đăng nhập, chỉ người (seed: `<id>@example.com`, `DEV_LOGIN_EMAIL` thay cho `hieu`) |
 | `MemberSkillRow` | cuid | `label`, `level` (Cao/Trung bình/Cơ bản/Không dùng), `percent`, `sortOrder` |
 | `MemberActivity` | cuid | `icon`, `text`, `at` (timestamp thật) |
 | `ProjectMember` | (`projectId`,`memberId`) | |
@@ -33,6 +35,10 @@ McpServer  (độc lập)
 | `McpServer` | `id` chuỗi | `status` enum `online`/`limited`, `tools String[]` |
 | `McpSession` | `id` chuỗi (`sess-8f2a`) / cuid | `startedAt`, `endedAt` (null = đang chạy; thời lượng tính từ 2 mốc này), `toolCalls`, `tokensUsed Int` (hiển thị "182K" qua `lib/mcpFormat.ts`), `result` enum |
 | `McpLogEntry` | cuid | `at`, `tool`, `target`, `result` enum; index `at desc` |
+| `AuthUser` (`auth_users`) | id do Better Auth sinh | schema lõi Better Auth 1.7 (`name`, `email` unique, `emailVerified`, `image`) + `memberId` unique → `Member` (cascade), gán lúc tạo tài khoản. Không sửa tay field lõi — adapter đọc đúng tên field mặc định |
+| `AuthSession` (`auth_sessions`) | id Better Auth | `token` unique, `expiresAt`, `ipAddress`, `userAgent`; cookie cache 5 phút nên không đọc bảng này mỗi request |
+| `AuthAccount` (`auth_accounts`) | id Better Auth | `providerId` = `google`, `accountId` = Google sub; token OAuth |
+| `AuthVerification` (`auth_verifications`) | id Better Auth | token tạm (state OAuth…) |
 
 ## Quy ước
 - **Khoá chính là id chuỗi đọc được** (`rv-web`, `FEAT-118`, `T-401`, `prd-listing`, `agent-atlas`) cho các thực thể nghiệp vụ — UI và URL dùng thẳng các id này. Bảng phụ (skill row, activity, revision, log) dùng `cuid()`. Lý do: `decisions.md` ADR-006.

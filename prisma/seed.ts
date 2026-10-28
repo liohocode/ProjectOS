@@ -73,6 +73,11 @@ const COMMAND_RESULT_MAP = {
 async function clearAll() {
   // Xoá theo thứ tự con → cha để không vướng FK. Script seed idempotent —
   // chạy lại an toàn khi đang phát triển (DB dev, chưa có dữ liệu người dùng thật).
+  // Tài khoản đăng nhập (auth_*) xoá trước: đăng nhập lại sau khi seed.
+  await prisma.authSession.deleteMany();
+  await prisma.authAccount.deleteMany();
+  await prisma.authVerification.deleteMany();
+  await prisma.authUser.deleteMany();
   await prisma.mcpLogEntry.deleteMany();
   await prisma.mcpSession.deleteMany();
   await prisma.docRevision.deleteMany();
@@ -89,6 +94,13 @@ async function clearAll() {
   await prisma.project.deleteMany();
 }
 
+/** Email thật để đăng nhập ở máy dev (không commit) — gán cho tech lead mẫu thay email @example.com. */
+const DEV_LOGIN_MEMBER_ID = "hieu";
+function memberEmail(m: Member): string | undefined {
+  const devEmail = process.env.DEV_LOGIN_EMAIL?.trim().toLowerCase();
+  return m.id === DEV_LOGIN_MEMBER_ID && devEmail ? devEmail : m.email;
+}
+
 async function main() {
   await clearAll();
 
@@ -103,6 +115,7 @@ async function main() {
         name: m.name,
         handle: m.handle,
         kind: m.kind,
+        email: memberEmail(m),
         role: m.role,
         skills: m.skills,
         current: m.current,
