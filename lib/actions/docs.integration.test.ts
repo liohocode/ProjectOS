@@ -38,6 +38,11 @@ describe("approveRevision", () => {
     expect(rev.approvedAt).toBeInstanceOf(Date);
     expect(await getPendingRevisionCount("rv-web")).toBe(1);
     expect(revalidatePath).toHaveBeenCalledWith("/rv-web", "layout");
+
+    // F12.4 — lịch sử hiện người duyệt; revision seed đã duyệt từ trước không có người duyệt.
+    const history = (await getDocBody("prd-listing")).history;
+    expect(history.find((r) => r.id === revisionId)).toMatchObject({ status: "approved", approvedBy: "Trung Hiếu", approvedWhen: expect.stringMatching(/giây trước$/) });
+    expect(history.find((r) => r.id !== revisionId && r.status === "approved")?.approvedBy).toBeUndefined();
   });
 
   it("từ chối duyệt lại, revision của dự án khác, revision không tồn tại và input rỗng", async () => {

@@ -6,7 +6,8 @@ import { rejectRevision } from "@/lib/actions/docs";
 import { ApproveButton } from "./ApproveButton";
 import { RevisionDiff } from "./RevisionDiff";
 
-// Một dòng revision (F12.3): revision đang chờ có "Xem thay đổi", "Từ chối" (nhập lý do), "Duyệt".
+// Một dòng revision: đang chờ → "Xem thay đổi", "Từ chối" (nhập lý do), "Duyệt" (F12.3);
+// đã xử lý → "Đã duyệt bởi … · …" / "Bị từ chối: <lý do>" lấy từ server (F12.4).
 export function RevisionItem({ rev, projectId }: { rev: DocRevision; projectId: string }) {
   const [showDiff, setShowDiff] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -32,11 +33,19 @@ export function RevisionItem({ rev, projectId }: { rev: DocRevision; projectId: 
     <div className="revision-item">
       <div className="revision-row">
         <span className={`tag ${rev.agent ? "tag-accent" : "tag-neutral"} nowrap revision-tag`}>{rev.who}</span>
-        <span className="revision-what">
-          {rev.what}
-          {rev.status === "rejected" && rev.rejectedReason && <span className="revision-reason"> — Từ chối: {rev.rejectedReason}</span>}
-        </span>
+        <span className="revision-what">{rev.what}</span>
         <span className="revision-when">{rev.when}</span>
+        {rev.status === "approved" && (
+          <span className="revision-status is-approved">
+            <i className="ph ph-check-circle" aria-hidden />{" "}
+            {rev.approvedBy ? `Đã duyệt bởi ${rev.approvedBy}${rev.approvedWhen ? ` · ${rev.approvedWhen}` : ""}` : "Đã duyệt"}
+          </span>
+        )}
+        {rev.status === "rejected" && (
+          <span className="revision-status is-rejected" title={rev.rejectedReason}>
+            <i className="ph ph-x-circle" aria-hidden /> Bị từ chối{rev.rejectedReason ? `: ${rev.rejectedReason}` : ""}
+          </span>
+        )}
         {pending && hasDiff && (
           <button type="button" className="btn btn-ghost revision-approve" aria-expanded={showDiff} aria-controls={diffId} onClick={() => setShowDiff((v) => !v)}>
             <i className={`ph ${showDiff ? "ph-caret-up" : "ph-caret-down"}`} aria-hidden /> Xem thay đổi

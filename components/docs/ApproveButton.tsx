@@ -3,14 +3,10 @@
 import { useState, useTransition } from "react";
 import { approveRevision } from "@/lib/actions/docs";
 
+// Duyệt xong server revalidate → dòng revision render lại thành "Đã duyệt bởi …" (F12.4), không giữ state cục bộ.
 export function ApproveButton({ revisionId, projectId }: { revisionId: string; projectId: string }) {
-  const [approved, setApproved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  if (approved) {
-    return <span className="tag tag-neutral nowrap revision-approve">Đã duyệt</span>;
-  }
 
   return (
     <>
@@ -27,8 +23,7 @@ export function ApproveButton({ revisionId, projectId }: { revisionId: string; p
           startTransition(async () => {
             setError(null);
             const result = await approveRevision(revisionId, projectId);
-            if (result.ok) setApproved(true);
-            else setError(result.error);
+            if (!result.ok) setError(result.error);
           })
         }
       >
