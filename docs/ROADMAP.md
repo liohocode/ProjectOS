@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-28 · Tổng: **54/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-28 · Tổng: **55/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -45,7 +45,7 @@ Cập nhật lần cuối: 2026-10-28 · Tổng: **54/104 task xong** (Phase 0 h
 ## Phase 5 — Vận hành
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F19](features/F19-deployment.md) | Deploy **Google Cloud Run + Neon Postgres** (gói Free), CD từ GitHub, budget alert, backup | F08.6, F15 | Chưa bắt đầu — F19.2 nên làm sớm | 2/10 |
+| [F19](features/F19-deployment.md) | Deploy **Google Cloud Run + Neon Postgres** (gói Free), CD từ GitHub, budget alert, backup | F08.6, F15 | Đang làm — F19.3 chờ người dùng | 3/10 |
 
 ## Việc nên nhận tiếp theo
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
@@ -53,10 +53,12 @@ Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhi�
 |---|---|
 | [F12.1](features/F12-doc-authoring.md) Revision có nội dung | Mở khoá phần còn lại của F12; dùng lại dialog URL (ADR-018) |
 | [F14.1](features/F14-search-filter.md) Deep link màn work | Độc lập, mở khoá F14.2 |
-| [F19.2](features/F19-deployment.md) Dockerfile production | Độc lập; xác nhận sớm app build được thành container (Next 16 standalone + Prisma 7) — nền cho cả F19 |
-| [F19.3](features/F19-deployment.md) Thiết lập Google Cloud + budget alert | **Người dùng tự làm** theo hướng dẫn; dùng chung project cho OAuth (F15.2) |
+| [F19.3](features/F19-deployment.md) Thiết lập Google Cloud + budget alert | **Người dùng tự làm** theo `docs/guides/deploy-cloud-run.md`; dùng chung project cho OAuth (F15.2) |
+| [F15.2](features/F15-auth-permissions.md) Đăng nhập Google | Bước kế tiếp trên đường deploy — cần OAuth client trong project của F19.3 |
 
 Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 → F13/F14 → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.
+
+**Đường deploy (chốt 2026-10-28)**: F19.2 ✓ + F19.3 → F15.2 → F15.3 → F19.4 → F19.5 → F19.6 → F19.7 — không chia sẻ URL production trước F15.3.
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Ghi chú |
@@ -73,6 +75,7 @@ Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: 
 | Realtime dùng polling ngắn, MCP stateless (vì Cloud Run tính tiền theo thời gian request mở) | 2026-10-14 | ADR-016 |
 | Embedding / kho tri thức ngữ nghĩa: để sau | 2026-10-14 | — (F18 hoãn) |
 | Feature chưa giao vẫn hiện ở list view | 2026-10-14 | — (ghi trong F09.3) |
+| Giữ Neon Free (không Cloud SQL); một môi trường deploy từ `main`; làm F15.2–F15.3 trước khi chia sẻ URL | 2026-10-28 | ADR-015 (xác nhận lại), F19 |
 
 ## Nhật ký
 - 2026-09-16 — Scaffold Next.js + App shell (F01).

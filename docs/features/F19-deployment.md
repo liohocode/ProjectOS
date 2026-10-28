@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu — F19.2 nên làm sớm | 5 | F08.6 (cho CD), F15 (trước khi mở cho người dùng thật) | NFR-10 |
+| Đang làm | 5 | F08.6 (cho CD), F15 (trước khi mở cho người dùng thật) | NFR-10 |
 
 ## Mục tiêu
 Đưa Meridian lên môi trường thật, **miễn phí trong hạn mức**: app chạy trên Google Cloud Run (container), database Neon Postgres gói Free, deploy tự động từ GitHub khi merge vào `main`, có cảnh báo chi phí và sao lưu.
@@ -37,15 +37,15 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 |---|---|---|
 | Cloud Run (billing theo request) | 2M request, 180K vCPU-giây, 360K GiB-giây / tháng, chung cho cả billing account | Request giữ kết nối lâu (SSE, MCP stream) đốt vCPU-giây → **cấm kết nối dài** (ADR-016) |
 | Artifact Registry | ~0.5 GB lưu trữ | Ảnh cũ tích tụ → bật cleanup policy |
-| Neon Free | 100 CU-giờ/project/tháng, 1 GB storage, 5 GB transfer; tự ngủ sau 5 phút | Polling liên tục giữ DB thức → polling chỉ khi tab hiển thị |
+| Neon Free | 100 CU-giờ/project/tháng, 0.5 GB storage/project (nguồn 2026-10; trước ghi 1 GB — đối chiếu trang giá ở F19.4), 5 GB transfer; tự ngủ sau 5 phút | Polling liên tục giữ DB thức → polling chỉ khi tab hiển thị |
 | Secret Manager | vài secret, vài nghìn lần truy cập/tháng | Thấp |
 
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | F19.1 | Quyết định hạ tầng | S | — | Xong — 2026-10-14 (ADR-016, ADR-015) |
-| F19.2 | Dockerfile production + chạy thử container ở local | M | — | Chưa làm |
-| F19.3 | Thiết lập Google Cloud + budget alert (hướng dẫn cho người dùng) | S | — | Chưa làm |
+| F19.2 | Dockerfile production + chạy thử container ở local | M | — | Xong — 2026-10-28 |
+| F19.3 | Thiết lập Google Cloud + budget alert (hướng dẫn cho người dùng) | S | — | Đang làm — hướng dẫn xong, chờ người dùng làm theo (2026-10-28) |
 | F19.4 | Neon production + kết nối Prisma | S | — | Chưa làm |
 | F19.5 | Secrets (Secret Manager) + kiểm tra biến môi trường | S | F19.3 | Chưa làm |
 | F19.6 | Deploy thủ công lần đầu lên Cloud Run | S | F19.2, F19.3, F19.4, F19.5 | Chưa làm |
@@ -61,8 +61,8 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 **Làm gì**: `next.config.ts` thêm `output: "standalone"` (kiểm tra docs Next 16). Dockerfile multi-stage: `deps` (`npm ci`, duyệt install script cho prisma/@prisma/engines/esbuild/unrs-resolver) → `build` (`npx prisma generate` + `npm run build`) → `runner` (`node:24-slim`, chỉ copy `.next/standalone`, `.next/static`, `public`, `lib/generated/prisma` nếu cần; user không phải root; `PORT` mặc định 8080 do Cloud Run truyền vào; `CMD ["node", "server.js"]`). Không chạy migrate trong container (CI làm, F19.7). `.dockerignore` loại `node_modules`, `.next`, `.env*`, `.git`. Thêm service `app` vào `docker-compose.yml` dưới `profiles: ["app"]` để chạy thử: `docker compose --profile app up --build` (app nối DB Docker).
 **File**: `Dockerfile`, `.dockerignore`, `next.config.ts`, `docker-compose.yml`
 **Hoàn thành khi**:
-- [ ] Container chạy ở `localhost:8080`, 5 màn hiển thị đúng với DB Docker
-- [ ] Kích thước image ghi vào mục ghi chú (mục tiêu < 300 MB)
+- [x] Container chạy ở `localhost:8080`, 5 màn hiển thị đúng với DB Docker
+- [x] Kích thước image ghi vào mục ghi chú (mục tiêu < 300 MB — không đạt, xem ghi chú: 393 MB, nén ~90 MB)
 
 ### F19.3 — Google Cloud + budget alert
 **Làm gì**: viết `docs/guides/deploy-cloud-run.md` hướng dẫn **người dùng tự làm** trên Google Cloud Console (dùng chung project với OAuth client của F15.2):
@@ -72,6 +72,7 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 4. Tạo Artifact Registry repo Docker ở `asia-southeast1` + cleanup policy giữ ~5 image gần nhất.
 5. Kiểm tra region chọn được áp hạn mức free của Cloud Run (nếu không, dùng region được free gần nhất và ghi lại).
 6. Tạo service account cho deploy (quyền tối thiểu: Run Admin, Artifact Registry Writer, Service Account User, Secret Manager Secret Accessor cho service account runtime) và **Workload Identity Federation** cho repo GitHub `liohocode/ProjectOS` (không tạo JSON key).
+Hướng dẫn: `docs/guides/deploy-cloud-run.md` → phần 1 (lệnh chạy trong Cloud Shell).
 **Hoàn thành khi**:
 - [ ] Người dùng làm theo hướng dẫn xong; có `PROJECT_ID`, region, tên repo Artifact Registry, provider WIF để dùng ở F19.7
 
@@ -128,4 +129,7 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 - **F15 Auth**: OAuth client tạo trong cùng Google Cloud project; redirect URI production là URL `run.app` (hoặc tên miền F19.9).
 
 ## Quyết định / ghi chú
+- **F19.2 (2026-10-28)**: base `node:24-slim` (glibc, cùng họ với runner CI Ubuntu). Image 393 MB (`docker images`), nén ~90 MB (dung lượng thật khi push). Phần app chỉ ~47 MB — còn lại là base Node. Thử `node:24-alpine`: 306 MB / nén ~73 MB, vẫn không đạt < 300 MB và đổi sang musl → giữ slim. Kiểm tra: 5 màn 200 với DB local, `/_next/static` phục vụ được, chạy user `node`, image không chứa `.env`.
+- `npm run build` có `postbuild` copy `.next/static` vào `.next/standalone`; `npm start` = `node .next/standalone/server.js` (Next 16 cảnh báo `next start` không hỗ trợ `output: "standalone"`). E2E chạy đúng server này (cổng qua `PORT`) → test cùng cách container production chạy. Next tự copy `.env` vào `.next/standalone` khi build ở máy — vô hại (`.next` gitignore); Docker không có vì `.dockerignore` loại `.env*`.
+- **2026-10-28 — người dùng chốt**: giữ Neon Free (so với Cloud SQL — xem ADR-015 "Xác nhận lại"); một môi trường duy nhất deploy từ `main`; **làm F15.2 → F15.3 trước khi chia sẻ URL**. Thứ tự: F19.2 + F19.3 → F15.2 → F15.3 → F19.4 → F19.5 → F19.6 → F19.7. Người dùng có credit Free Trial 300 USD (hết hạn sau ~90 ngày; sau đó Cloud Run vẫn trong hạn mức free).
 - Nếu sau này cần kết nối dài, job nền nặng, hoặc vượt hạn mức free: chuyển cùng image sang VPS (Docker Compose) — ghi ADR mới khi đó.
