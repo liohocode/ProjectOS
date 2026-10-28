@@ -1,5 +1,10 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { getProjectsByMember } from "@/lib/data/projects";
 
-export default function RootPage() {
-  redirect("/rv-web/work");
+// "/" → màn Feature & Task của dự án đầu tiên người dùng thuộc về (F15.3).
+export default async function RootPage() {
+  const [first] = await getProjectsByMember(await getCurrentUserId());
+  if (!first) notFound();
+  redirect(`/${first.id}/work`);
 }

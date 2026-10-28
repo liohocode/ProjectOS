@@ -40,7 +40,7 @@ Một task chỉ `Xong` khi:
 ## 6. Commit
 - Tiêu đề: `<task-id>: <mô tả ngắn>` — vd `F11.2: server actions cập nhật stage và giao task`.
 - Commit nhỏ, một task một (hoặc vài) commit; không gộp nhiều task không liên quan.
-- Không push/merge vào `main` nếu người dùng chưa yêu cầu.
+- Không push thẳng vào `main`; mọi thay đổi đi qua PR. Agent tự merge PR của chính mình khi CI xanh (rebase merge) — xem "Mức tự quyết của agent" trong `CLAUDE.md`.
 
 ## Quy ước mã
 | Loại | Định dạng | Ví dụ |

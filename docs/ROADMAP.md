@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-28 · Tổng: **55/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-28 · Tổng: **56/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -33,7 +33,7 @@ Cập nhật lần cuối: 2026-10-28 · Tổng: **55/104 task xong** (Phase 0 h
 ## Phase 3 — Danh tính
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F15](features/F15-auth-permissions.md) | Đăng nhập **Google** (Better Auth), phân quyền, token cho agent | F11.1 | Đang làm — F15.2 chờ OAuth client | 1/6 |
+| [F15](features/F15-auth-permissions.md) | Đăng nhập **Google** (Better Auth), phân quyền, token cho agent | F11.1 | Đang làm — F15.2 chờ OAuth client | 2/6 |
 
 ## Phase 4 — Nền tảng agent (lõi sản phẩm)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -55,7 +55,6 @@ Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhi�
 | [F14.1](features/F14-search-filter.md) Deep link màn work | Độc lập, mở khoá F14.2 |
 | [F19.3](features/F19-deployment.md) Thiết lập Google Cloud + budget alert | **Người dùng tự làm** theo `docs/guides/deploy-cloud-run.md`; dùng chung project cho OAuth (F15.2) |
 | [F15.2](features/F15-auth-permissions.md) Đăng nhập Google | Code xong — **người dùng tạo OAuth client** theo `docs/guides/google-oauth.md` để thử thật |
-| [F15.3](features/F15-auth-permissions.md) Chặn route + `getCurrentUser()` từ session | Làm được ngay (không cần Google thật để code/test); sau bước này mới chia sẻ URL |
 
 Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 → F13/F14 → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.
 

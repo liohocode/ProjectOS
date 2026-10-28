@@ -58,7 +58,7 @@ Nếu consent screen đang ở **Testing**, nhớ thêm `DEV_LOGIN_EMAIL` vào *
 | Đăng xuất ở `/login` | Về trạng thái chưa đăng nhập |
 | Đăng nhập bằng email Google khác (không có trong Meridian) | Quay về `/login` với "Email này chưa được mời vào Meridian…" |
 
-Chưa có ở F15.2: chặn route khi chưa đăng nhập và app đọc người dùng từ session (F15.3) — trước F15.3, app vẫn coi người dùng là Trung Hiếu dù ai đăng nhập.
+Từ F15.3: chưa đăng nhập mở bất kỳ trang nào → về `/login`, đăng nhập xong quay lại đúng trang; app dùng người đang đăng nhập (không còn cố định Trung Hiếu) và chỉ hiện dự án họ thuộc về.
 
 ## Lỗi thường gặp
 | Triệu chứng | Nguyên nhân |

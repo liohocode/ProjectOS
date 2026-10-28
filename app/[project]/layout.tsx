@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { getProjectById, getProjects } from "@/lib/data/projects";
+import { getProjectById, getProjects, getProjectsByMember } from "@/lib/data/projects";
 import { getTaskCountsByProject } from "@/lib/data/features";
 import { getDocCountByProject, getPendingRevisionCount } from "@/lib/data/docs";
 import { getMemberCountByProject, getPipelineAgents } from "@/lib/data/team";
-import { getCurrentUser } from "@/lib/auth/currentUser";
+import { getCurrentUser, getCurrentUserId } from "@/lib/auth/currentUser";
 import { getMcpServers } from "@/lib/data/mcp";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -12,8 +12,14 @@ import type { ScreenId } from "@/lib/types";
 export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   const { project: projectId } = await props.params;
 
-  const [project, projects] = await Promise.all([getProjectById(projectId), getProjects()]);
-  if (!project) notFound();
+  const userId = await getCurrentUserId();
+  const [project, projects, myProjects] = await Promise.all([
+    getProjectById(projectId),
+    getProjects(),
+    getProjectsByMember(userId),
+  ]);
+  // Dự án không tồn tại hoặc người dùng không thuộc dự án → 404 (không lộ dự án có tồn tại hay không).
+  if (!project || !myProjects.some((p) => p.id === projectId)) notFound();
 
   // Badge chỉ cần số → hàm đếm, không tải danh sách task/thành viên (page cần thì tự tải).
   const [taskCounts, docCount, pendingRevisions, memberCount, pipeline, mcpServers, currentUser] =
@@ -46,7 +52,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
     <div className="app-shell">
       <Sidebar
         project={project}
-        projects={projects}
+        projects={myProjects}
         navCounts={navCounts}
         navAlerts={navAlerts}
         pipeline={pipeline}

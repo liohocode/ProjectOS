@@ -1,4 +1,4 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "@/lib/prisma";
@@ -8,7 +8,8 @@ import { checkLogin } from "./loginPolicy";
 // Env: BETTER_AUTH_SECRET, BETTER_AUTH_URL (Better Auth tự đọc), GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
 const googleConfigured = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
-export const auth = betterAuth({
+// Tách khỏi betterAuth() để e2e dựng instance test cùng cấu hình (e2e/auth.setup.ts).
+export const authOptions = {
   appName: "Meridian",
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   // Model Prisma riêng (AuthUser…) để không lẫn với Member — xem prisma/schema.prisma.
@@ -55,6 +56,8 @@ export const auth = betterAuth({
   telemetry: { enabled: false },
   // nextCookies() phải đứng cuối: set cookie khi gọi auth.api từ server action.
   plugins: [nextCookies()],
-});
+} satisfies BetterAuthOptions;
+
+export const auth = betterAuth(authOptions);
 
 export const isGoogleLoginConfigured = googleConfigured;

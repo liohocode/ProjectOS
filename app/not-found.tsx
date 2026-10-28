@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { getProjects } from "@/lib/data/projects";
+import { getProjectsByMember } from "@/lib/data/projects";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 
 // Hiện khi URL trỏ tới dự án không tồn tại (notFound() trong app/[project]/layout.tsx)
-// hoặc route không có. Liệt kê dự án thật để người dùng chọn lại.
+// hoặc route không có. Liệt kê dự án người dùng thuộc về để chọn lại (F15.3).
 export default async function NotFound() {
   // Render lúc request, không prerender lúc build (build trên CI không có DB).
   await connection();
-  const projects = await getProjects();
+  const projects = await getProjectsByMember(await getCurrentUserId());
 
   return (
     <main className="error-page">

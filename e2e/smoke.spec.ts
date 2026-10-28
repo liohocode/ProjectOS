@@ -8,9 +8,9 @@ const SCREEN_TITLES: Record<string, string> = {
   mcp: "Kết nối MCP cho agent",
 };
 
-test("/ chuyển về màn Feature & Task của dự án mặc định", async ({ page }) => {
+test("/ chuyển về màn Feature & Task của dự án đầu tiên người dùng thuộc về (F15.3)", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/rv-web\/work$/);
+  await expect(page).toHaveURL(/\/crm\/work$/);
   await expect(page.locator("header h4")).toHaveText(SCREEN_TITLES.work);
 });
 
