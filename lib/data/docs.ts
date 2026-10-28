@@ -1,10 +1,11 @@
+import { cache } from "react";
 import type { DocBody, DocGroup, DocSection } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
 
 const GENERAL_GROUP_NAME = "Kho tri thức chung";
 
-export async function getDocGroupsByProject(projectId: string): Promise<DocGroup[]> {
+export const getDocGroupsByProject = cache(async (projectId: string): Promise<DocGroup[]> => {
   const features = await prisma.feature.findMany({
     where: { projectId },
     include: { docs: { orderBy: { id: "asc" } } },
@@ -32,20 +33,20 @@ export async function getDocGroupsByProject(projectId: string): Promise<DocGroup
   }
 
   return groups;
-}
+});
 
-export async function getFirstDocId(projectId: string): Promise<string | null> {
+export const getFirstDocId = cache(async (projectId: string): Promise<string | null> => {
   const groups = await getDocGroupsByProject(projectId);
   return groups[0]?.items[0]?.id ?? null;
-}
+});
 
-export async function getDocCountByProject(projectId: string): Promise<number> {
+export const getDocCountByProject = cache(async (projectId: string): Promise<number> => {
   return prisma.doc.count({ where: { projectId } });
-}
+});
 
-export async function getPendingRevisionCount(projectId: string): Promise<number> {
+export const getPendingRevisionCount = cache(async (projectId: string): Promise<number> => {
   return prisma.docRevision.count({ where: { pending: true, doc: { projectId } } });
-}
+});
 
 export async function getPendingRevisionsByProject(
   projectId: string,
@@ -74,7 +75,7 @@ export interface KnowledgeStripStats {
   embeddingModel: string;
 }
 
-export async function getKnowledgeStripStats(projectId: string): Promise<KnowledgeStripStats> {
+export const getKnowledgeStripStats = cache(async (projectId: string): Promise<KnowledgeStripStats> => {
   const [totalDocs, indexedDocs, agentWritten, pendingRevisions, chunkAgg, lastIndexed] = await Promise.all([
     prisma.doc.count({ where: { projectId } }),
     prisma.doc.count({ where: { projectId, indexedAt: { not: null } } }),
@@ -93,9 +94,9 @@ export async function getKnowledgeStripStats(projectId: string): Promise<Knowled
     lastIndexedAgo: lastIndexed?.indexedAt ? formatRelativeVi(lastIndexed.indexedAt) : "Chưa index",
     embeddingModel: "text-embedding-3-large",
   };
-}
+});
 
-export async function getDocBody(id: string): Promise<DocBody> {
+export const getDocBody = cache(async (id: string): Promise<DocBody> => {
   const row = await prisma.doc.findUnique({
     where: { id },
     include: {
@@ -141,4 +142,4 @@ export async function getDocBody(id: string): Promise<DocBody> {
       pending: rev.pending,
     })),
   };
-}
+});

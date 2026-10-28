@@ -107,3 +107,12 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 - Khung dùng chung: `components/ui/Dialog.tsx` (Esc/click nền, focus trap, trả focus) + `components/ui/Field.tsx` (nhãn + `.input`).
 - Màn chưa có dialog để `primaryDialog: false` trong `components/layout/screenMeta.ts`; bật lên khi page của màn đã render dialog.
 **Hệ quả**: dialog mở được bằng link/bookmark, nút Back đóng dialog; F12 ("Tài liệu mới") và F13 ("Thêm thành viên") chỉ cần thêm component dialog + đọc `searchParams` ở page.
+
+### ADR-019 — Dedupe đọc dữ liệu trong một request bằng `React.cache()` (2026-10-28)
+**Bối cảnh**: layout `/[project]`, page và các hàm data gọi lại nhau (vd `getActivityFeed` → `getTasksByProject` → `getFeaturesByProject`) nên một request tải cùng dữ liệu nhiều lần; màn work tốn 131 câu SQL. Production chạy Neon Free + Cloud Run (ADR-015, ADR-016) — query thừa vừa chậm vừa ăn quota.
+**Quyết định**:
+- Mọi hàm đọc export trong `lib/data/*.ts` và `lib/auth/currentUser.ts` viết dạng `export const getX = cache(async (...) => { ... })` (`cache` từ `react`). Chữ ký giữ nguyên (ADR-004) nên nơi gọi không đổi.
+- Phạm vi cache là **một request render** của Server Component — không phải cache giữa các request, không giữ trạng thái trong RAM (hợp ràng buộc ADR-016). Server action ghi xong gọi `revalidatePath` → request render mới → đọc lại từ DB.
+- Tham số là kiểu nguyên thuỷ (id chuỗi) để cache khớp theo giá trị; không truyền object/mảng vào hàm `lib/data`.
+- Chỗ chỉ cần con số (badge sidebar) dùng hàm đếm riêng (`prisma.*.count`) thay vì tải danh sách rồi `.length`.
+**Hệ quả**: màn work 131 → 33 câu SQL, các màn khác giảm 8–10 câu. Ngoài React render (Vitest integration, script) `cache` không dedupe — hàm vẫn chạy đúng, chỉ không gộp. Giá trị trả về dùng chung giữa các nơi gọi trong request → không mutate kết quả của hàm `lib/data`.

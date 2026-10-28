@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Member } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
@@ -27,24 +28,29 @@ function toMember(row: MemberRow): Member {
   };
 }
 
-export async function getTeam(): Promise<Member[]> {
+export const getTeam = cache(async (): Promise<Member[]> => {
   const rows = await prisma.member.findMany({ include: memberInclude, orderBy: { id: "asc" } });
   return rows.map(toMember);
-}
+});
 
-export async function getTeamByProject(projectId: string): Promise<Member[]> {
+export const getTeamByProject = cache(async (projectId: string): Promise<Member[]> => {
   const rows = await prisma.member.findMany({
     where: { projects: { some: { projectId } } },
     include: memberInclude,
     orderBy: { id: "asc" },
   });
   return rows.map(toMember);
-}
+});
 
-export async function getMemberById(id: string): Promise<Member | undefined> {
+/** Số thành viên dự án cho badge sidebar — cùng tập với getTeamByProject, không tải hồ sơ. */
+export const getMemberCountByProject = cache(async (projectId: string): Promise<number> => {
+  return prisma.projectMember.count({ where: { projectId } });
+});
+
+export const getMemberById = cache(async (id: string): Promise<Member | undefined> => {
   const row = await prisma.member.findUnique({ where: { id }, include: memberInclude });
   return row ? toMember(row) : undefined;
-}
+});
 
 const PIPELINE_STAGE_BY_AGENT_ID: Record<string, string> = {
   "agent-bao": "BA",
@@ -53,7 +59,7 @@ const PIPELINE_STAGE_BY_AGENT_ID: Record<string, string> = {
   "agent-scout": "Index",
 };
 
-export async function getPipelineAgents(): Promise<{ stage: string; agent: Member }[]> {
+export const getPipelineAgents = cache(async (): Promise<{ stage: string; agent: Member }[]> => {
   const order = Object.keys(PIPELINE_STAGE_BY_AGENT_ID);
   const rows = await prisma.member.findMany({
     where: { id: { in: order } },
@@ -64,4 +70,4 @@ export async function getPipelineAgents(): Promise<{ stage: string; agent: Membe
     const row = byId.get(id);
     return row ? [{ stage: PIPELINE_STAGE_BY_AGENT_ID[id], agent: toMember(row) }] : [];
   });
-}
+});

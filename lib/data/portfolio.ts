@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Member, Project } from "@/lib/types";
 import { getProjects } from "./projects";
 import { getFeaturesByProject } from "./features";
@@ -13,7 +14,7 @@ export interface ProjectSummary extends Project {
   avatars: Member[];
 }
 
-export async function getPortfolioSummaries(): Promise<ProjectSummary[]> {
+export const getPortfolioSummaries = cache(async (): Promise<ProjectSummary[]> => {
   const projects = await getProjects();
   return Promise.all(
     projects.map(async (project) => {
@@ -31,4 +32,4 @@ export async function getPortfolioSummaries(): Promise<ProjectSummary[]> {
       };
     }),
   );
-}
+});

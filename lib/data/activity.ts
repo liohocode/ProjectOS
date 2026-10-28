@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { ActivityItem } from "@/lib/types";
 import { getTasksByProject } from "./features";
 import { getPendingRevisionsByProject } from "./docs";
@@ -5,7 +6,7 @@ import { getPendingRevisionsByProject } from "./docs";
 // Activity rail — suy ra từ task (running/blocked/chờ review) và revision
 // docs đang chờ duyệt, thay vì một mock rời rạc, để luôn khớp với dữ liệu
 // task/doc thật ở các màn khác. Thay bằng bảng sự kiện thật ở docs/features/F17-realtime-activity.md (F17.1).
-export async function getActivityFeed(projectId: string): Promise<ActivityItem[]> {
+export const getActivityFeed = cache(async (projectId: string): Promise<ActivityItem[]> => {
   const [tasks, pendingRevisions] = await Promise.all([
     getTasksByProject(projectId),
     getPendingRevisionsByProject(projectId),
@@ -54,4 +55,4 @@ export async function getActivityFeed(projectId: string): Promise<ActivityItem[]
   }));
 
   return [...running, ...blocked, ...review, ...docs];
-}
+});

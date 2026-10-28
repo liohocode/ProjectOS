@@ -1,10 +1,11 @@
+import { cache } from "react";
 import type { Feature, Task } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning, toIsoDate } from "@/lib/taskFormat";
 
 export const UNASSIGNED_OWNER = "Chưa giao";
 
-export async function getFeaturesByProject(projectId: string): Promise<Feature[]> {
+export const getFeaturesByProject = cache(async (projectId: string): Promise<Feature[]> => {
   const rows = await prisma.feature.findMany({
     where: { projectId },
     include: {
@@ -42,9 +43,18 @@ export async function getFeaturesByProject(projectId: string): Promise<Feature[]
       }),
     ),
   }));
-}
+});
 
-export async function getTasksByProject(projectId: string): Promise<Task[]> {
+export const getTasksByProject = cache(async (projectId: string): Promise<Task[]> => {
   const features = await getFeaturesByProject(projectId);
   return features.flatMap((f) => f.tasks);
-}
+});
+
+/** Số task + số task bị block cho badge sidebar — đếm trong DB, không tải cả cây feature/task. */
+export const getTaskCountsByProject = cache(async (projectId: string): Promise<{ total: number; blocked: number }> => {
+  const [total, blocked] = await Promise.all([
+    prisma.task.count({ where: { feature: { projectId } } }),
+    prisma.task.count({ where: { feature: { projectId }, blocked: { not: null } } }),
+  ]);
+  return { total, blocked };
+});
