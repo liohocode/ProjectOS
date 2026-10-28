@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-28 · Tổng: **56/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-28 · Tổng: **57/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -28,7 +28,7 @@ Cập nhật lần cuối: 2026-10-28 · Tổng: **56/104 task xong** (Phase 0 h
 | [F11](features/F11-task-mutations.md) | Thao tác task ghi DB; khuôn mẫu dialog hành động chính | F07 (+F09.2) | Xong | 7/7 |
 | [F12](features/F12-doc-authoring.md) | Revision có nội dung, duyệt áp vào bản chính, từ chối, diff, tạo/sửa tài liệu | F11.4 | Đang làm | 1/7 |
 | [F13](features/F13-entity-management.md) | Dự án mới, thêm thành viên, cấu hình agent, MCP server ngoài | F11 | Chưa bắt đầu | 0/7 |
-| [F14](features/F14-search-filter.md) | Tìm kiếm, lọc, deep link, phân trang | F07 | Chưa bắt đầu | 0/4 |
+| [F14](features/F14-search-filter.md) | Tìm kiếm, lọc, deep link, phân trang | F07 | Đang làm | 1/4 |
 
 ## Phase 3 — Danh tính
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -52,7 +52,7 @@ Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhi�
 | Task | Vì sao |
 |---|---|
 | [F12.1](features/F12-doc-authoring.md) Revision có nội dung | Mở khoá phần còn lại của F12; dùng lại dialog URL (ADR-018) |
-| [F14.1](features/F14-search-filter.md) Deep link màn work | Độc lập, mở khoá F14.2 |
+| [F14.2](features/F14-search-filter.md) Tìm kiếm trong dự án | F14.1 xong — dùng `?task=` để mở kết quả |
 | [F19.3](features/F19-deployment.md) Thiết lập Google Cloud + budget alert | **Người dùng tự làm** theo `docs/guides/deploy-cloud-run.md`; dùng chung project cho OAuth (F15.2) |
 | [F15.2](features/F15-auth-permissions.md) Đăng nhập Google | Code xong — **người dùng tạo OAuth client** theo `docs/guides/google-oauth.md` để thử thật |
 

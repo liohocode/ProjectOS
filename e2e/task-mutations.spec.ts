@@ -141,7 +141,8 @@ test.describe("sửa nhanh task", () => {
     await page.reload();
     const reloaded = page.locator(".trow", { hasText: "T-409" });
     await expect(reloaded.locator(".trow-title")).toHaveText("Chốt chỉ số p95 (đã sửa)");
-    await reloaded.click();
+    // URL vẫn có ?task=T-409 (F14.1) → reload xong drawer mở sẵn đúng task.
+    await expect(page).toHaveURL(/\?task=T-409$/);
     await expect(page.getByRole("dialog").locator(".drawer-meta-row", { hasText: "Hạn" })).toContainText("30/09");
   });
 });

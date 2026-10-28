@@ -21,6 +21,7 @@ export const getActivityFeed = cache(async (projectId: string): Promise<Activity
       tool: `tasks.claim ${t.id}`,
       when: t.running!,
       tone: "run",
+      taskId: t.id,
     }));
 
   const blocked: ActivityItem[] = tasks
@@ -32,6 +33,7 @@ export const getActivityFeed = cache(async (projectId: string): Promise<Activity
       tool: "tasks.comment",
       when: `Hạn ${t.due}`,
       tone: "block",
+      taskId: t.id,
     }));
 
   const review: ActivityItem[] = tasks
@@ -43,6 +45,7 @@ export const getActivityFeed = cache(async (projectId: string): Promise<Activity
       tool: "tasks.update_status",
       when: `Hạn ${t.due}`,
       tone: "review",
+      taskId: t.id,
     }));
 
   const docs: ActivityItem[] = pendingRevisions.map((r) => ({
