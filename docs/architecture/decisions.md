@@ -74,6 +74,8 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 **Quyết định**: **Neon Postgres** gói Free cho production (cùng Postgres với dev → giữ nguyên schema, migration, Prisma). Kết nối từ Workers qua driver adapter phù hợp môi trường Workers (`@prisma/adapter-neon` hoặc `@prisma/adapter-pg` qua Cloudflare Hyperdrive — chốt ở spike F19.2/F19.3). Neon hỗ trợ `pgvector` nên F18 không bị chặn.
 **Hệ quả**: dev vẫn dùng Postgres trong Docker; `prisma migrate deploy` chạy từ CI trước khi deploy (Workers không có bước khởi động). Gói Free có giới hạn dung lượng/compute — theo dõi khi dữ liệu lớn dần. Không dùng Google Sheets làm DB (giữ ADR-005).
 
+**Xác nhận lại (2026-10-28)**: người dùng đã có Google Cloud (billing + credit 300 USD), cân nhắc Cloud SQL để gom một nhà cung cấp. Giữ Neon Free: Cloud SQL nhỏ nhất (`db-f1-micro`, CPU dùng chung, không SLA) ~10–12 USD/tháng kể cả lúc không ai dùng; Neon Free 0 USD, có branching (thử migration trên bản sao dữ liệu). Đổi lại: kết nối qua internet (cùng Singapore), thêm một tài khoản, backup tự lo (F19.8). Nâng cấp khi dữ liệu > 0.5 GB hoặc độ trễ đánh thức gây phiền: Neon Launch (~5–20 USD/tháng) trước khi tính Cloud SQL.
+
 ### ADR-016 — Deploy lên Google Cloud Run (thay thế ADR-014) (2026-10-14)
 **Bối cảnh**: so sánh lại các phương án với nhu cầu thật của app (SSR Next.js, endpoint MCP public, realtime, job nền sau này, Postgres) và tiêu chí "chủ yếu free, sẵn sàng đổi kiến trúc":
 - Cloudflare Workers Free: giới hạn bundle đã nới (64 MiB từ 9/2026) nhưng **10ms CPU/request** vẫn còn — rủi ro cao cho SSR + Prisma; phải chạy qua OpenNext; không có bộ nhớ dùng chung.

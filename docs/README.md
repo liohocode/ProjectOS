@@ -32,7 +32,9 @@ docs/
     _TEMPLATE.md            mẫu cho feature mới
     F01 … F07               đã xong (UI v1 + backend)
     F08 … F19               kế hoạch: mỗi file = 1 feature + danh sách task chi tiết
-  guides/                   (sẽ có) hướng dẫn thao tác: kết nối agent (F16.9), backup (F19.5)…
+  guides/
+    deploy-cloud-run.md     triển khai Cloud Run + Neon (F19), từng bước cho người dùng và agent
+                            (sẽ có thêm: kết nối agent F16.9, backup F19.8…)
 ```
 
 ## Quy tắc giữ tài liệu sống
