@@ -119,3 +119,17 @@ export async function applyRevision(revisionId: string, approverId: string): Pro
     throw error;
   }
 }
+
+/**
+ * Từ chối revision đang chờ (F12.3) kèm lý do — tài liệu giữ nguyên. Điều kiện `status = pending`
+ * nằm trong câu UPDATE → không từ chối được revision vừa được duyệt bởi người khác.
+ */
+export async function rejectRevision(revisionId: string, reason: string): Promise<ActionResult> {
+  const parsed = z.string().trim().min(1, "Nhập lý do từ chối").max(500, "Lý do tối đa 500 ký tự").safeParse(reason);
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+  const { count } = await prisma.docRevision.updateMany({
+    where: { id: revisionId, status: "pending" },
+    data: { status: "rejected", rejectedReason: parsed.data },
+  });
+  return count === 0 ? fail("Revision này không còn chờ duyệt") : { ok: true };
+}

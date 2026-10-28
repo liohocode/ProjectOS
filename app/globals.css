@@ -840,6 +840,23 @@ img { display: block; max-width: 100%; }
 .revision-when { color: var(--color-neutral-500); font-size: 12px; }
 .revision-approve { height: 26px; }
 .revision-error { color: var(--color-warning); font-size: 12px; }
+.revision-item + .revision-item { border-top: 1px solid var(--color-divider); }
+.revision-reason { color: var(--color-neutral-500); }
+.revision-reject { display: flex; flex-direction: column; gap: var(--space-2); padding: 0 0 var(--space-3); }
+.revision-reject-label { font-size: 12px; color: var(--color-neutral-500); }
+.revision-reject-input { height: auto; resize: vertical; font: inherit; font-size: 13px; padding: var(--space-2); }
+.revision-reject-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+.revision-diff { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); margin-bottom: var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface); font-size: 13px; }
+.diff-heading { font-weight: 600; margin-bottom: var(--space-1); }
+.diff-kind { font-weight: 400; font-size: 11px; color: var(--color-neutral-500); margin-left: var(--space-2); }
+.diff-para { margin: 0; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); color: var(--color-neutral-500); }
+.diff-para.is-added { color: inherit; background: color-mix(in srgb, var(--color-success) 12%, transparent); }
+.diff-para.is-removed { background: color-mix(in srgb, var(--color-warning) 10%, transparent); }
+.diff-para ins, .diff-para del { text-decoration: none; }
+.diff-para.is-removed del { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--color-warning) 60%, transparent); }
+.diff-mark { display: inline-block; width: 1.2em; font-weight: 600; }
+.diff-para.is-added .diff-mark { color: var(--color-success); }
+.diff-para.is-removed .diff-mark { color: var(--color-warning); }
 
 /* ══════════════ Dev & AI agents (xem docs/features/F04-team.md) ══════════════ */
 
