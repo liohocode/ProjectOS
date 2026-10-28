@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { DocGroup, Feature, McpLogEntry, McpSession, Task } from "@/lib/types";
+import type { DocGroup, Feature, Task } from "@/lib/types";
 import {
   countActiveFilters,
   filterDocGroups,
   filterFeatures,
-  filterLog,
-  filterSessions,
   parseDocsFilter,
   parseMcpFilter,
   parseWorkFilter,
@@ -65,22 +63,5 @@ describe("filterDocGroups", () => {
     expect(filterDocGroups(groups, { pending: true }, ["b", "c"]).map((g) => g.items.map((d) => d.id))).toEqual([["b"], ["c"]]);
     expect(filterDocGroups(groups, { agent: true, pending: true }, ["b"])).toEqual([]);
     expect(filterDocGroups(groups, {}, [])).toBe(groups);
-  });
-});
-
-describe("filterSessions / filterLog", () => {
-  const sessions = [
-    { id: "s1", agentId: "agent-atlas", projectId: "rv-web", result: "Đang chạy" },
-    { id: "s2", agentId: "agent-vega", projectId: "crm", result: "Xong" },
-  ] as McpSession[];
-  const log = [{ agentId: "agent-atlas" }, { agentId: "agent-vega" }] as McpLogEntry[];
-  const labels = { DangChay: "Đang chạy", Xong: "Xong" };
-
-  it("lọc phiên theo agent, dự án, kết quả; nhật ký chỉ theo agent", () => {
-    expect(filterSessions(sessions, { agent: "agent-vega" }, labels).map((s) => s.id)).toEqual(["s2"]);
-    expect(filterSessions(sessions, { project: "rv-web" }, labels).map((s) => s.id)).toEqual(["s1"]);
-    expect(filterSessions(sessions, { result: "Xong" }, labels).map((s) => s.id)).toEqual(["s2"]);
-    expect(filterLog(log, { agent: "agent-atlas", result: "Xong" })).toHaveLength(1);
-    expect(filterLog(log, {})).toBe(log);
   });
 });

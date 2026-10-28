@@ -126,7 +126,8 @@ describe("mcp", () => {
   });
 
   it("phiên chạy và nhật ký map enum sang chuỗi tiếng Việt", async () => {
-    const sessions = await getMcpSessions();
+    const { items: sessions, nextCursor } = await getMcpSessions();
+    expect(nextCursor).toBeNull(); // 8 phiên < 1 trang
     expect(sessions).toHaveLength(8);
     expect(new Set(sessions.map((s) => s.result))).toEqual(new Set(["Đang chạy", "Chờ review", "Bị chặn", "Xong"]));
 
@@ -135,7 +136,7 @@ describe("mcp", () => {
     expect(s8f2a?.durationMin).toBeGreaterThanOrEqual(14); // đang chạy → tăng theo thời gian
     expect(sessions.find((s) => s.id === "sess-5a77")).toMatchObject({ tokens: "95K", durationMin: 12 });
 
-    const log = await getMcpLog();
+    const { items: log } = await getMcpLog();
     expect(log).toHaveLength(8);
     expect(log.every((e) => /^\d{2}:\d{2}:\d{2}$/.test(e.at))).toBe(true);
     expect(log.some((e) => e.result === "Bị chặn")).toBe(true);

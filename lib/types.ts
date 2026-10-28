@@ -163,6 +163,8 @@ export interface McpSession {
 export type CommandResult = "OK" | "Chờ review" | "Bị chặn";
 
 export interface McpLogEntry {
+  /** id dòng — khoá React + cursor phân trang (F14.4) */
+  id: string;
   at: string;
   agentId: string;
   agent: string;
@@ -183,4 +185,10 @@ export interface MemberOption {
   id: string;
   name: string;
   kind: MemberKind;
+}
+
+/** Một trang dữ liệu (F14.4): `nextCursor` = id dòng cuối nếu còn trang sau, null nếu hết. */
+export interface Page<T> {
+  items: T[];
+  nextCursor: string | null;
 }

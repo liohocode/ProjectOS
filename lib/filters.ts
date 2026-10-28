@@ -1,7 +1,8 @@
-import type { DocGroup, Feature, McpLogEntry, McpSession, TaskStage } from "@/lib/types";
+import type { DocGroup, Feature, TaskStage } from "@/lib/types";
 
 // Bộ lọc theo màn (F14.3): tiêu chí nằm trong URL search params, áp ở server bằng hàm thuần
 // trên dữ liệu đã tải (lib/data/* giữ chữ ký + cache() theo tham số nguyên thuỷ — ADR-019).
+// Riêng MCP lọc trong DB (lib/data/mcp.ts) vì bảng có phân trang (F14.4).
 
 export type FilterScreen = "work" | "docs" | "mcp";
 type SearchParams = Record<string, string | string[] | undefined> | URLSearchParams;
@@ -91,18 +92,4 @@ export function filterDocGroups(groups: DocGroup[], f: DocsFilter, pendingDocIds
   return groups
     .map((g) => ({ ...g, items: g.items.filter((d) => (!f.agent || d.agent) && (!f.pending || pending.has(d.id))) }))
     .filter((g) => g.items.length > 0);
-}
-
-export function filterSessions(sessions: McpSession[], f: McpFilter, resultLabel: Record<string, string>): McpSession[] {
-  return sessions.filter(
-    (s) =>
-      (!f.agent || s.agentId === f.agent) &&
-      (!f.project || s.projectId === f.project) &&
-      (!f.result || s.result === resultLabel[f.result]),
-  );
-}
-
-/** Nhật ký lệnh chỉ lọc theo agent (kết quả lệnh khác tập kết quả phiên). */
-export function filterLog(log: McpLogEntry[], f: McpFilter): McpLogEntry[] {
-  return f.agent ? log.filter((e) => e.agentId === f.agent) : log;
 }

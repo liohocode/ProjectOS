@@ -91,7 +91,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | NFR-03 | Responsive bằng **container query**, không media query; tiêu đề task và tên thành viên không bao giờ bị ẩn | ✅ | — |
 | NFR-04 | `:focus-visible` rõ ràng; nút/hàng có thể thao tác bằng bàn phím | ✅ (F10.5) | F10 |
 | NFR-05 | Có loading state, error state, empty state, trang 404 | ✅ (F10.1–F10.4) | F10 |
-| NFR-06 | Phân trang cho danh sách lớn (nhật ký lệnh, phiên chạy) | ⬜ | F14 |
+| NFR-06 | Phân trang cho danh sách lớn (nhật ký lệnh, phiên chạy) | ✅ cursor 50 dòng + "Xem thêm" (F14.4) | F14 |
 | NFR-07 | Có test tự động (unit, integration với DB, e2e smoke) và CI chạy lint/type/build/test | 🟡 test đủ 3 tầng; CI chờ push để chạy lần đầu | F08 |
 | NFR-08 | Không commit secret; mọi cấu hình qua biến môi trường (`.env.example` liệt kê đủ) | ✅ | — |
 | NFR-09 | Có đăng nhập (**Google**, chỉ người đã có trong danh sách thành viên); thao tác ghi kiểm tra quyền | 🟡 đăng nhập Google (F15.2), chặn route + chỉ thành viên xem dự án (F15.3); chưa phân quyền thao tác (F15.4) | F15 |
