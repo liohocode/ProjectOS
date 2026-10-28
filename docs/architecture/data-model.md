@@ -41,6 +41,7 @@ AuthVerification  (độc lập, Better Auth dùng cho token tạm)
 | `AuthVerification` (`auth_verifications`) | id Better Auth | token tạm (state OAuth…) |
 
 ## Quy ước
+- **Extension Postgres**: `unaccent` (migration `unaccent_search`, F14.2) cho tìm kiếm không dấu ở `lib/data/search.ts` (`$queryRaw`). Không khai báo trong `schema.prisma` → `migrate diff` không đụng tới; DB mới (test, Neon) có qua `migrate deploy`.
 - **Khoá chính là id chuỗi đọc được** (`rv-web`, `FEAT-118`, `T-401`, `prd-listing`, `agent-atlas`) cho các thực thể nghiệp vụ — UI và URL dùng thẳng các id này. Bảng phụ (skill row, activity, revision, log) dùng `cuid()`. Lý do: `decisions.md` ADR-006.
 - **Enum có giá trị tiếng Việt**: tên identifier ASCII + `@map` giữ giá trị trong DB. Map ngược sang chuỗi hiển thị ở `lib/data/mcpLabels.ts` (`SESSION_RESULT_LABEL`, `COMMAND_RESULT_LABEL`), `lib/taskFormat.ts` (`TASK_STATUS_LABEL`) và `prisma/seed.ts` (`SESSION_RESULT_MAP`, `COMMAND_RESULT_MAP`). Unit test đối chiếu với enum sinh ra — thêm giá trị enum mà quên nhãn sẽ fail.
 

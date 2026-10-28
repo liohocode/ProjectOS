@@ -524,6 +524,15 @@ img { display: block; max-width: 100%; }
 .header-search {
   width: 200px;
 }
+/* Ô tìm kiếm header (F14.2) — dropdown dùng lại khung .switcher-dropdown */
+.header-search-wrap { position: relative; }
+.search-dropdown { left: auto; width: 360px; max-height: 420px; overflow-y: auto; }
+.search-group { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-neutral-600); padding: var(--space-2) var(--space-2) 2px; }
+.search-hit { min-width: 0; }
+.search-code { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--color-accent-300); flex-shrink: 0; }
+.search-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-empty { font-size: 12.5px; color: var(--color-neutral-500); padding: var(--space-2); }
+.feature-section { scroll-margin-top: var(--space-4); }
 
 .content-area {
   flex: 1;

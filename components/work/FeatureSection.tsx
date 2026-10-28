@@ -14,7 +14,7 @@ export function FeatureSection({
   onOpenTask: (taskId: string) => void;
 }) {
   return (
-    <section className="feature-section">
+    <section className="feature-section" id={`feature-${feature.id}`}>
       <div className="frow">
         <button type="button" className="frow-caret" onClick={onToggle} aria-label={open ? "Thu gọn" : "Mở rộng"}>
           <i className={`ph ${open ? "ph-caret-down" : "ph-caret-right"}`} aria-hidden />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ActivityItem, Feature, Member, TaskDrawerInfo, TimelineRow } from "@/lib/types";
 import { FeatureSection } from "./FeatureSection";
 import { TimelineView } from "./TimelineView";
@@ -26,6 +26,12 @@ export function WorkScreen({
   const [railOpen, setRailOpen] = useState(true);
   // Task đang mở và view nằm trong URL (F14.1) — copy link là mở lại đúng chỗ.
   const { taskId: openTaskId, view, taskHref, openTask, closeTask, setView } = useWorkUrl();
+
+  // Link `#feature-FEAT-118` (kết quả tìm kiếm F14.2) từ màn khác → cuộn tới feature sau khi màn work hiện.
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash.startsWith("feature-")) document.getElementById(hash)?.scrollIntoView({ block: "start" });
+  }, []);
 
   const allTasks = useMemo(() => features.flatMap((f) => f.tasks), [features]);
   const blockedTasks = useMemo(() => allTasks.filter((t) => t.blocked), [allTasks]);

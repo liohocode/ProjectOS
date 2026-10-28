@@ -20,7 +20,7 @@
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | F14.1 | Deep link màn work: `?task=`, `?view=` | S | — | Xong — 2026-10-28 |
-| F14.2 | Tìm kiếm trong dự án từ ô header | M | F14.1 | Chưa làm |
+| F14.2 | Tìm kiếm trong dự án từ ô header | M | F14.1 | Xong — 2026-10-28 |
 | F14.3 | Bộ lọc "Lọc" theo từng màn | M | — | Chưa làm |
 | F14.4 | Phân trang phiên chạy + nhật ký lệnh | S | — | Chưa làm |
 
@@ -32,7 +32,7 @@
 ### F14.2 — Tìm kiếm
 **Làm gì**: ô tìm kiếm header: gõ (debounce ~250ms) → gọi server action `searchProject(projectId, q)` tìm trong task (id, tiêu đề), feature (id, tên), doc (tiêu đề, tóm tắt) — Prisma `contains` + `mode: 'insensitive'`. Tiếng Việt có dấu: cân nhắc extension Postgres `unaccent` để "tieu chi" khớp "Tiêu chí" (ghi quyết định). Dropdown kết quả nhóm theo loại; chọn → task: `/work?task=`, doc: `/docs?doc=`, feature: `/work` + cuộn tới feature. Phím: ↑↓ Enter Esc; `/` để focus ô tìm kiếm.
 **Hoàn thành khi**:
-- [ ] Gõ "T-418", "migration", "PRD" ra đúng kết quả; điều hướng đúng
+- [x] Gõ "T-418", "migration", "PRD" ra đúng kết quả; điều hướng đúng (integration `lib/data/search.integration.test.ts`, e2e `search.spec.ts`)
 
 ### F14.3 — Bộ lọc theo màn
 **Làm gì**: nút "Lọc" mở panel nhỏ, tiêu chí theo màn (lưu trong URL search params):
@@ -50,4 +50,5 @@
 - [ ] Seed thêm >50 log trong DB test → phân trang đúng thứ tự thời gian
 
 ## Quyết định / ghi chú
+- **F14.2 (2026-10-28)**: **dùng extension Postgres `unaccent`** (migration `unaccent_search`, chỉ thêm; trusted extension, Neon có) — "phap ly" khớp "pháp lý", "nang cap" khớp "nâng cấp". Prisma `contains` không gọi được `unaccent` → `lib/data/search.ts` dùng `$queryRaw` (tham số hoá, escape `%`/`_`/`\`), tối đa 5 kết quả mỗi nhóm. Server action `lib/actions/search.ts` chỉ tìm trong dự án người dùng là thành viên (F15.3). `components/layout/HeaderSearch.tsx`: debounce 250ms, bỏ phản hồi về muộn, combobox/listbox ARIA, ↑↓ Enter Esc, `/` để focus. Feature → `/work#feature-<id>`: tự cuộn (đổi hash không làm Next cuộn trong khung danh sách). Chưa đánh index cho tìm kiếm (dữ liệu mỗi dự án nhỏ); khi lớn → `pg_trgm` + index GIN trên `unaccent(...)`.
 - **F14.1 (2026-10-28)**: hook `components/work/workUrl.ts` (`useWorkUrl`). **Mở task = `router.push`** (lệch mô tả "replace": để nút Back đóng drawer như tiêu chí yêu cầu); đóng drawer / đổi view = `router.replace` (không thêm lịch sử). `?task=` không tồn tại → không mở drawer. Activity rail: mục gắn task (đang chạy / bị block / chờ review) thành link `?task=` (`ActivityItem.taskId`); mục revision chờ duyệt giữ dạng tĩnh. Reload khi drawer đang mở → drawer mở lại (e2e sửa nhanh task cập nhật theo).
