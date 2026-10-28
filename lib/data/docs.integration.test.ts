@@ -40,7 +40,7 @@ describe("thân tài liệu", () => {
     expect(body.sections.map((s) => s.heading)).toEqual(["Bối cảnh", "Phạm vi", "Tiêu chí hoàn thành"]);
     expect(body.history).toHaveLength(3);
     expect(body.history.every((h) => h.id)).toBe(true);
-    expect(body.history.filter((h) => h.pending)).toHaveLength(1);
+    expect(body.history.filter((h) => h.status === "pending")).toHaveLength(1);
   });
 
   it("tài liệu thuộc kho chung hiển thị đúng nhóm", async () => {

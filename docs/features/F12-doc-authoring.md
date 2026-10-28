@@ -19,7 +19,7 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F12.1 | Schema revision: nội dung đề xuất + trạng thái | M | — | Chưa làm |
+| F12.1 | Schema revision: nội dung đề xuất + trạng thái | M | — | Xong — 2026-10-28 |
 | F12.2 | Duyệt = áp nội dung vào bản chính, tăng version | S | F12.1 | Chưa làm |
 | F12.3 | Từ chối revision + xem diff trước khi duyệt | M | F12.1 | Chưa làm |
 | F12.4 | Lịch sử hiển thị người duyệt / bị từ chối | S | F12.1 | Chưa làm |
@@ -30,7 +30,7 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 ### F12.1 — Schema revision
 **Làm gì**: `DocRevision`: thay `pending Boolean` bằng enum `RevisionStatus` (`pending`, `approved`, `rejected`); thêm `proposedSummary String?`, `proposedSections Json?` (cùng shape `[{heading, paras[]}]` với `Doc.sections`), `rejectedReason String?`, `baseVersion String` (version của doc lúc tạo revision). Migration chuyển dữ liệu cũ (`pending=true` → `pending`, còn lại → `approved`). Seed: 2 revision đang chờ ở `prd-listing`, `mcp-spec` có `proposedSections` = bản hiện tại + thay đổi đúng như mô tả (vd thêm đoạn vào "Tiêu chí hoàn thành"). Tách hàm `createRevision(docId, authorId, what, proposed)` trong `lib/actions/docs.ts` (hoặc `lib/domain/docs.ts` nếu cần dùng từ MCP) để F16.5 tái sử dụng. Cập nhật `lib/data/docs.ts`, `lib/types.ts` (`DocRevision.status`), `getPendingRevision*` lọc theo status.
 **Hoàn thành khi**:
-- [ ] UI hiện như trước, nút "Duyệt" vẫn đúng chỗ; `data-model.md` cập nhật
+- [x] UI hiện như trước, nút "Duyệt" vẫn đúng chỗ; `data-model.md` cập nhật (e2e smoke "duyệt revision" xanh)
 
 ### F12.2 — Duyệt áp nội dung
 **Làm gì**: `approveRevision` chạy trong `prisma.$transaction`: nếu revision có `proposedSections`/`proposedSummary` → ghi vào `Doc`, tăng version phụ (`v4.2` → `v4.3`), `updatedAt = now`; nếu `baseVersion` khác version hiện tại → từ chối duyệt với lỗi "Tài liệu đã thay đổi từ khi revision được tạo" (tránh ghi đè).
@@ -65,4 +65,5 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 - [x] Integration test: duyệt lại, revision dự án khác, revision không tồn tại, input rỗng → `{ ok: false }` và không ghi DB
 
 ## Quyết định / ghi chú
+- **F12.1 (2026-10-28, người dùng đồng ý migration đổi kiểu cột)**: migration `revision_status_content` viết tay theo quy tắc 4 CLAUDE.md — thêm cột (`baseVersion` tạm nullable) → chuyển dữ liệu (`pending=true` → `pending`, còn lại → `approved`; `baseVersion` = version hiện tại của tài liệu) → `SET NOT NULL` → xoá cột `pending`; `migrate diff` sau đó ra "empty migration" (SQL Prisma tự sinh sẽ xoá cột trước khi chuyển và thêm `NOT NULL` không giá trị). `createRevision` đặt ở **`lib/domain/docs.ts`** (không "use server" — client không gọi thẳng; F16.5 MCP `docs.append` dùng lại), kèm `docSectionsSchema` (zod) dùng chung cho F12.5/F12.6. Dữ liệu mẫu: `prisma/seed-data/revisions.ts` sinh nội dung đề xuất = bản hiện tại + thay đổi theo mô tả. Thông báo duyệt lại đổi thành "Revision này không còn chờ duyệt" (đúng cả khi đã bị từ chối).
 - Nội dung tài liệu tiếp tục lưu dạng `sections Json` (không chuyển sang markdown thô) — form chỉ chuyển đổi qua lại markdown ↔ sections ở biên.

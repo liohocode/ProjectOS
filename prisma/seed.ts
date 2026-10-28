@@ -10,6 +10,7 @@ import { getFeaturesByProject } from "./seed-data/features";
 import { getDocGroupsByProject, getDocBody } from "./seed-data/docs";
 import { getMcpServers, getMcpSessions, getMcpLog } from "./seed-data/mcp";
 import { TIMELINE_BY_PROJECT } from "./seed-data/timeline";
+import { PROPOSED_SECTIONS } from "./seed-data/revisions";
 import type { SeedMember as Member } from "./seed-data/types";
 import { parseSprintLabel } from "../lib/sprint";
 import { parseDue, parseEstimate, parseRunning, parseTaskStatus } from "../lib/taskFormat";
@@ -228,7 +229,12 @@ async function main() {
                 authorId: resolveMemberId(members, h.who),
                 what: h.what,
                 createdAt: parseRelativeVietnamese(h.when),
-                pending: h.pending ?? false,
+                status: h.pending ? "pending" : "approved",
+                baseVersion: body.version,
+                // Revision đang chờ: nội dung đề xuất = bản hiện tại + thay đổi theo mô tả (F12.1)
+                proposedSections: h.pending && PROPOSED_SECTIONS[item.id]
+                  ? (PROPOSED_SECTIONS[item.id](body.sections) as unknown as Prisma.InputJsonValue)
+                  : undefined,
               })),
             },
           },

@@ -9,7 +9,7 @@ describe("approveRevision", () => {
   let revisionId: string;
 
   beforeAll(async () => {
-    const rev = await prisma.docRevision.findFirstOrThrow({ where: { pending: true, docId: "prd-listing" } });
+    const rev = await prisma.docRevision.findFirstOrThrow({ where: { status: "pending", docId: "prd-listing" } });
     revisionId = rev.id;
   });
 
@@ -17,7 +17,7 @@ describe("approveRevision", () => {
   afterAll(async () => {
     await prisma.docRevision.update({
       where: { id: revisionId },
-      data: { pending: true, approvedById: null, approvedAt: null },
+      data: { status: "pending", approvedById: null, approvedAt: null },
     });
   });
 
@@ -25,7 +25,7 @@ describe("approveRevision", () => {
     expect(await approveRevision(revisionId, "rv-web")).toEqual({ ok: true });
 
     const rev = await prisma.docRevision.findUniqueOrThrow({ where: { id: revisionId } });
-    expect(rev.pending).toBe(false);
+    expect(rev.status).toBe("approved");
     expect(rev.approvedById).toBe(await getCurrentUserId());
     expect(rev.approvedAt).toBeInstanceOf(Date);
     expect(await getPendingRevisionCount("rv-web")).toBe(1);
@@ -34,11 +34,11 @@ describe("approveRevision", () => {
 
   it("từ chối duyệt lại, revision của dự án khác, revision không tồn tại và input rỗng", async () => {
     // Chạy sau test trên: revision đã duyệt.
-    expect(await approveRevision(revisionId, "rv-web")).toEqual({ ok: false, error: "Revision này đã được duyệt" });
+    expect(await approveRevision(revisionId, "rv-web")).toEqual({ ok: false, error: "Revision này không còn chờ duyệt" });
 
-    const other = await prisma.docRevision.findFirstOrThrow({ where: { pending: true, doc: { projectId: "rv-web" } } });
+    const other = await prisma.docRevision.findFirstOrThrow({ where: { status: "pending", doc: { projectId: "rv-web" } } });
     expect(await approveRevision(other.id, "crm")).toEqual({ ok: false, error: "Không tìm thấy revision trong dự án này" });
-    expect((await prisma.docRevision.findUniqueOrThrow({ where: { id: other.id } })).pending).toBe(true);
+    expect((await prisma.docRevision.findUniqueOrThrow({ where: { id: other.id } })).status).toBe("pending");
 
     expect(await approveRevision("rev-khong-ton-tai", "rv-web")).toEqual({ ok: false, error: "Không tìm thấy revision trong dự án này" });
     expect(await approveRevision(" ", "rv-web")).toEqual({ ok: false, error: "Thiếu mã revision" });

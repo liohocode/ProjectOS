@@ -56,13 +56,16 @@ export interface DocGroup {
   items: DocItem[];
 }
 
+export type RevisionStatus = "pending" | "approved" | "rejected";
+
 export interface DocRevision {
   id: string;
   who: string;
   agent: boolean;
   what: string;
   when: string;
-  pending?: boolean;
+  /** F12.1 — pending: chờ duyệt (hiện nút Duyệt), approved, rejected */
+  status: RevisionStatus;
 }
 
 export interface DocSection {

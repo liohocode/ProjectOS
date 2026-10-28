@@ -45,13 +45,13 @@ export const getDocCountByProject = cache(async (projectId: string): Promise<num
 });
 
 export const getPendingRevisionCount = cache(async (projectId: string): Promise<number> => {
-  return prisma.docRevision.count({ where: { pending: true, doc: { projectId } } });
+  return prisma.docRevision.count({ where: { status: "pending", doc: { projectId } } });
 });
 
 /** Id các tài liệu đang có revision chờ duyệt — lọc `?pending=1` ở màn docs (F14.3). */
 export const getDocIdsWithPendingRevision = cache(async (projectId: string): Promise<string[]> => {
   const rows = await prisma.docRevision.findMany({
-    where: { pending: true, doc: { projectId } },
+    where: { status: "pending", doc: { projectId } },
     select: { docId: true },
     distinct: ["docId"],
   });
@@ -62,7 +62,7 @@ export async function getPendingRevisionsByProject(
   projectId: string,
 ): Promise<{ docTitle: string; who: string; agent: boolean; what: string; when: string }[]> {
   const rows = await prisma.docRevision.findMany({
-    where: { pending: true, doc: { projectId } },
+    where: { status: "pending", doc: { projectId } },
     include: { doc: true, author: true },
     orderBy: { createdAt: "desc" },
   });
@@ -128,7 +128,7 @@ export const getDocBody = cache(async (id: string): Promise<DocBody> => {
       readBy: "—",
       summary: "Tài liệu này chưa có nội dung chi tiết.",
       sections: [{ heading: "Nội dung", paras: ["Phần thân tài liệu sẽ hiển thị ở đây."] }],
-      history: [{ id: "n-a", who: "Hiếu", agent: false, what: "Tạo tài liệu", when: "tuần trước" }],
+      history: [{ id: "n-a", who: "Hiếu", agent: false, what: "Tạo tài liệu", when: "tuần trước", status: "approved" }],
     };
   }
 
@@ -149,7 +149,7 @@ export const getDocBody = cache(async (id: string): Promise<DocBody> => {
       agent: rev.author.kind === "agent",
       what: rev.what,
       when: formatRelativeVi(rev.createdAt),
-      pending: rev.pending,
+      status: rev.status,
     })),
   };
 });
