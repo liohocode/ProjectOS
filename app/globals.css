@@ -524,6 +524,12 @@ img { display: block; max-width: 100%; }
 .header-search {
   width: 200px;
 }
+/* Nút "Lọc" (F14.3) — panel dùng lại khung .switcher-dropdown */
+.filter-wrap { position: relative; }
+.filter-panel { left: auto; width: 280px; gap: var(--space-3); padding: var(--space-4); }
+.filter-check { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; cursor: pointer; }
+.filter-count { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--color-accent); color: var(--color-bg); font-size: 11px; line-height: 18px; text-align: center; }
+.filter-clear { align-self: flex-start; }
 /* Ô tìm kiếm header (F14.2) — dropdown dùng lại khung .switcher-dropdown */
 .header-search-wrap { position: relative; }
 .search-dropdown { left: auto; width: 360px; max-height: 420px; overflow-y: auto; }
@@ -778,6 +784,7 @@ img { display: block; max-width: 100%; }
   height: 100%;
   min-height: 0;
 }
+.doc-tree-empty { font-size: 12.5px; color: var(--color-neutral-500); padding: var(--space-2); }
 .doc-tree {
   width: 264px;
   flex: none;

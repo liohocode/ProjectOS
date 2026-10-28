@@ -5,10 +5,13 @@ import { getTaskDrawerInfo } from "@/lib/data/taskDrawer";
 import { getTeamByProject } from "@/lib/data/team";
 import { WorkScreen } from "@/components/work/WorkScreen";
 import { NewTaskDialog } from "@/components/work/NewTaskDialog";
+import { filterFeatures, parseWorkFilter } from "@/lib/filters";
 
 export default async function WorkPage(props: PageProps<"/[project]/work">) {
   const { project: projectId } = await props.params;
-  const { new: newParam } = await props.searchParams;
+  const searchParams = await props.searchParams;
+  const { new: newParam } = searchParams;
+  const filter = parseWorkFilter(searchParams);
 
   const [features, timeline, activity, projectTeam] = await Promise.all([
     getFeaturesByProject(projectId),
@@ -29,7 +32,8 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
   return (
     <>
       <WorkScreen
-        features={features}
+        features={filterFeatures(features, filter)}
+        filtered={Object.values(filter).some((v) => v !== undefined)}
         timeline={timeline}
         activity={activity}
         taskDrawerInfo={taskDrawerInfo}

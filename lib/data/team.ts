@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { Member } from "@/lib/types";
+import type { Member, MemberOption } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
 import { MEMBER_STATUS_LABEL } from "@/lib/memberFormat";
@@ -54,6 +54,20 @@ export const getLoginMemberIdByEmail = cache(async (email: string): Promise<stri
     select: { id: true },
   });
   return row?.id ?? null;
+});
+
+/** Người + agent của dự án (chỉ id, tên, kind) cho panel "Lọc" màn work (F14.3). */
+export const getMemberOptionsByProject = cache(async (projectId: string): Promise<MemberOption[]> => {
+  return prisma.member.findMany({
+    where: { projects: { some: { projectId } } },
+    select: { id: true, name: true, kind: true },
+    orderBy: { name: "asc" },
+  });
+});
+
+/** Mọi agent (id, tên) cho panel "Lọc" màn MCP — phiên/nhật ký MCP là của toàn tổ chức. */
+export const getAgentOptions = cache(async (): Promise<MemberOption[]> => {
+  return prisma.member.findMany({ where: { kind: "agent" }, select: { id: true, name: true, kind: true }, orderBy: { name: "asc" } });
 });
 
 export const getMemberById = cache(async (id: string): Promise<Member | undefined> => {

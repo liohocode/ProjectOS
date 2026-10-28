@@ -48,6 +48,16 @@ export const getPendingRevisionCount = cache(async (projectId: string): Promise<
   return prisma.docRevision.count({ where: { pending: true, doc: { projectId } } });
 });
 
+/** Id các tài liệu đang có revision chờ duyệt — lọc `?pending=1` ở màn docs (F14.3). */
+export const getDocIdsWithPendingRevision = cache(async (projectId: string): Promise<string[]> => {
+  const rows = await prisma.docRevision.findMany({
+    where: { pending: true, doc: { projectId } },
+    select: { docId: true },
+    distinct: ["docId"],
+  });
+  return rows.map((r) => r.docId);
+});
+
 export async function getPendingRevisionsByProject(
   projectId: string,
 ): Promise<{ docTitle: string; who: string; agent: boolean; what: string; when: string }[]> {

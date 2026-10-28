@@ -21,7 +21,7 @@
 |---|---|---|---|---|
 | F14.1 | Deep link màn work: `?task=`, `?view=` | S | — | Xong — 2026-10-28 |
 | F14.2 | Tìm kiếm trong dự án từ ô header | M | F14.1 | Xong — 2026-10-28 |
-| F14.3 | Bộ lọc "Lọc" theo từng màn | M | — | Chưa làm |
+| F14.3 | Bộ lọc "Lọc" theo từng màn | M | — | Xong — 2026-10-28 |
 | F14.4 | Phân trang phiên chạy + nhật ký lệnh | S | — | Chưa làm |
 
 ### F14.1 — Deep link màn work
@@ -42,7 +42,7 @@
 - mcp: agent, dự án, kết quả (`?agent=` dùng cho F13.4)
 Áp lọc ở server: thêm tham số tuỳ chọn cho hàm `lib/data/*` liên quan (giữ tương thích chữ ký cũ). Nút "Lọc" hiện số tiêu chí đang bật.
 **Hoàn thành khi**:
-- [ ] Mỗi tiêu chí lọc đúng, xoá lọc trở về như cũ, link có lọc mở lại đúng
+- [x] Mỗi tiêu chí lọc đúng, xoá lọc trở về như cũ, link có lọc mở lại đúng (unit `lib/filters.test.ts`, e2e `filter.spec.ts`)
 
 ### F14.4 — Phân trang bảng MCP
 **Làm gì**: `getMcpSessions` / `getMcpLog` nhận `{ cursor, limit = 50 }`, trả `{ items, nextCursor }`; màn MCP có nút "Xem thêm". (Đổi chữ ký → cập nhật mọi nơi gọi.)
@@ -50,5 +50,6 @@
 - [ ] Seed thêm >50 log trong DB test → phân trang đúng thứ tự thời gian
 
 ## Quyết định / ghi chú
+- **F14.3 (2026-10-28)**: tiêu chí trong URL — work `stage`, `who` (member id), `blocked=1`, `running=1`; docs `agent=1`, `pending=1`; mcp `agent`, `project`, `result` (khoá enum `DangChay`…). **Lệch mô tả**: không thêm tham số object vào `lib/data/*` (sẽ phá dedupe `cache()` — ADR-019) mà lọc bằng hàm thuần `lib/filters.ts` ở server (page.tsx) trên dữ liệu đã tải; dữ liệu mỗi dự án nhỏ nên đủ. "Người / agent" và "người thực hiện" trong mô tả gộp làm một tiêu chí `who`. Lọc chỉ áp list view (timeline giữ nguyên). Nhật ký lệnh MCP chỉ lọc theo agent (tập kết quả lệnh khác kết quả phiên). Màn team/portfolio: nút Lọc bị khoá. Thêm `Task.assigneeId`, `McpSession/McpLogEntry.agentId`, `getDocIdsWithPendingRevision`, `getMemberOptionsByProject`, `getAgentOptions` (layout tải lựa chọn — 2 query nhẹ). Panel dùng `useOptimistic` để ô chọn đổi ngay, URL cập nhật sau.
 - **F14.2 (2026-10-28)**: **dùng extension Postgres `unaccent`** (migration `unaccent_search`, chỉ thêm; trusted extension, Neon có) — "phap ly" khớp "pháp lý", "nang cap" khớp "nâng cấp". Prisma `contains` không gọi được `unaccent` → `lib/data/search.ts` dùng `$queryRaw` (tham số hoá, escape `%`/`_`/`\`), tối đa 5 kết quả mỗi nhóm. Server action `lib/actions/search.ts` chỉ tìm trong dự án người dùng là thành viên (F15.3). `components/layout/HeaderSearch.tsx`: debounce 250ms, bỏ phản hồi về muộn, combobox/listbox ARIA, ↑↓ Enter Esc, `/` để focus. Feature → `/work#feature-<id>`: tự cuộn (đổi hash không làm Next cuộn trong khung danh sách). Chưa đánh index cho tìm kiếm (dữ liệu mỗi dự án nhỏ); khi lớn → `pg_trgm` + index GIN trên `unaccent(...)`.
 - **F14.1 (2026-10-28)**: hook `components/work/workUrl.ts` (`useWorkUrl`). **Mở task = `router.push`** (lệch mô tả "replace": để nút Back đóng drawer như tiêu chí yêu cầu); đóng drawer / đổi view = `router.replace` (không thêm lịch sử). `?task=` không tồn tại → không mở drawer. Activity rail: mục gắn task (đang chạy / bị block / chờ review) thành link `?task=` (`ActivityItem.taskId`); mục revision chờ duyệt giữ dạng tĩnh. Reload khi drawer đang mở → drawer mở lại (e2e sửa nhanh task cập nhật theo).

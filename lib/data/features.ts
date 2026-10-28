@@ -30,6 +30,7 @@ export const getFeaturesByProject = cache(async (projectId: string): Promise<Fea
         id: t.id,
         stage: t.stage,
         title: t.title,
+        assigneeId: t.assigneeId,
         who: t.assignee.name,
         kind: t.assignee.kind,
         status: TASK_STATUS_LABEL[t.status],

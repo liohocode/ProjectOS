@@ -16,6 +16,8 @@ export interface Task {
   id: string;
   stage: TaskStage;
   title: string;
+  /** Member id người/agent thực hiện — lọc `?who=` (F14.3) */
+  assigneeId: string;
   who: string;
   kind: MemberKind;
   status: string;
@@ -147,6 +149,8 @@ export type SessionResult = "Xong" | "Đang chạy" | "Chờ review" | "Bị ch�
 
 export interface McpSession {
   id: string;
+  /** Member id của agent — lọc `?agent=` (F14.3) */
+  agentId: string;
   agent: string;
   projectId: string;
   taskId: string;
@@ -160,6 +164,7 @@ export type CommandResult = "OK" | "Chờ review" | "Bị chặn";
 
 export interface McpLogEntry {
   at: string;
+  agentId: string;
   agent: string;
   tool: string;
   target: string;
@@ -171,4 +176,11 @@ export interface SearchResults {
   tasks: { id: string; title: string; featureId: string }[];
   features: { id: string; name: string }[];
   docs: { id: string; title: string }[];
+}
+
+/** Lựa chọn trong panel "Lọc" (F14.3) — chỉ id + tên, không tải hồ sơ đầy đủ. */
+export interface MemberOption {
+  id: string;
+  name: string;
+  kind: MemberKind;
 }
