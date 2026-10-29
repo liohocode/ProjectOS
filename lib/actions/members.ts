@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { getMemberActivityPage } from "@/lib/data/team";
+import type { MemberActivityEntry, Page } from "@/lib/types";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
 
@@ -99,4 +102,12 @@ export async function createMember(input: NewMemberInput): Promise<ActionResult<
   await recordActivity("ph-user-plus", `Thêm thành viên mới ${data.name}`);
   revalidateMemberViews();
   return { ok: true, memberId: id };
+}
+
+/** "Xem log" của người (F13.4) — chỉ đọc; `cursor` null = trang đầu. */
+export async function loadMemberActivity(memberId: string, cursor: string | null): Promise<ActionResult<{ page: Page<MemberActivityEntry> }>> {
+  await getCurrentUserId(); // chưa đăng nhập → /login
+  const input = z.object({ memberId: memberIdSchema, cursor: z.string().trim().min(1).nullable() }).safeParse({ memberId, cursor });
+  if (!input.success) return fail(input.error.issues[0].message);
+  return { ok: true, page: await getMemberActivityPage(input.data.memberId, input.data.cursor) };
 }

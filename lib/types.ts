@@ -102,6 +102,11 @@ export interface MemberActivity {
   when: string;
 }
 
+/** Một dòng trong dialog "Xem log" của người (F13.4) — có id để phân trang. */
+export interface MemberActivityEntry extends MemberActivity {
+  id: string;
+}
+
 export interface Member {
   id: string;
   name: string;

@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { Member } from "@/lib/types";
 import { initials } from "@/components/work/taskStyle";
 import { AssignTaskDialog, type AssignableFeature } from "./AssignTaskDialog";
+import { MemberLogDialog } from "./MemberLogDialog";
 
 export function MemberPanel({
   member,
@@ -16,6 +19,8 @@ export function MemberPanel({
   assignable: AssignableFeature[];
 }) {
   const [assigning, setAssigning] = useState(false);
+  const [showLog, setShowLog] = useState(false);
+  const projectId = usePathname().split("/")[1];
   return (
     <aside className="team-aside">
       <div className="panel-header">
@@ -76,9 +81,16 @@ export function MemberPanel({
       </div>
 
       <div className="panel-footer">
-        <button type="button" className="btn btn-secondary">
-          Xem log
-        </button>
+        {/* F13.4 — agent: nhật ký lệnh MCP lọc theo agent (F14.3); người: dialog hoạt động */}
+        {member.kind === "agent" ? (
+          <Link className="btn btn-secondary" href={`/${projectId}/mcp?agent=${encodeURIComponent(member.id)}`}>
+            Xem log
+          </Link>
+        ) : (
+          <button type="button" className="btn btn-secondary" onClick={() => setShowLog(true)}>
+            Xem log
+          </button>
+        )}
         <button
           type="button"
           className="btn btn-primary"
@@ -89,6 +101,7 @@ export function MemberPanel({
           Giao task
         </button>
       </div>
+      {showLog && <MemberLogDialog member={member} onClose={() => setShowLog(false)} />}
       {assigning && <AssignTaskDialog member={member} features={assignable} onClose={() => setAssigning(false)} />}
     </aside>
   );

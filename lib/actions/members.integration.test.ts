@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getTeamByProject } from "@/lib/data/team";
-import { addProjectMember, createMember } from "./members";
+import { addProjectMember, createMember, loadMemberActivity } from "./members";
 
 // crm seed: không có agent-vega → dùng để thử "Từ tổ chức".
 afterAll(async () => {
@@ -48,5 +48,38 @@ describe("createMember (F13.2)", () => {
     expect(await createMember({ ...base, kind: "agent", email: "a@b.co" })).toEqual({ ok: false, error: "Agent không có email đăng nhập" });
     expect(await createMember({ ...base, name: " " })).toEqual({ ok: false, error: "Nhập tên" });
     expect(await createMember({ ...base, role: "" })).toEqual({ ok: false, error: "Nhập vai trò" });
+  });
+});
+
+describe("loadMemberActivity (F13.4)", () => {
+  // 25 dòng mới nhất cho "nam" → trang 20 + trang 5; xoá sau.
+  const base = Date.now() + 60_000;
+  afterAll(async () => {
+    await prisma.memberActivity.deleteMany({ where: { memberId: "nam", text: { startsWith: "IT log " } } });
+  });
+
+  it("trang đầu 20 dòng mới nhất, 'Xem thêm' nối tiếp không trùng, hết thì nextCursor null", async () => {
+    await prisma.memberActivity.createMany({
+      data: Array.from({ length: 25 }, (_, i) => ({ memberId: "nam", icon: "ph-dot", text: `IT log ${i}`, at: new Date(base + i * 1000) })),
+    });
+    const total = await prisma.memberActivity.count({ where: { memberId: "nam" } });
+
+    const first = await loadMemberActivity("nam", null);
+    if (!first.ok) throw new Error(first.error);
+    expect(first.page.items).toHaveLength(20);
+    expect(first.page.items[0].text).toBe("IT log 24");
+    expect(first.page.nextCursor).not.toBeNull();
+
+    const seen = [...first.page.items];
+    let cursor = first.page.nextCursor;
+    while (cursor) {
+      const next = await loadMemberActivity("nam", cursor);
+      if (!next.ok) throw new Error(next.error);
+      seen.push(...next.page.items);
+      cursor = next.page.nextCursor;
+    }
+    expect(seen).toHaveLength(total);
+    expect(new Set(seen.map((a) => a.id)).size).toBe(total);
+    expect(await loadMemberActivity(" ", null)).toEqual({ ok: false, error: "Chọn thành viên" });
   });
 });
