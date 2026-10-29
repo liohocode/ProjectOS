@@ -1,7 +1,21 @@
+"use client";
+
+import { useState } from "react";
 import type { Member } from "@/lib/types";
 import { initials } from "@/components/work/taskStyle";
+import { AssignTaskDialog, type AssignableFeature } from "./AssignTaskDialog";
 
-export function MemberPanel({ member }: { member: Member }) {
+export function MemberPanel({
+  member,
+  inProject,
+  assignable,
+}: {
+  member: Member;
+  /** Chỉ thành viên của dự án đang mở mới giao task được (xem "Toàn tổ chức" thì có thể không) */
+  inProject: boolean;
+  assignable: AssignableFeature[];
+}) {
+  const [assigning, setAssigning] = useState(false);
   return (
     <aside className="team-aside">
       <div className="panel-header">
@@ -65,10 +79,17 @@ export function MemberPanel({ member }: { member: Member }) {
         <button type="button" className="btn btn-secondary">
           Xem log
         </button>
-        <button type="button" className="btn btn-primary">
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={!inProject}
+          title={inProject ? undefined : "Thành viên chưa thuộc dự án này — thêm vào dự án trước"}
+          onClick={() => setAssigning(true)}
+        >
           Giao task
         </button>
       </div>
+      {assigning && <AssignTaskDialog member={member} features={assignable} onClose={() => setAssigning(false)} />}
     </aside>
   );
 }

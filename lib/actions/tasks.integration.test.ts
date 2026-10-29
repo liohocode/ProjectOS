@@ -64,9 +64,15 @@ describe("assignTask", () => {
     const member = await prisma.projectMember.findFirstOrThrow({
       where: { projectId, memberId: { not: seed.assigneeId } },
     });
+    const before = await prisma.member.findUniqueOrThrow({ where: { id: member.memberId } });
     expect(await assignTask(TASK_ID, member.memberId)).toEqual({ ok: true });
-    expect((await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).assigneeId).toBe(member.memberId);
-    const name = (await prisma.member.findUniqueOrThrow({ where: { id: member.memberId } })).name;
+    const task = await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } });
+    expect(task.assigneeId).toBe(member.memberId);
+    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.memberId } });
+    // F13.3: cột "Đang làm" ở màn team = việc vừa giao.
+    expect(after.current).toBe(`${TASK_ID} ${task.title}`);
+    await prisma.member.update({ where: { id: member.memberId }, data: { current: before.current } });
+    const name = after.name;
     const latest = await prisma.memberActivity.findFirstOrThrow({ orderBy: { at: "desc" } });
     expect(latest.text).toBe(`Giao ${TASK_ID} cho ${name}`);
   });
