@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { approveRevision, rejectRevision } from "./docs";
-import { getDocBody, getPendingRevisionCount } from "@/lib/data/docs";
+import { approveRevision, createDoc, rejectRevision } from "./docs";
+import { getDocBody, getDocCountByProject, getDocGroupsByProject, getPendingRevisionCount } from "@/lib/data/docs";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 
 describe("approveRevision", () => {
@@ -98,5 +98,66 @@ describe("rejectRevision (F12.3)", () => {
     expect(await rejectRevision(other.id, "rv-web", "   ")).toEqual({ ok: false, error: "Nhập lý do từ chối" });
     expect(await rejectRevision(other.id, "crm", "x")).toEqual({ ok: false, error: "Không tìm thấy revision trong dự án này" });
     expect((await prisma.docRevision.findUniqueOrThrow({ where: { id: other.id } })).status).toBe("pending");
+  });
+});
+
+describe("createDoc (F12.5)", () => {
+  const TITLE = "Đặc tả thanh toán điện tử";
+  afterAll(async () => {
+    await prisma.doc.deleteMany({ where: { id: { startsWith: "dac-ta-thanh-toan-dien-tu" } } });
+  });
+
+  it("tạo tài liệu id slug, tác giả = người đăng nhập, v1.0, nội dung tách từ markdown, đúng nhóm feature", async () => {
+    const before = await getDocCountByProject("rv-web");
+    const feature = await prisma.feature.findFirstOrThrow({ where: { projectId: "rv-web" }, orderBy: { id: "asc" } });
+    const result = await createDoc({
+      projectId: "rv-web",
+      featureId: feature.id,
+      title: `  ${TITLE} `,
+      summary: "Luồng thanh toán qua ví điện tử.",
+      content: "## Bối cảnh\nNgười mua cần\nthanh toán nhanh.\n\n## Phạm vi\nVí MoMo, ZaloPay.",
+    });
+    expect(result).toEqual({ ok: true, docId: "dac-ta-thanh-toan-dien-tu" });
+
+    const doc = await prisma.doc.findUniqueOrThrow({ where: { id: "dac-ta-thanh-toan-dien-tu" }, include: { revisions: true } });
+    expect(doc).toMatchObject({
+      projectId: "rv-web",
+      featureId: feature.id,
+      title: TITLE,
+      version: "v1.0",
+      status: "Bản nháp",
+      agentWritten: false,
+      authorId: await getCurrentUserId(),
+      sections: [
+        { heading: "Bối cảnh", paras: ["Người mua cần thanh toán nhanh."] },
+        { heading: "Phạm vi", paras: ["Ví MoMo, ZaloPay."] },
+      ],
+    });
+    expect(doc.revisions).toMatchObject([{ what: "Tạo tài liệu", status: "approved", approvedById: await getCurrentUserId() }]);
+    expect(await getDocCountByProject("rv-web")).toBe(before + 1);
+    const group = (await getDocGroupsByProject("rv-web")).find((g) => g.name.startsWith(feature.id))!;
+    expect(group.items.map((i) => i.id)).toContain("dac-ta-thanh-toan-dien-tu");
+    expect(revalidatePath).toHaveBeenCalledWith("/rv-web", "layout");
+    expect((await getDocBody("dac-ta-thanh-toan-dien-tu")).history[0]).toMatchObject({ what: "Tạo tài liệu", approvedBy: "Trung Hiếu" });
+  });
+
+  it("trùng tiêu đề → thêm hậu tố; không gắn feature → Kho tri thức chung", async () => {
+    const base = { projectId: "rv-web", featureId: "", title: TITLE, summary: "x", content: "Chỉ một đoạn." };
+    expect(await createDoc(base)).toEqual({ ok: true, docId: "dac-ta-thanh-toan-dien-tu-2" });
+    expect(await createDoc(base)).toEqual({ ok: true, docId: "dac-ta-thanh-toan-dien-tu-3" });
+    const doc = await prisma.doc.findUniqueOrThrow({ where: { id: "dac-ta-thanh-toan-dien-tu-2" } });
+    expect(doc.featureId).toBeNull();
+    expect(doc.sections).toEqual([{ heading: "Nội dung", paras: ["Chỉ một đoạn."] }]);
+  });
+
+  it("chặn input thiếu, nội dung rỗng, feature của dự án khác, dự án không tồn tại", async () => {
+    const base = { projectId: "rv-web", featureId: "", title: "Tài liệu thử", summary: "x", content: "## A\nb" };
+    expect(await createDoc({ ...base, title: "  " })).toEqual({ ok: false, error: "Nhập tiêu đề" });
+    expect(await createDoc({ ...base, summary: "" })).toEqual({ ok: false, error: "Nhập tóm tắt" });
+    expect(await createDoc({ ...base, content: "  \n " })).toEqual({ ok: false, error: "Tài liệu cần ít nhất một mục" });
+    const other = await prisma.feature.findFirstOrThrow({ where: { projectId: { not: "rv-web" } } });
+    expect(await createDoc({ ...base, featureId: other.id })).toEqual({ ok: false, error: "Feature không thuộc dự án này" });
+    expect(await createDoc({ ...base, projectId: "khong-co" })).toEqual({ ok: false, error: "Không tìm thấy dự án" });
+    expect(await prisma.doc.count({ where: { title: "Tài liệu thử" } })).toBe(0);
   });
 });

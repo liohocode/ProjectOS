@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
-import { applyRevision, rejectRevision as rejectRevisionDomain } from "@/lib/domain/docs";
+import { applyRevision, createDoc as createDocDomain, rejectRevision as rejectRevisionDomain } from "@/lib/domain/docs";
+import { markdownToSections } from "@/lib/markdownSections";
 import { fail, ok, type ActionResult } from "./result";
 
 const approveSchema = z.object({
@@ -46,4 +47,29 @@ export async function rejectRevision(revisionId: string, projectId: string, reas
   // Badge "Docs" ở sidebar (layout) đếm revision chờ → revalidate cả layout của dự án.
   revalidatePath(`/${project}`, "layout");
   return ok();
+}
+
+export interface NewDocFormInput {
+  projectId: string;
+  /** "" = Kho tri thức chung */
+  featureId: string;
+  title: string;
+  summary: string;
+  /** Markdown: `## Tiêu đề mục`, đoạn cách nhau bằng dòng trống */
+  content: string;
+}
+
+/** Tạo tài liệu mới (F12.5) — người đang đăng nhập là tác giả. */
+export async function createDoc(input: NewDocFormInput): Promise<ActionResult<{ docId: string }>> {
+  // TODO(F15.4): kiểm tra quyền
+  const result = await createDocDomain(await getCurrentUserId(), {
+    projectId: input.projectId,
+    featureId: input.featureId?.trim() ? input.featureId : null,
+    title: input.title,
+    summary: input.summary,
+    sections: markdownToSections(String(input.content ?? "")),
+  });
+  // Cây tài liệu + badge "Docs" (đếm số tài liệu) ở layout.
+  if (result.ok) revalidatePath(`/${input.projectId}`, "layout");
+  return result;
 }

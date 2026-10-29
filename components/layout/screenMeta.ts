@@ -22,7 +22,7 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     title: "Docs gắn feature và kho tri thức",
     searchPlaceholder: "Tìm feature, task, docs…",
     primaryAction: "Tài liệu mới",
-    primaryDialog: false,
+    primaryDialog: true,
   },
   work: {
     kicker: "Module 2",
