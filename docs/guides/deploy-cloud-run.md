@@ -4,7 +4,7 @@ Hướng dẫn cho F19 (ADR-016, ADR-015). Mỗi phần ghi rõ **ai làm**: ng�
 
 | Phần | Task | Ai làm | Trạng thái |
 |---|---|---|---|
-| [1. Thiết lập Google Cloud](#1-thiết-lập-google-cloud-f193) | F19.3 | Người dùng | Hướng dẫn sẵn sàng |
+| [1. Thiết lập Google Cloud](#1-thiết-lập-google-cloud-f193) | F19.3 | Người dùng | Xong, trừ budget alert |
 | 2. Neon production | F19.4 | Agent + người dùng | Chưa viết |
 | 3. Secrets | F19.5 | Agent + người dùng | Chưa viết |
 | 4. Deploy thủ công lần đầu | F19.6 | Người dùng chạy lệnh agent soạn | Chưa viết |
@@ -144,6 +144,19 @@ GCP_RUN_SA=${RUN_SA}
 EOF
 ```
 Các giá trị này **không phải secret** (WIF chỉ chấp nhận token từ repo `liohocode/ProjectOS`) — dán vào chat hoặc tự thêm vào GitHub → Settings → Secrets and variables → Actions → **Variables**.
+
+### Giá trị đã thiết lập (2026-10-29)
+Không phải secret — F19.7 ghi thẳng vào workflow (hoặc GitHub Variables).
+```
+GCP_PROJECT_ID=pdos-513017
+GCP_PROJECT_NUMBER=669737756643
+GCP_REGION=asia-southeast1
+GCP_ARTIFACT_REPO=asia-southeast1-docker.pkg.dev/pdos-513017/meridian
+GCP_WIF_PROVIDER=projects/669737756643/locations/global/workloadIdentityPools/github/providers/github
+GCP_DEPLOY_SA=meridian-deploy@pdos-513017.iam.gserviceaccount.com
+GCP_RUN_SA=meridian-run@pdos-513017.iam.gserviceaccount.com
+```
+Secret Manager hiện có: `BETTER_AUTH_SECRET`. Còn thiếu: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (người dùng, sau khi tạo OAuth client), `DATABASE_URL` (F19.4).
 
 ### Kiểm tra đã xong F19.3
 - [ ] Budget alert 5 USD tồn tại, đã bỏ chọn credit

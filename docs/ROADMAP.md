@@ -45,14 +45,14 @@ Cập nhật lần cuối: 2026-10-28 · Tổng: **64/104 task xong** (Phase 0 h
 ## Phase 5 — Vận hành
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F19](features/F19-deployment.md) | Deploy **Google Cloud Run + Neon Postgres** (gói Free), CD từ GitHub, budget alert, backup | F08.6, F15 | Đang làm — F19.3 chờ người dùng | 3/10 |
+| [F19](features/F19-deployment.md) | Deploy **Google Cloud Run + Neon Postgres** (gói Free), CD từ GitHub, budget alert, backup | F08.6, F15 | Đang làm — F19.3 chờ budget alert | 3/10 |
 
 ## Việc nên nhận tiếp theo
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
 | Task | Vì sao |
 |---|---|
 | [F12.5](features/F12-doc-authoring.md) Tài liệu mới (dialog theo URL, id slug) | F12.1–F12.4 xong; F12.6 dùng lại form |
-| [F19.3](features/F19-deployment.md) Thiết lập Google Cloud + budget alert | **Người dùng tự làm** theo `docs/guides/deploy-cloud-run.md`; dùng chung project cho OAuth (F15.2) |
+| [F19.3](features/F19-deployment.md) Budget alert + OAuth client | Hạ tầng GCP xong (project `pdos-513017`); **người dùng** đặt budget alert + tạo OAuth client (`docs/guides/google-oauth.md`) |
 | [F15.2](features/F15-auth-permissions.md) Đăng nhập Google | Code xong — **người dùng tạo OAuth client** theo `docs/guides/google-oauth.md` để thử thật |
 
 Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 → F13/F14 → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.

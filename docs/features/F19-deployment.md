@@ -45,7 +45,7 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 |---|---|---|---|---|
 | F19.1 | Quyết định hạ tầng | S | — | Xong — 2026-10-14 (ADR-016, ADR-015) |
 | F19.2 | Dockerfile production + chạy thử container ở local | M | — | Xong — 2026-10-28 |
-| F19.3 | Thiết lập Google Cloud + budget alert (hướng dẫn cho người dùng) | S | — | Đang làm — hướng dẫn xong, chờ người dùng làm theo (2026-10-28) |
+| F19.3 | Thiết lập Google Cloud + budget alert (hướng dẫn cho người dùng) | S | — | Đang làm — hạ tầng xong (2026-10-29), chờ người dùng đặt budget alert |
 | F19.4 | Neon production + kết nối Prisma | S | — | Chưa làm |
 | F19.5 | Secrets (Secret Manager) + kiểm tra biến môi trường | S | F19.3 | Chưa làm |
 | F19.6 | Deploy thủ công lần đầu lên Cloud Run | S | F19.2, F19.3, F19.4, F19.5 | Chưa làm |
@@ -74,7 +74,8 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 6. Tạo service account cho deploy (quyền tối thiểu: Run Admin, Artifact Registry Writer, Service Account User, Secret Manager Secret Accessor cho service account runtime) và **Workload Identity Federation** cho repo GitHub `liohocode/ProjectOS` (không tạo JSON key).
 Hướng dẫn: `docs/guides/deploy-cloud-run.md` → phần 1 (lệnh chạy trong Cloud Shell).
 **Hoàn thành khi**:
-- [ ] Người dùng làm theo hướng dẫn xong; có `PROJECT_ID`, region, tên repo Artifact Registry, provider WIF để dùng ở F19.7
+- [x] Có `PROJECT_ID`, region, tên repo Artifact Registry, provider WIF để dùng ở F19.7 — xem "Giá trị đã thiết lập" trong `docs/guides/deploy-cloud-run.md`
+- [ ] Budget alert 5 USD (bỏ chọn credit) — người dùng làm trên console (cần quyền billing)
 
 ### F19.4 — Neon production
 **Làm gì**: hướng dẫn người dùng tạo project Neon (region Singapore, Postgres 16), lấy **pooled connection string** (cho app) và **direct connection string** (cho `prisma migrate deploy`). `lib/prisma.ts` giữ `@prisma/adapter-pg`, giới hạn pool nhỏ (vd `max: 5`) cho môi trường serverless — đọc skill Prisma về cấu hình adapter. Chạy `npx prisma migrate deploy` lần đầu bằng direct URL. **Không seed dữ liệu mẫu** vào production; tạo thành viên thật (ít nhất tài khoản tech lead có email Google — cần cho F15.2) bằng script `scripts/bootstrap-prod.ts` hoặc qua Prisma Studio trỏ vào Neon.
@@ -129,6 +130,7 @@ Hướng dẫn: `docs/guides/deploy-cloud-run.md` → phần 1 (lệnh chạy tr
 - **F15 Auth**: OAuth client tạo trong cùng Google Cloud project; redirect URI production là URL `run.app` (hoặc tên miền F19.9).
 
 ## Quyết định / ghi chú
+- **F19.3 (2026-10-29)**: project `pdos-513017` (organization `liohocompany-org`). Người dùng làm trên điện thoại nên agent chạy bước 1.4–1.6 + tạo secret `BETTER_AUTH_SECRET` bằng service account tạm `meridian-agent` (Owner trên project). Organization mặc định chặn tạo key (`iam.disableServiceAccountKeyCreation`, `iam.managed.disableServiceAccountKeyCreation`) → người dùng tắt **riêng cho project này**. **Sau khi F19.7 chạy (deploy qua WIF, không cần key): xoá key/SA `meridian-agent` và bỏ override 2 org policy trên.** Budget alert để người dùng làm (service account không có quyền billing — cố ý).
 - **F19.2 (2026-10-28)**: base `node:24-slim` (glibc, cùng họ với runner CI Ubuntu). Image 393 MB (`docker images`), nén ~90 MB (dung lượng thật khi push). Phần app chỉ ~47 MB — còn lại là base Node. Thử `node:24-alpine`: 306 MB / nén ~73 MB, vẫn không đạt < 300 MB và đổi sang musl → giữ slim. Kiểm tra: 5 màn 200 với DB local, `/_next/static` phục vụ được, chạy user `node`, image không chứa `.env`.
 - `npm run build` có `postbuild` copy `.next/static` vào `.next/standalone`; `npm start` = `node .next/standalone/server.js` (Next 16 cảnh báo `next start` không hỗ trợ `output: "standalone"`). E2E chạy đúng server này (cổng qua `PORT`) → test cùng cách container production chạy. Next tự copy `.env` vào `.next/standalone` khi build ở máy — vô hại (`.next` gitignore); Docker không có vì `.dockerignore` loại `.env*`.
 - **2026-10-28 — người dùng chốt**: giữ Neon Free (so với Cloud SQL — xem ADR-015 "Xác nhận lại"); một môi trường duy nhất deploy từ `main`; **làm F15.2 → F15.3 trước khi chia sẻ URL**. Thứ tự: F19.2 + F19.3 → F15.2 → F15.3 → F19.4 → F19.5 → F19.6 → F19.7. Người dùng có credit Free Trial 300 USD (hết hạn sau ~90 ngày; sau đó Cloud Run vẫn trong hạn mức free).
