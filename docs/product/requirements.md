@@ -13,7 +13,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-SH-02 | Badge đếm trên nav; đổi màu amber khi có task block / revision chờ duyệt | ✅ | F01 |
 | FR-SH-03 | Khối pipeline agent BA/TA/Dev/Index ở sidebar | ✅ | F01 |
 | FR-SH-04 | Footer: trạng thái MCP (n/m server online) + người dùng hiện tại | 🟡 người dùng đang hardcode | F01 → F15 |
-| FR-SH-05 | Header mọi màn: kicker, tiêu đề, dòng context (dự án · sprint), ô tìm kiếm, nút "Lọc", nút hành động chính theo màn | 🟡 nút "Task mới" (F11.4, ADR-018), "Tài liệu mới" (F12.5), "Dự án mới" (F13.1), ô tìm kiếm (F14.2), nút "Lọc" (F14.3) đã hoạt động; nút hành động các màn khác chưa | F01 → F11/F12/F13/F14 |
+| FR-SH-05 | Header mọi màn: kicker, tiêu đề, dòng context (dự án · sprint), ô tìm kiếm, nút "Lọc", nút hành động chính theo màn | 🟡 nút "Task mới" (F11.4, ADR-018), "Tài liệu mới" (F12.5), "Dự án mới" (F13.1), "Thêm thành viên" (F13.2), ô tìm kiếm (F14.2), nút "Lọc" (F14.3) đã hoạt động; nút hành động các màn khác chưa | F01 → F11/F12/F13/F14 |
 | FR-SH-06 | Đổi dự án: reset tài liệu đang xem về tài liệu đầu tiên, đóng task drawer, mở lại mọi feature group | ✅ | F01 |
 
 ### Portfolio
@@ -58,7 +58,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-TM-03 | Danh sách thành viên (avatar, tên+handle, role, skills, đang làm, trạng thái) + responsive | ✅ | F04 |
 | FR-TM-04 | Panel chi tiết: cấu hình agent (chỉ agent), skills có thanh mức, hoạt động gần đây | ✅ | F04 |
 | FR-TM-05 | Phân biệt người / agent xuyên suốt (avatar, tag role) | ✅ | F04 |
-| FR-TM-06 | "Thêm thành viên"; "Giao task", "Xem log" trong panel | ⬜ | F13 |
+| FR-TM-06 | "Thêm thành viên"; "Giao task", "Xem log" trong panel | 🟡 thêm thành viên (F13.2) | F13 |
 | FR-TM-07 | Sửa cấu hình agent (model, MCP server, quyền ghi docs, số task đồng thời) | ⬜ | F13 |
 
 ### MCP (màn quản trị)

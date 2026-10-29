@@ -36,7 +36,7 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     title: "Dev và AI coding agents",
     searchPlaceholder: "Tìm feature, task, docs…",
     primaryAction: "Thêm thành viên",
-    primaryDialog: false,
+    primaryDialog: true,
   },
   mcp: {
     kicker: "Module 4",
