@@ -43,7 +43,7 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     title: "Kết nối MCP cho agent",
     searchPlaceholder: "Tìm feature, task, docs…",
     primaryAction: "Kết nối server",
-    primaryDialog: false,
+    primaryDialog: true,
   },
 };
 

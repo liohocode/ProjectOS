@@ -162,7 +162,10 @@ export interface McpServer {
   tools: string[];
   clients: number;
   commandsPerDay: number;
-  lastCommandAgo: string;
+  /** null = chưa nhận lệnh nào */
+  lastCommandAgo: string | null;
+  /** Server nội bộ của Meridian (meridian-core, meridian-docs) — không sửa/xoá được */
+  internal: boolean;
 }
 
 export type SessionResult = "Xong" | "Đang chạy" | "Chờ review" | "Bị chặn";

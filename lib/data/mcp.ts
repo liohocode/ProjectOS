@@ -6,6 +6,9 @@ import { formatRelativeVi } from "@/lib/relativeTime";
 import { COMMAND_RESULT_LABEL, SESSION_RESULT_LABEL } from "./mcpLabels";
 import { formatTokens, sessionDurationMin } from "@/lib/mcpFormat";
 
+/** Server nội bộ của Meridian — không cho sửa/xoá ở màn MCP (F13.6). */
+export const INTERNAL_MCP_SERVERS = ["meridian-core", "meridian-docs"];
+
 export const getMcpServers = cache(async (): Promise<McpServer[]> => {
   const rows = await prisma.mcpServer.findMany({ orderBy: { id: "asc" } });
   return rows.map((row) => ({
@@ -16,7 +19,8 @@ export const getMcpServers = cache(async (): Promise<McpServer[]> => {
     tools: row.tools,
     clients: row.clients,
     commandsPerDay: row.commandsPerDay,
-    lastCommandAgo: formatRelativeVi(row.lastCommandAt),
+    lastCommandAgo: row.lastCommandAt ? formatRelativeVi(row.lastCommandAt) : null,
+    internal: INTERNAL_MCP_SERVERS.includes(row.id),
   }));
 });
 
