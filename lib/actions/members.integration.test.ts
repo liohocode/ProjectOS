@@ -1,8 +1,8 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getTeamByProject } from "@/lib/data/team";
-import { addProjectMember, createMember, loadMemberActivity } from "./members";
+import { getTeam, getTeamByProject } from "@/lib/data/team";
+import { addProjectMember, createMember, loadMemberActivity, updateAgentConfig } from "./members";
 
 // crm seed: không có agent-vega → dùng để thử "Từ tổ chức".
 afterAll(async () => {
@@ -81,5 +81,58 @@ describe("loadMemberActivity (F13.4)", () => {
     expect(seen).toHaveLength(total);
     expect(new Set(seen.map((a) => a.id)).size).toBe(total);
     expect(await loadMemberActivity(" ", null)).toEqual({ ok: false, error: "Chọn thành viên" });
+  });
+});
+
+describe("AgentConfig (F13.5)", () => {
+  let seed: Awaited<ReturnType<typeof prisma.agentConfig.findUniqueOrThrow>>;
+  beforeAll(async () => {
+    seed = await prisma.agentConfig.findUniqueOrThrow({ where: { memberId: "agent-atlas" } });
+  });
+  afterAll(async () => {
+    const { memberId, extra, ...rest } = seed;
+    await prisma.agentConfig.update({ where: { memberId }, data: { ...rest, extra: extra ?? undefined } });
+  });
+
+  it("seed chuyển sang cấu trúc; panel dựng lại dòng hiển thị", async () => {
+    const vega = (await getTeam()).find((m) => m.id === "agent-vega")!;
+    expect(vega.agentConfig).toMatchObject({ docsWritePermission: "append_edit_spec", canAssignTo: ["agent-atlas", "agent-scout"] });
+    expect(vega.config).toContainEqual(["Được phép giao task", "Cho Atlas, Scout"]);
+    expect(vega.config).toContainEqual(["Quyền ghi docs", "Append + sửa spec"]);
+    expect(vega.config).toContainEqual(["Token tuần này", "3.2M"]);
+    expect((await getTeam()).find((m) => m.id === "hieu")?.config).toBeUndefined();
+  });
+
+  it("sửa cấu hình → đọc lại giữ nguyên", async () => {
+    const input = {
+      model: "claude-opus-4.5",
+      mcpServers: ["meridian-core", "meridian-docs", "meridian-core"],
+      docsWritePermission: "append_edit_spec" as const,
+      maxConcurrentTasks: 3,
+      canProposeFeatures: true,
+      canAssignTo: ["agent-scout"],
+    };
+    expect(await updateAgentConfig("agent-atlas", input)).toEqual({ ok: true });
+    const atlas = (await getTeam()).find((m) => m.id === "agent-atlas")!;
+    expect(atlas.agentConfig).toMatchObject({ ...input, mcpServers: ["meridian-core", "meridian-docs"] });
+    expect(atlas.config).toContainEqual(["Task đồng thời", "tối đa 3"]);
+    expect(atlas.config).toContainEqual(["Tool đặc thù", "features.propose"]);
+  });
+
+  it("chặn người, tự giao cho mình, giao cho người, số task sai, model trống", async () => {
+    const base = { model: "m", mcpServers: [], docsWritePermission: "read_only" as const, maxConcurrentTasks: 2, canProposeFeatures: false, canAssignTo: [] };
+    expect(await updateAgentConfig("hieu", base)).toEqual({ ok: false, error: "Chỉ agent có cấu hình" });
+    expect(await updateAgentConfig("agent-atlas", { ...base, canAssignTo: ["agent-atlas"] })).toEqual({ ok: false, error: "Agent không tự giao task cho chính mình" });
+    expect(await updateAgentConfig("agent-atlas", { ...base, canAssignTo: ["nam"] })).toEqual({ ok: false, error: "Chỉ giao task cho agent khác" });
+    expect(await updateAgentConfig("agent-atlas", { ...base, maxConcurrentTasks: 0 })).toEqual({ ok: false, error: "Tối thiểu 1 task" });
+    expect(await updateAgentConfig("agent-atlas", { ...base, model: " " })).toEqual({ ok: false, error: "Nhập model" });
+  });
+
+  it("agent tạo mới có cấu hình mặc định", async () => {
+    const created = await createMember({ projectId: "crm", kind: "agent", name: "IT Nova", handle: "", role: "QA agent", skills: "", email: "" });
+    if (!created.ok) throw new Error(created.error);
+    const nova = (await getTeam()).find((m) => m.id === created.memberId)!;
+    expect(nova.agentConfig).toMatchObject({ model: "", docsWritePermission: "read_only", maxConcurrentTasks: 2 });
+    expect(nova.config?.[0]).toEqual(["Model", "Chưa đặt"]);
   });
 });

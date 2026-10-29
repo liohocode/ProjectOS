@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Member } from "@/lib/types";
+import type { Member, MemberOption } from "@/lib/types";
 import { PipelineCards } from "./PipelineCards";
 import { MemberRow } from "./MemberRow";
 import { MemberPanel } from "./MemberPanel";
@@ -23,12 +23,14 @@ export function TeamScreen({
   orgTeam,
   defaultSelectedId,
   assignable,
+  mcpServers,
 }: {
   pipeline: { stage: string; agent: Member }[];
   projectTeam: Member[];
   orgTeam: Member[];
   defaultSelectedId: string | null;
   assignable: AssignableFeature[];
+  mcpServers: string[];
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(defaultSelectedId);
@@ -39,6 +41,10 @@ export function TeamScreen({
     return source.filter((m) => m.kind === filter);
   }, [filter, orgTeam, projectTeam]);
 
+  const agents: MemberOption[] = useMemo(
+    () => orgTeam.filter((m) => m.kind === "agent").map(({ id, name, kind }) => ({ id, name, kind })),
+    [orgTeam],
+  );
   const selected = orgTeam.find((m) => m.id === selectedId) ?? shown[0];
 
   return (
@@ -73,7 +79,7 @@ export function TeamScreen({
         )}
       </div>
 
-      {selected && <MemberPanel key={selected.id} member={selected} inProject={projectTeam.some((m) => m.id === selected.id)} assignable={assignable} />}
+      {selected && <MemberPanel key={selected.id} member={selected} inProject={projectTeam.some((m) => m.id === selected.id)} assignable={assignable} mcpServers={mcpServers} agents={agents} />}
     </div>
   );
 }

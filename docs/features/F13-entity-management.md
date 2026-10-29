@@ -22,7 +22,7 @@ Các nút hành động còn "chết" ở Portfolio, Team, MCP hoạt động th
 | F13.2 | "Thêm thành viên" (gán người có sẵn / tạo mới) | M | F11.4 | Xong |
 | F13.3 | Panel thành viên: "Giao task" | S | F11.2 | Xong |
 | F13.4 | Panel thành viên: "Xem log" | S | F14.3 | Xong |
-| F13.5 | Model `AgentConfig` + form sửa cấu hình agent | M | F11.4 | Chưa làm |
+| F13.5 | Model `AgentConfig` + form sửa cấu hình agent | M | F11.4 | Xong |
 | F13.6 | "Kết nối server" + sửa/xoá MCP server | S | F11.4 | Chưa làm |
 | F13.7 | Gỡ thành viên khỏi dự án; lưu trữ dự án | S | F13.1, F13.2 | Chưa làm |
 
@@ -49,7 +49,7 @@ Các nút hành động còn "chết" ở Portfolio, Team, MCP hoạt động th
 ### F13.5 — Cấu hình agent có cấu trúc
 **Làm gì**: hiện `Member.config` là `Json` mảng cặp `[label, value]` — không dùng được cho việc kiểm tra quyền ở F16. Thêm model `AgentConfig(memberId PK, model String, mcpServers String[], docsWritePermission enum {read_only, append_review, append_edit_spec}, maxConcurrentTasks Int @default(2), canProposeFeatures Boolean, canAssignTo String[], extra Json?)`. Migration + seed chuyển từ `config` cũ (Chỉ đọc → `read_only`, "Append (chờ review)" → `append_review`, "Append + sửa spec" → `append_edit_spec`). `lib/data/team.ts` dựng lại mảng hiển thị `config` từ model mới (UI panel không đổi). Form sửa cấu hình trong panel agent → `updateAgentConfig`.
 **Hoàn thành khi**:
-- [ ] Panel hiển thị như cũ; sửa model/quyền → reload giữ nguyên; `data-model.md` cập nhật
+- [x] Panel hiển thị như cũ; sửa model/quyền → reload giữ nguyên; `data-model.md` cập nhật (e2e `agent-config.spec.ts`)
 
 ### F13.6 — MCP server ngoài
 **Làm gì**: dialog "Kết nối server" ở màn MCP: tên, URL, danh sách tool → `createMcpServer` (trạng thái mặc định `limited` cho tới khi F16.8 kiểm tra). Trên mỗi `ServerCard`: sửa / xoá (xác nhận). Không cho xoá `meridian-core`, `meridian-docs` (server nội bộ).
@@ -62,6 +62,7 @@ Các nút hành động còn "chết" ở Portfolio, Team, MCP hoạt động th
 - [ ] Cả hai thao tác có xác nhận và kiểm tra ràng buộc
 
 ## Quyết định / ghi chú
+- **F13.5 (2026-10-29)**: Migration chỉ thêm `agent_config` (bảng `agent_configs` + enum `DocsWritePermission`); cột `Member.config` giữ nguyên nhưng không còn đọc/ghi (xoá cột = migration mất dữ liệu → để sau, cần người dùng đồng ý). Chuyển dữ liệu ở **seed** (`parseLegacyConfig` trong `lib/agentConfig.ts`: "Tool đặc thù: features.propose" → `canProposeFeatures`, "Được phép giao task: Cho Atlas, Scout" → `canAssignTo` theo member id, nhãn quyền ghi docs → enum, dòng lạ → `extra`) — DB dev/test seed lại; production chưa có dữ liệu. Panel dựng lại dòng theo thứ tự cố định bằng `agentConfigRows`; **lệch nhỏ so với cũ**: mọi agent có thêm dòng "Task đồng thời: tối đa N" (giá trị sửa được nên cần hiện). Seed sửa "MCP server: meridian-core, docs" của Bảo → `meridian-docs` (id server thật). Form "Sửa" ở mục Cấu hình agent → `updateAgentConfig` (chặn người, tự giao cho mình, giao cho người, số task ngoài 1–10). Agent tạo mới (F13.2) có cấu hình mặc định (chỉ đọc docs, tối đa 2 task).
 - **F13.4 (2026-10-29)**: Agent: link sang `/<dự án>/mcp?agent=<id>` (bộ lọc F14.3 áp ngay). Người: dialog cục bộ tải trang đầu bằng server action chỉ đọc `loadMemberActivity` (cursor 20 dòng, `getMemberActivityPage` trong `lib/data/team.ts`) + "Xem thêm". `toPage` chuyển sang `lib/data/paging.ts` dùng chung với bảng MCP.
 - **F13.3 (2026-10-29)**: Dialog cục bộ trong panel (không theo URL — hành động phụ, gắn với thành viên đang chọn). Page tải sẵn task chưa Done của dự án (nhóm theo feature); dialog bỏ task đang giao cho chính thành viên. `assignTask` (F11.2) nay ghi luôn `Member.current = "<id> <tiêu đề>"` — cột "Đang làm" ở màn team phản ánh việc vừa giao (áp dụng cả khi giao từ drawer màn work). Thành viên chưa thuộc dự án (xem "Toàn tổ chức") → nút khoá kèm tooltip.
 - **F13.2 (2026-10-29)**: `lib/actions/members.ts`: `addProjectMember` (gán người/agent có sẵn) + `createMember` (id slug tên cho người, `agent-<slug>` cho agent, hậu tố `-2`… khi trùng; handle mặc định `@slug` / `agent`; skills tách dấu phẩy; email đăng nhập chỉ cho người, không trùng; trạng thái "Chờ", "Chưa có việc"). Dialog 2 tab ở màn team (`?new=1`); tab "Từ tổ chức" chỉ liệt kê người chưa thuộc dự án. Cấu hình agent khi tạo mới: F13.5 tạo `AgentConfig` mặc định.

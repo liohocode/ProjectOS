@@ -1,4 +1,5 @@
 import type { SectionDiff } from "@/lib/diffSections";
+import type { AgentConfigValues } from "@/lib/agentConfig";
 
 export type ScreenId = "portfolio" | "docs" | "work" | "team" | "mcp";
 
@@ -119,8 +120,10 @@ export interface Member {
   /** [label, level, percent][] — level is a display string (Cao/Trung bình/Cơ bản/Không dùng) */
   skillRows: [string, string, number][];
   activity: MemberActivity[];
-  /** [label, value][] — agent-only configuration rows */
+  /** [label, value][] — agent-only configuration rows (dựng từ AgentConfig, F13.5) */
   config?: [string, string][];
+  /** Giá trị có cấu trúc cho form sửa cấu hình (F13.5) — chỉ agent */
+  agentConfig?: AgentConfigValues;
 }
 
 export interface TimelineRow {

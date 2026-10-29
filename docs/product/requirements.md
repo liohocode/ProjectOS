@@ -59,7 +59,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-TM-04 | Panel chi tiết: cấu hình agent (chỉ agent), skills có thanh mức, hoạt động gần đây | ✅ | F04 |
 | FR-TM-05 | Phân biệt người / agent xuyên suốt (avatar, tag role) | ✅ | F04 |
 | FR-TM-06 | "Thêm thành viên"; "Giao task", "Xem log" trong panel | ✅ thêm thành viên (F13.2), giao task (F13.3), xem log (F13.4) | F13 |
-| FR-TM-07 | Sửa cấu hình agent (model, MCP server, quyền ghi docs, số task đồng thời) | ⬜ | F13 |
+| FR-TM-07 | Sửa cấu hình agent (model, MCP server, quyền ghi docs, số task đồng thời) | ✅ model `AgentConfig` + form (F13.5) | F13 |
 
 ### MCP (màn quản trị)
 | Mã | Yêu cầu | TT | Feature |
