@@ -11,6 +11,7 @@ Feature 1─n Doc
 Doc     1─n DocRevision    (author, approvedBy → Member)
 Member  n─n Project        (qua ProjectMember — "phân bổ" người/agent vào dự án)
 Member  1─n MemberSkillRow, MemberActivity
+Member  0..1─1 AgentConfig   (chỉ agent — F13.5)
 Member  1─n Feature (owner), Task (assignee), Doc (author)
 Member  1─n McpSession, McpLogEntry      (agent; log có thể là người, vd duyệt revision)
 Project 1─n McpSession; Task 0─n McpSession
@@ -24,7 +25,8 @@ AuthVerification  (độc lập, Better Auth dùng cho token tạm)
 |---|---|---|
 | `Project` (`projects`) | `id` chuỗi (`rv-web`) | `currentSprintId` → sprint hiện tại; nhãn hiển thị "Sprint 14 · 12–26/08" dựng lại bằng `lib/sprint.ts` |
 | `Sprint` (`sprints`) | cuid | `name`, `startDate`, `endDate` (kiểu `DATE`) |
-| `Member` (`members`) | `id` chuỗi (`agent-atlas`, `hieu`) | `kind` = `human`/`agent`; `status` enum `MemberStatus` (nhãn ở `lib/memberFormat.ts`); `current` chuỗi tự do; `skills String[]`; `config Json?` = `[["Model","claude-sonnet-4.5"], ...]`, chỉ agent có; `email String? @unique` — email Google đăng nhập, chỉ người (seed: `<id>@example.com`, `DEV_LOGIN_EMAIL` thay cho `hieu`) |
+| `Member` (`members`) | `id` chuỗi (`agent-atlas`, `hieu`) | `kind` = `human`/`agent`; `status` enum `MemberStatus` (nhãn ở `lib/memberFormat.ts`); `current` chuỗi tự do; `skills String[]`; `config Json?` **cũ, không còn dùng** (thay bằng `AgentConfig`, F13.5 — giữ cột để không phải migration xoá dữ liệu); `email String? @unique` — email Google đăng nhập, chỉ người (seed: `<id>@example.com`, `DEV_LOGIN_EMAIL` thay cho `hieu`) |
+| `AgentConfig` (`agent_configs`) | `memberId` | Cấu hình có cấu trúc của agent (F13.5): `model`, `mcpServers String[]`, `docsWritePermission` enum `DocsWritePermission` (`read_only` / `append_review` / `append_edit_spec`), `maxConcurrentTasks` (mặc định 2), `canProposeFeatures`, `canAssignTo String[]` (member id agent), `extra Json?` (dòng hiển thị khác: token tuần này, embedding). Dòng hiển thị ở panel dựng lại bằng `lib/agentConfig.ts`; seed chuyển từ mảng hiển thị cũ bằng `parseLegacyConfig` |
 | `MemberSkillRow` | cuid | `label`, `level` (Cao/Trung bình/Cơ bản/Không dùng), `percent`, `sortOrder` |
 | `MemberActivity` | cuid | `icon`, `text`, `at` (timestamp thật) |
 | `ProjectMember` | (`projectId`,`memberId`) | |
@@ -59,6 +61,7 @@ AuthVerification  (độc lập, Better Auth dùng cho token tạm)
 ## Điểm còn tạm (nợ kỹ thuật dữ liệu)
 | Field | Hiện tại | Đích | Task |
 |---|---|---|---|
+| `Member.config` | cột JSON cũ, không còn đọc/ghi | xoá cột (migration làm mất dữ liệu → hỏi người dùng) sau khi production đã có `AgentConfig` | — |
 | `Member.current` | chuỗi tự do ("T-405 Sinh test cho API bộ lọc") | suy ra từ task đang chạy/đang làm của thành viên | F17 (cùng lúc với bảng sự kiện thật) |
 
 ## Dữ liệu seed

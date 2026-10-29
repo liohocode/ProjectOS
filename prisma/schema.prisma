@@ -103,7 +103,8 @@ model Member {
   skills  String[]
   current String
   status  MemberStatus
-  /// Chỉ set khi kind = agent: [["Model","claude-opus-4.1"], ...]
+  /// CŨ (trước F13.5) — mảng hiển thị [["Model","claude-opus-4.1"], ...]. Không còn đọc/ghi; dữ liệu nằm ở AgentConfig.
+  /// Giữ cột để không phải migration xoá dữ liệu; bỏ hẳn sau khi production đã chuyển xong.
   config  Json?
   /// Email Google để đăng nhập — chỉ người (kind = human). Đăng nhập chỉ chấp nhận email có ở đây (ADR-020).
   email   String?      @unique
@@ -119,8 +120,34 @@ model Member {
   mcpSessions       McpSession[]
   mcpLogEntries     McpLogEntry[]
   authUser          AuthUser?
+  agentConfig       AgentConfig?
 
   @@map("members")
+}
+
+enum DocsWritePermission {
+  read_only
+  append_review
+  append_edit_spec
+}
+
+/// Cấu hình có cấu trúc của agent (F13.5) — F16 dùng để kiểm tra quyền khi agent gọi MCP.
+model AgentConfig {
+  memberId            String              @id
+  member              Member              @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  model               String
+  /// Id/tên MCP server agent được kết nối (vd "meridian-core")
+  mcpServers          String[]
+  docsWritePermission DocsWritePermission @default(read_only)
+  maxConcurrentTasks  Int                 @default(2)
+  /// Được gọi tool `features.propose` (BA agent)
+  canProposeFeatures  Boolean             @default(false)
+  /// Member id các agent mà agent này được giao task cho
+  canAssignTo         String[]
+  /// Dòng hiển thị khác không dùng để kiểm tra quyền: [["Token tuần này","2.4M"], ...]
+  extra               Json?
+
+  @@map("agent_configs")
 }
 
 model MemberSkillRow {

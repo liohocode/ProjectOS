@@ -3,23 +3,30 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { Member } from "@/lib/types";
+import type { Member, MemberOption } from "@/lib/types";
 import { initials } from "@/components/work/taskStyle";
 import { AssignTaskDialog, type AssignableFeature } from "./AssignTaskDialog";
 import { MemberLogDialog } from "./MemberLogDialog";
+import { AgentConfigDialog } from "./AgentConfigDialog";
 
 export function MemberPanel({
   member,
   inProject,
   assignable,
+  mcpServers,
+  agents,
 }: {
   member: Member;
   /** Chỉ thành viên của dự án đang mở mới giao task được (xem "Toàn tổ chức" thì có thể không) */
   inProject: boolean;
   assignable: AssignableFeature[];
+  /** Id MCP server đã đăng ký — form cấu hình agent (F13.5) */
+  mcpServers: string[];
+  agents: MemberOption[];
 }) {
   const [assigning, setAssigning] = useState(false);
   const [showLog, setShowLog] = useState(false);
+  const [editingConfig, setEditingConfig] = useState(false);
   const projectId = usePathname().split("/")[1];
   return (
     <aside className="team-aside">
@@ -37,7 +44,14 @@ export function MemberPanel({
 
       {member.kind === "agent" && member.config && (
         <div className="panel-section">
-          <div className="panel-section-title">Cấu hình agent</div>
+          <div className="panel-section-title panel-section-title-row">
+            Cấu hình agent
+            {member.agentConfig && (
+              <button type="button" className="btn btn-ghost panel-section-action" onClick={() => setEditingConfig(true)}>
+                <i className="ph ph-pencil-simple" aria-hidden /> Sửa
+              </button>
+            )}
+          </div>
           {member.config.map(([label, value]) => (
             <div className="config-row" key={label}>
               <span className="config-row-label">{label}</span>
@@ -101,6 +115,9 @@ export function MemberPanel({
           Giao task
         </button>
       </div>
+      {editingConfig && member.agentConfig && (
+        <AgentConfigDialog member={member} config={member.agentConfig} mcpServers={mcpServers} agents={agents} onClose={() => setEditingConfig(false)} />
+      )}
       {showLog && <MemberLogDialog member={member} onClose={() => setShowLog(false)} />}
       {assigning && <AssignTaskDialog member={member} features={assignable} onClose={() => setAssigning(false)} />}
     </aside>

@@ -7,6 +7,7 @@ import { slugify } from "@/lib/slug";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { getMemberActivityPage } from "@/lib/data/team";
 import type { MemberActivityEntry, Page } from "@/lib/types";
+import { DEFAULT_AGENT_CONFIG, DOCS_WRITE_PERMISSIONS } from "@/lib/agentConfig";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
 
@@ -97,6 +98,10 @@ export async function createMember(input: NewMemberInput): Promise<ActionResult<
       status: "Cho",
       email: data.email || null,
       projects: { create: { projectId: data.projectId } },
+      // F13.5: agent mới có cấu hình mặc định (chỉ đọc docs, tối đa 2 task) — sửa ở panel.
+      ...(data.kind === "agent" && {
+        agentConfig: { create: { ...DEFAULT_AGENT_CONFIG, extra: [] } },
+      }),
     },
   });
   await recordActivity("ph-user-plus", `Thêm thành viên mới ${data.name}`);
@@ -110,4 +115,41 @@ export async function loadMemberActivity(memberId: string, cursor: string | null
   const input = z.object({ memberId: memberIdSchema, cursor: z.string().trim().min(1).nullable() }).safeParse({ memberId, cursor });
   if (!input.success) return fail(input.error.issues[0].message);
   return { ok: true, page: await getMemberActivityPage(input.data.memberId, input.data.cursor) };
+}
+
+const agentConfigSchema = z.object({
+  model: z.string().trim().min(1, "Nhập model").max(80, "Model tối đa 80 ký tự"),
+  mcpServers: z.array(z.string().trim().min(1)).max(20, "Tối đa 20 MCP server"),
+  docsWritePermission: z.enum(DOCS_WRITE_PERMISSIONS, { message: "Quyền ghi docs không hợp lệ" }),
+  maxConcurrentTasks: z.number({ error: "Số task đồng thời phải là số" }).int("Số nguyên").min(1, "Tối thiểu 1 task").max(10, "Tối đa 10 task"),
+  canProposeFeatures: z.boolean(),
+  canAssignTo: z.array(z.string().trim().min(1)).max(50),
+});
+
+export type AgentConfigInput = z.input<typeof agentConfigSchema>;
+
+/** Sửa cấu hình agent (F13.5). `extra` (token tuần này, embedding…) không sửa ở đây. */
+export async function updateAgentConfig(memberId: string, input: AgentConfigInput): Promise<ActionResult> {
+  // TODO(F15.4): kiểm tra quyền
+  const id = memberIdSchema.safeParse(memberId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const parsed = agentConfigSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+  const data = { ...parsed.data, mcpServers: [...new Set(parsed.data.mcpServers)], canAssignTo: [...new Set(parsed.data.canAssignTo)] };
+
+  const member = await prisma.member.findUnique({ where: { id: id.data }, select: { kind: true, name: true } });
+  if (!member) return fail("Không tìm thấy thành viên");
+  if (member.kind !== "agent") return fail("Chỉ agent có cấu hình");
+  if (data.canAssignTo.includes(id.data)) return fail("Agent không tự giao task cho chính mình");
+  const targets = await prisma.member.count({ where: { id: { in: data.canAssignTo }, kind: "agent" } });
+  if (targets !== data.canAssignTo.length) return fail("Chỉ giao task cho agent khác");
+
+  await prisma.agentConfig.upsert({
+    where: { memberId: id.data },
+    create: { memberId: id.data, ...data, extra: [] },
+    update: data,
+  });
+  await recordActivity("ph-gear", `Sửa cấu hình agent ${member.name}`);
+  revalidateMemberViews();
+  return ok();
 }

@@ -1,11 +1,13 @@
 import { cache } from "react";
 import type { Member, MemberActivityEntry, MemberOption, Page } from "@/lib/types";
 import { toPage } from "./paging";
+import { agentConfigRows, DEFAULT_AGENT_CONFIG, type AgentConfigValues } from "@/lib/agentConfig";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
 import { MEMBER_STATUS_LABEL } from "@/lib/memberFormat";
 
 const memberInclude = {
+  agentConfig: true,
   skillRows: { orderBy: { sortOrder: "asc" } },
   // Panel "Hoạt động gần đây" — action ghi thêm liên tục (F11.7) nên chỉ lấy các dòng mới nhất.
   activity: { orderBy: { at: "desc" }, take: 10 },
@@ -13,7 +15,28 @@ const memberInclude = {
 
 type MemberRow = Awaited<ReturnType<typeof prisma.member.findFirstOrThrow<{ include: typeof memberInclude }>>>;
 
-function toMember(row: MemberRow): Member {
+/** Tên mọi thành viên theo id — để hiện "Được phép giao task: Cho Atlas, Scout". */
+const getMemberNames = cache(async (): Promise<Map<string, string>> => {
+  const rows = await prisma.member.findMany({ select: { id: true, name: true } });
+  return new Map(rows.map((r) => [r.id, r.name]));
+});
+
+function configOf(row: MemberRow): AgentConfigValues | undefined {
+  const c = row.agentConfig;
+  if (!c) return row.kind === "agent" ? { ...DEFAULT_AGENT_CONFIG } : undefined;
+  return {
+    model: c.model,
+    mcpServers: c.mcpServers,
+    docsWritePermission: c.docsWritePermission,
+    maxConcurrentTasks: c.maxConcurrentTasks,
+    canProposeFeatures: c.canProposeFeatures,
+    canAssignTo: c.canAssignTo,
+    extra: (c.extra as [string, string][] | null) ?? [],
+  };
+}
+
+function toMember(row: MemberRow, names: Map<string, string>): Member {
+  const agentConfig = configOf(row);
   return {
     id: row.id,
     name: row.name,
@@ -25,13 +48,18 @@ function toMember(row: MemberRow): Member {
     status: MEMBER_STATUS_LABEL[row.status],
     skillRows: row.skillRows.map((s) => [s.label, s.level, s.percent]),
     activity: row.activity.map((a) => ({ icon: a.icon, text: a.text, when: formatRelativeVi(a.at) })),
-    config: (row.config as [string, string][] | null) ?? undefined,
+    ...(agentConfig && { agentConfig, config: agentConfigRows(agentConfig, (id) => names.get(id)) }),
   };
+}
+
+async function toMembers(rows: MemberRow[]): Promise<Member[]> {
+  const names = await getMemberNames();
+  return rows.map((row) => toMember(row, names));
 }
 
 export const getTeam = cache(async (): Promise<Member[]> => {
   const rows = await prisma.member.findMany({ include: memberInclude, orderBy: { id: "asc" } });
-  return rows.map(toMember);
+  return toMembers(rows);
 });
 
 export const getTeamByProject = cache(async (projectId: string): Promise<Member[]> => {
@@ -40,7 +68,7 @@ export const getTeamByProject = cache(async (projectId: string): Promise<Member[
     include: memberInclude,
     orderBy: { id: "asc" },
   });
-  return rows.map(toMember);
+  return toMembers(rows);
 });
 
 /** Số thành viên dự án cho badge sidebar — cùng tập với getTeamByProject, không tải hồ sơ. */
@@ -73,7 +101,7 @@ export const getAgentOptions = cache(async (): Promise<MemberOption[]> => {
 
 export const getMemberById = cache(async (id: string): Promise<Member | undefined> => {
   const row = await prisma.member.findUnique({ where: { id }, include: memberInclude });
-  return row ? toMember(row) : undefined;
+  return row ? toMember(row, await getMemberNames()) : undefined;
 });
 
 const PIPELINE_STAGE_BY_AGENT_ID: Record<string, string> = {
@@ -90,9 +118,10 @@ export const getPipelineAgents = cache(async (): Promise<{ stage: string; agent:
     include: memberInclude,
   });
   const byId = new Map(rows.map((row) => [row.id, row]));
+  const names = await getMemberNames();
   return order.flatMap((id) => {
     const row = byId.get(id);
-    return row ? [{ stage: PIPELINE_STAGE_BY_AGENT_ID[id], agent: toMember(row) }] : [];
+    return row ? [{ stage: PIPELINE_STAGE_BY_AGENT_ID[id], agent: toMember(row, names) }] : [];
   });
 });
 

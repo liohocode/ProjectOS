@@ -17,6 +17,7 @@ import { parseDue, parseEstimate, parseRunning, parseTaskStatus } from "../lib/t
 import { weeksToDates } from "../lib/timeline";
 import { parseTokens } from "../lib/mcpFormat";
 import { parseMemberStatus } from "../lib/memberFormat";
+import { parseLegacyConfig } from "../lib/agentConfig";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -121,7 +122,14 @@ async function main() {
         skills: m.skills,
         current: m.current,
         status: parseMemberStatus(m.status),
-        config: (m.config as unknown as Prisma.InputJsonValue) ?? undefined,
+        // F13.5: dữ liệu mẫu giữ dạng mảng hiển thị → chuyển sang AgentConfig có cấu trúc.
+        ...(m.config && {
+          agentConfig: {
+            create: (({ extra, ...rest }) => ({ ...rest, extra: extra as unknown as Prisma.InputJsonValue }))(
+              parseLegacyConfig(m.config, (name) => members.find((x) => x.name === name)?.id),
+            ),
+          },
+        }),
         skillRows: {
           create: m.skillRows.map(([label, level, percent], sortOrder) => ({ label, level, percent, sortOrder })),
         },

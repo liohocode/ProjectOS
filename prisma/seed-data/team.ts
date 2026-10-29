@@ -12,7 +12,7 @@ const TEAM: Member[] = [
     status: "Đang chạy",
     config: [
       ["Model", "claude-opus-4.1"],
-      ["MCP server", "meridian-core, docs"],
+      ["MCP server", "meridian-core, meridian-docs"],
       ["Tool đặc thù", "features.propose"],
       ["Quyền ghi docs", "Append (chờ review)"],
       ["Token tuần này", "2.4M"],
