@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { toPage } from "./paging";
 import type { McpLogEntry, McpServer, McpSession, Page } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
@@ -32,12 +33,6 @@ export interface McpPageOptions {
 }
 
 /** Cắt `limit + 1` dòng → biết còn trang sau mà không cần đếm. */
-function toPage<R extends { id: string }, T>(rows: R[], limit: number, map: (row: R) => T): Page<T> {
-  const hasMore = rows.length > limit;
-  const pageRows = hasMore ? rows.slice(0, limit) : rows;
-  return { items: pageRows.map(map), nextCursor: hasMore ? pageRows[pageRows.length - 1].id : null };
-}
-
 // cache() theo tham số nguyên thuỷ (ADR-019); hàm export nhận object cho dễ gọi.
 const sessionsPage = cache(
   async (limit: number, cursor: string | null, agent: string | null, project: string | null, result: string | null): Promise<Page<McpSession>> => {

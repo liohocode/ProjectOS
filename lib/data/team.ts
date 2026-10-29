@@ -1,5 +1,6 @@
 import { cache } from "react";
-import type { Member, MemberOption } from "@/lib/types";
+import type { Member, MemberActivityEntry, MemberOption, Page } from "@/lib/types";
+import { toPage } from "./paging";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
 import { MEMBER_STATUS_LABEL } from "@/lib/memberFormat";
@@ -94,3 +95,18 @@ export const getPipelineAgents = cache(async (): Promise<{ stage: string; agent:
     return row ? [{ stage: PIPELINE_STAGE_BY_AGENT_ID[id], agent: toMember(row) }] : [];
   });
 });
+
+export const MEMBER_ACTIVITY_PAGE_SIZE = 20;
+
+/** Toàn bộ hoạt động của một thành viên, mới nhất trước, từng trang (dialog "Xem log", F13.4). */
+export const getMemberActivityPage = cache(
+  async (memberId: string, cursor: string | null, limit: number = MEMBER_ACTIVITY_PAGE_SIZE): Promise<Page<MemberActivityEntry>> => {
+    const rows = await prisma.memberActivity.findMany({
+      where: { memberId },
+      orderBy: [{ at: "desc" }, { id: "desc" }],
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+    });
+    return toPage(rows, limit, (a) => ({ id: a.id, icon: a.icon, text: a.text, when: formatRelativeVi(a.at) }));
+  },
+);
