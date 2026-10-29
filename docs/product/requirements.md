@@ -13,7 +13,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-SH-02 | Badge đếm trên nav; đổi màu amber khi có task block / revision chờ duyệt | ✅ | F01 |
 | FR-SH-03 | Khối pipeline agent BA/TA/Dev/Index ở sidebar | ✅ | F01 |
 | FR-SH-04 | Footer: trạng thái MCP (n/m server online) + người dùng hiện tại | 🟡 người dùng đang hardcode | F01 → F15 |
-| FR-SH-05 | Header mọi màn: kicker, tiêu đề, dòng context (dự án · sprint), ô tìm kiếm, nút "Lọc", nút hành động chính theo màn | 🟡 nút "Task mới" (F11.4, ADR-018), "Tài liệu mới" (F12.5), ô tìm kiếm (F14.2), nút "Lọc" (F14.3) đã hoạt động; nút hành động các màn khác chưa | F01 → F11/F12/F13/F14 |
+| FR-SH-05 | Header mọi màn: kicker, tiêu đề, dòng context (dự án · sprint), ô tìm kiếm, nút "Lọc", nút hành động chính theo màn | 🟡 nút "Task mới" (F11.4, ADR-018), "Tài liệu mới" (F12.5), "Dự án mới" (F13.1), ô tìm kiếm (F14.2), nút "Lọc" (F14.3) đã hoạt động; nút hành động các màn khác chưa | F01 → F11/F12/F13/F14 |
 | FR-SH-06 | Đổi dự án: reset tài liệu đang xem về tài liệu đầu tiên, đóng task drawer, mở lại mọi feature group | ✅ | F01 |
 
 ### Portfolio
@@ -22,7 +22,7 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 | FR-PF-01 | Dòng tóm tắt: số dự án · số người và agent dùng chung · số task đang block | ✅ | F06 |
 | FR-PF-02 | Grid project card: mã, tên, trạng thái, mô tả, progress (% TB feature), 4 ô thống kê, avatar (≤6), cảnh báo block, sprint; dự án đang mở có viền accent | ✅ | F06 |
 | FR-PF-03 | Click card → đổi dự án và sang màn Feature & Task | ✅ | F06 |
-| FR-PF-04 | Nút "Dự án mới" tạo dự án | ⬜ | F13 |
+| FR-PF-04 | Nút "Dự án mới" tạo dự án | ✅ (F13.1) | F13 |
 
 ### Docs dự án
 | Mã | Yêu cầu | TT | Feature |
