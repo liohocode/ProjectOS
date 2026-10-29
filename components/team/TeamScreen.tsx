@@ -5,6 +5,7 @@ import type { Member } from "@/lib/types";
 import { PipelineCards } from "./PipelineCards";
 import { MemberRow } from "./MemberRow";
 import { MemberPanel } from "./MemberPanel";
+import type { AssignableFeature } from "./AssignTaskDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 type Filter = "all" | "human" | "agent" | "org";
@@ -21,11 +22,13 @@ export function TeamScreen({
   projectTeam,
   orgTeam,
   defaultSelectedId,
+  assignable,
 }: {
   pipeline: { stage: string; agent: Member }[];
   projectTeam: Member[];
   orgTeam: Member[];
   defaultSelectedId: string | null;
+  assignable: AssignableFeature[];
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(defaultSelectedId);
@@ -70,7 +73,7 @@ export function TeamScreen({
         )}
       </div>
 
-      {selected && <MemberPanel member={selected} />}
+      {selected && <MemberPanel key={selected.id} member={selected} inProject={projectTeam.some((m) => m.id === selected.id)} assignable={assignable} />}
     </div>
   );
 }

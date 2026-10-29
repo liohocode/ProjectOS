@@ -64,7 +64,9 @@ export async function assignTask(taskId: string, memberId: string): Promise<Acti
   });
   if (!membership) return fail("Người/agent này không thuộc dự án của task");
 
-  await prisma.task.update({ where: { id: input.data.taskId }, data: { assigneeId: input.data.memberId } });
+  const task = await prisma.task.update({ where: { id: input.data.taskId }, data: { assigneeId: input.data.memberId }, select: { title: true } });
+  // Cột "Đang làm" ở màn team (F13.3): việc vừa được giao.
+  await prisma.member.update({ where: { id: input.data.memberId }, data: { current: `${input.data.taskId} ${task.title}` } });
   await recordActivity("ph-share-network", `Giao ${input.data.taskId} cho ${membership.member.name}`);
   revalidateTaskViews();
   return ok();
