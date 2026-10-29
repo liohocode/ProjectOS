@@ -34,7 +34,7 @@ AuthVerification  (độc lập, Better Auth dùng cho token tạm)
 | `Task` (`tasks`) | `id` chuỗi (`T-401`) | `status` enum `TaskStatus`; `estimatePoints Int?`, `dueDate DATE?`, `runningSince DateTime?` — format sang "5đ" / "22/08" / "chạy 14 phút" bằng `lib/taskFormat.ts` |
 | `Doc` (`docs`) | `id` chuỗi slug (`prd-listing`) | `projectId` bắt buộc, `featureId` tuỳ chọn; `sections Json` = `[{heading, paras[]}]`; `readBy String[]`; `indexedAt`, `chunkCount` |
 | `DocRevision` | cuid | `what` (mô tả); `status` enum `RevisionStatus` (`pending` chờ duyệt / `approved` / `rejected`); `proposedSummary String?`, `proposedSections Json?` (cùng shape `Doc.sections`; null = giữ nguyên phần đó); `rejectedReason`; `baseVersion` = `Doc.version` lúc tạo (F12.2 chặn ghi đè); `approvedById`, `approvedAt`. Tạo qua `lib/domain/docs.ts` → `createRevision` (F12.1) |
-| `McpServer` | `id` chuỗi | `status` enum `online`/`limited`, `tools String[]` |
+| `McpServer` | `id` chuỗi (slug tên — F13.6) | `status` enum `online`/`limited`, `tools String[]`; `lastCommandAt` null = chưa nhận lệnh (server vừa đăng ký). `meridian-core`, `meridian-docs` là server nội bộ, không sửa/xoá |
 | `McpSession` | `id` chuỗi (`sess-8f2a`) / cuid | `startedAt`, `endedAt` (null = đang chạy; thời lượng tính từ 2 mốc này), `toolCalls`, `tokensUsed Int` (hiển thị "182K" qua `lib/mcpFormat.ts`), `result` enum |
 | `McpLogEntry` | cuid | `at`, `tool`, `target`, `result` enum; index `at desc` |
 | `AuthUser` (`auth_users`) | id do Better Auth sinh | schema lõi Better Auth 1.7 (`name`, `email` unique, `emailVerified`, `image`) + `memberId` unique → `Member` (cascade), gán lúc tạo tài khoản. Không sửa tay field lõi — adapter đọc đúng tên field mặc định |
