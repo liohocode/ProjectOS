@@ -206,3 +206,66 @@ export async function createDoc(authorId: string, input: NewDocInput): Promise<A
   }
   return fail("Không tạo được id tài liệu, thử lại");
 }
+
+const editDocSchema = z.object({
+  docId: z.string().trim().min(1, "Thiếu tài liệu"),
+  baseVersion: z.string().trim().min(1, "Thiếu version gốc"),
+  what: z.string().trim().max(300, "Mô tả tối đa 300 ký tự"),
+  summary: z.string().trim().min(1, "Nhập tóm tắt").max(2000, "Tóm tắt tối đa 2000 ký tự"),
+  sections: docSectionsSchema,
+});
+
+export type EditDocInput = z.input<typeof editDocSchema>;
+
+/**
+ * Người sửa trực tiếp (F12.6): trong một transaction — ghi tài liệu nếu version vẫn là `baseVersion`
+ * (version lúc mở form; khác → báo đã có người sửa/duyệt trước), tăng version phụ, và lưu một revision
+ * `approved` do chính người sửa để có lịch sử. Agent không có đường này (chỉ đề xuất revision, F16.5).
+ */
+export async function editDoc(editorId: string, input: EditDocInput): Promise<ActionResult<{ version: string }>> {
+  const parsed = editDocSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+  const data = parsed.data;
+
+  try {
+    const version = await prisma.$transaction(async (tx) => {
+      const doc = await tx.doc.findUnique({ where: { id: data.docId }, select: { version: true, summary: true, sections: true } });
+      if (!doc) throw new RevisionConflict("Không tìm thấy tài liệu");
+      if (doc.version !== data.baseVersion) throw new RevisionConflict("Tài liệu đã thay đổi từ khi bạn mở form — tải lại để sửa trên bản mới");
+      // jsonb đổi thứ tự key ("paras" trước "heading") → so sánh theo field, không so chuỗi JSON thô.
+      const same = (a: DocSection[], b: DocSection[]) =>
+        a.length === b.length && a.every((x, i) => x.heading === b[i].heading && x.paras.join("\u0000") === b[i].paras.join("\u0000"));
+      if (doc.summary === data.summary && same(doc.sections as unknown as DocSection[], data.sections)) {
+        throw new RevisionConflict("Nội dung không có thay đổi");
+      }
+
+      const now = new Date();
+      const nextVersion = bumpMinorVersion(data.baseVersion);
+      const written = await tx.doc.updateMany({
+        where: { id: data.docId, version: data.baseVersion },
+        data: { summary: data.summary, sections: data.sections, version: nextVersion, updatedAt: now },
+      });
+      if (written.count === 0) throw new RevisionConflict("Tài liệu đã thay đổi từ khi bạn mở form — tải lại để sửa trên bản mới");
+
+      await tx.docRevision.create({
+        data: {
+          docId: data.docId,
+          authorId: editorId,
+          what: data.what || "Sửa trực tiếp",
+          createdAt: now,
+          status: "approved",
+          baseVersion: data.baseVersion,
+          proposedSummary: data.summary,
+          proposedSections: data.sections,
+          approvedById: editorId,
+          approvedAt: now,
+        },
+      });
+      return nextVersion;
+    });
+    return { ok: true, version };
+  } catch (error) {
+    if (error instanceof RevisionConflict) return fail(error.message);
+    throw error;
+  }
+}

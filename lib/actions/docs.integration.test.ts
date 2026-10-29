@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { approveRevision, createDoc, rejectRevision } from "./docs";
+import { approveRevision, createDoc, editDoc, rejectRevision } from "./docs";
 import { getDocBody, getDocCountByProject, getDocGroupsByProject, getPendingRevisionCount } from "@/lib/data/docs";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 
@@ -159,5 +159,64 @@ describe("createDoc (F12.5)", () => {
     expect(await createDoc({ ...base, featureId: other.id })).toEqual({ ok: false, error: "Feature không thuộc dự án này" });
     expect(await createDoc({ ...base, projectId: "khong-co" })).toEqual({ ok: false, error: "Không tìm thấy dự án" });
     expect(await prisma.doc.count({ where: { title: "Tài liệu thử" } })).toBe(0);
+  });
+});
+
+describe("editDoc (F12.6)", () => {
+  // "glossary" (rv-web) không có revision chờ → sửa không làm lệch dữ liệu mẫu của test khác; trả lại sau.
+  const DOC = "glossary";
+  let seed: { summary: string; sections: unknown; version: string; updatedAt: Date };
+  let seedRevisionIds: string[];
+  beforeAll(async () => {
+    const doc = await prisma.doc.findUniqueOrThrow({ where: { id: DOC }, include: { revisions: { select: { id: true } } } });
+    seed = { summary: doc.summary, sections: doc.sections, version: doc.version, updatedAt: doc.updatedAt };
+    seedRevisionIds = doc.revisions.map((r) => r.id);
+  });
+  afterAll(async () => {
+    await prisma.docRevision.deleteMany({ where: { docId: DOC, id: { notIn: seedRevisionIds } } });
+    await prisma.doc.update({ where: { id: DOC }, data: { ...seed, sections: seed.sections as object } });
+  });
+
+  const input = (over: Partial<Parameters<typeof editDoc>[0]> = {}) => ({
+    docId: DOC,
+    projectId: "rv-web",
+    baseVersion: seed.version,
+    what: "",
+    summary: "Thuật ngữ dùng chung, bản sửa.",
+    content: "## Thuật ngữ\nTin đăng: bài đăng bán/cho thuê.\n\n## Viết tắt\nBA: business analyst.",
+    ...over,
+  });
+
+  it("áp nội dung, tăng version, lịch sử 'Sửa trực tiếp' đã duyệt bởi người sửa", async () => {
+    expect(await editDoc(input())).toEqual({ ok: true, version: "v1.1" });
+    const doc = await prisma.doc.findUniqueOrThrow({ where: { id: DOC } });
+    expect(doc).toMatchObject({
+      version: "v1.1",
+      summary: "Thuật ngữ dùng chung, bản sửa.",
+      sections: [
+        { heading: "Thuật ngữ", paras: ["Tin đăng: bài đăng bán/cho thuê."] },
+        { heading: "Viết tắt", paras: ["BA: business analyst."] },
+      ],
+    });
+    expect(doc.updatedAt.getTime()).toBeGreaterThan(seed.updatedAt.getTime());
+    expect(revalidatePath).toHaveBeenCalledWith("/rv-web", "layout");
+    const top = (await getDocBody(DOC)).history[0];
+    expect(top).toMatchObject({ what: "Sửa trực tiếp", status: "approved", who: "Trung Hiếu", approvedBy: "Trung Hiếu" });
+    expect(await getPendingRevisionCount("rv-web")).toBe(await prisma.docRevision.count({ where: { status: "pending", doc: { projectId: "rv-web" } } }));
+  });
+
+  it("sửa trên version cũ, không đổi gì, tài liệu dự án khác, input lỗi → từ chối, không ghi", async () => {
+    // Chạy sau test trên: version hiện tại v1.1, form cũ còn baseVersion v1.0.
+    expect(await editDoc(input({ summary: "khác" }))).toEqual({
+      ok: false,
+      error: "Tài liệu đã thay đổi từ khi bạn mở form — tải lại để sửa trên bản mới",
+    });
+    const current = await prisma.doc.findUniqueOrThrow({ where: { id: DOC } });
+    expect(await editDoc(input({ baseVersion: "v1.1", summary: current.summary }))).toEqual({ ok: false, error: "Nội dung không có thay đổi" });
+    expect(await editDoc(input({ baseVersion: "v1.1", projectId: "crm" }))).toEqual({ ok: false, error: "Không tìm thấy tài liệu trong dự án này" });
+    expect(await editDoc(input({ baseVersion: "v1.1", content: " " }))).toEqual({ ok: false, error: "Tài liệu cần ít nhất một mục" });
+    expect(await editDoc(input({ baseVersion: "v1.1", summary: "" }))).toEqual({ ok: false, error: "Nhập tóm tắt" });
+    expect((await prisma.doc.findUniqueOrThrow({ where: { id: DOC } })).version).toBe("v1.1");
+    expect(await prisma.docRevision.count({ where: { docId: DOC, id: { notIn: seedRevisionIds } } })).toBe(1);
   });
 });

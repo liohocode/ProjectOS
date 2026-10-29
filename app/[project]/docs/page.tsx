@@ -5,6 +5,8 @@ import { DocTree } from "@/components/docs/DocTree";
 import { DocBodyView } from "@/components/docs/DocBodyView";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { NewDocDialog } from "@/components/docs/NewDocDialog";
+import { EditDocDialog } from "@/components/docs/EditDocDialog";
+import { sectionsToMarkdown } from "@/lib/markdownSections";
 import { getFeaturesByProject } from "@/lib/data/features";
 
 export default async function DocsPage(props: PageProps<"/[project]/docs">) {
@@ -24,6 +26,8 @@ export default async function DocsPage(props: PageProps<"/[project]/docs">) {
 
   const requestedDoc = typeof searchParams.doc === "string" ? searchParams.doc : undefined;
   const docId = requestedDoc ?? groups[0]?.items[0]?.id ?? null;
+  // getDocBody trả nội dung giữ chỗ cho id không tồn tại → chỉ cho sửa tài liệu có thật trong dự án.
+  const docExists = docId !== null && allGroups.some((g) => g.items.some((item) => item.id === docId));
   const body = docId ? await getDocBody(docId) : null;
   // "Tài liệu mới" ở header đặt ?new=1 (ADR-018).
   const features = searchParams.new === "1" ? await getFeaturesByProject(projectId) : null;
@@ -34,7 +38,7 @@ export default async function DocsPage(props: PageProps<"/[project]/docs">) {
       <div className="docs-shell">
         <DocTree projectId={projectId} groups={groups} activeDocId={docId} filterQuery={filterQuery} filtered={filtered} />
         {body ? (
-          <DocBodyView body={body} projectId={projectId} />
+          <DocBodyView body={body} projectId={projectId} editable={docExists} />
         ) : (
           <div className="doc-body-area">
             {filtered ? (
@@ -49,6 +53,17 @@ export default async function DocsPage(props: PageProps<"/[project]/docs">) {
           </div>
         )}
       </div>
+      {/* "Sửa" ở thân tài liệu đặt ?edit=1 (F12.6) */}
+      {searchParams.edit === "1" && docExists && body && docId && (
+        <EditDocDialog
+          projectId={projectId}
+          docId={docId}
+          title={body.title}
+          version={body.version}
+          summary={body.summary}
+          markdown={sectionsToMarkdown(body.sections)}
+        />
+      )}
       {features && <NewDocDialog projectId={projectId} features={features.map(({ id, name }) => ({ id, name }))} />}
     </div>
   );

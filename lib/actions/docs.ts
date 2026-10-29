@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
-import { applyRevision, createDoc as createDocDomain, rejectRevision as rejectRevisionDomain } from "@/lib/domain/docs";
+import { applyRevision, createDoc as createDocDomain, editDoc as editDocDomain, rejectRevision as rejectRevisionDomain } from "@/lib/domain/docs";
 import { markdownToSections } from "@/lib/markdownSections";
 import { fail, ok, type ActionResult } from "./result";
 
@@ -70,6 +70,34 @@ export async function createDoc(input: NewDocFormInput): Promise<ActionResult<{ 
     sections: markdownToSections(String(input.content ?? "")),
   });
   // Cây tài liệu + badge "Docs" (đếm số tài liệu) ở layout.
+  if (result.ok) revalidatePath(`/${input.projectId}`, "layout");
+  return result;
+}
+
+export interface EditDocFormInput {
+  docId: string;
+  projectId: string;
+  /** Version lúc mở form — chặn ghi đè thay đổi của người khác */
+  baseVersion: string;
+  /** Mô tả ngắn (tuỳ chọn) — trống thì lịch sử ghi "Sửa trực tiếp" */
+  what: string;
+  summary: string;
+  content: string;
+}
+
+/** Người sửa trực tiếp tài liệu (F12.6) — chỉ tài liệu thuộc `projectId`. */
+export async function editDoc(input: EditDocFormInput): Promise<ActionResult<{ version: string }>> {
+  // TODO(F15.4): kiểm tra quyền
+  const doc = await prisma.doc.findUnique({ where: { id: String(input.docId ?? "") }, select: { projectId: true } });
+  if (!doc || doc.projectId !== input.projectId) return fail("Không tìm thấy tài liệu trong dự án này");
+
+  const result = await editDocDomain(await getCurrentUserId(), {
+    docId: input.docId,
+    baseVersion: input.baseVersion,
+    what: String(input.what ?? ""),
+    summary: input.summary,
+    sections: markdownToSections(String(input.content ?? "")),
+  });
   if (result.ok) revalidatePath(`/${input.projectId}`, "layout");
   return result;
 }
