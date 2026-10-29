@@ -110,6 +110,7 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 - Khung dùng chung: `components/ui/Dialog.tsx` (Esc/click nền, focus trap, trả focus) + `components/ui/Field.tsx` (nhãn + `.input`).
 - Màn chưa có dialog để `primaryDialog: false` trong `components/layout/screenMeta.ts`; bật lên khi page của màn đã render dialog.
 **Hệ quả**: dialog mở được bằng link/bookmark, nút Back đóng dialog; F12 ("Tài liệu mới") và F13 ("Thêm thành viên") chỉ cần thêm component dialog + đọc `searchParams` ở page.
+**Bổ sung (2026-10-29, F12.6)**: dialog không phải hành động chính dùng tham số riêng qua `useUrlDialog(param)` — vd `?edit=1` (sửa tài liệu đang mở); page kiểm tra đối tượng có thật trước khi render dialog.
 
 ### ADR-019 — Dedupe đọc dữ liệu trong một request bằng `React.cache()` (2026-10-28)
 **Bối cảnh**: layout `/[project]`, page và các hàm data gọi lại nhau (vd `getActivityFeed` → `getTasksByProject` → `getFeaturesByProject`) nên một request tải cùng dữ liệu nhiều lần; màn work tốn 131 câu SQL. Production chạy Neon Free + Cloud Run (ADR-015, ADR-016) — query thừa vừa chậm vừa ăn quota.

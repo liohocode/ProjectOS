@@ -1,7 +1,8 @@
 import type { DocBody } from "@/lib/types";
 import { RevisionItem } from "./RevisionItem";
+import { EditDocButton } from "./EditDocDialog";
 
-export function DocBodyView({ body, projectId }: { body: DocBody; projectId: string }) {
+export function DocBodyView({ body, projectId, editable = false }: { body: DocBody; projectId: string; editable?: boolean }) {
   return (
     <div className="doc-body-area">
       <div className="doc-body-inner">
@@ -11,6 +12,7 @@ export function DocBodyView({ body, projectId }: { body: DocBody; projectId: str
           <span>
             Sửa lần cuối {body.updated} · {body.author}
           </span>
+          {editable && <EditDocButton />}
         </div>
         <h3>{body.title}</h3>
         <p className="text-muted">{body.summary}</p>

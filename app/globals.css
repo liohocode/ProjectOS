@@ -828,6 +828,7 @@ img { display: block; max-width: 100%; }
 }
 .doc-body-inner { max-width: 660px; }
 .doc-meta-row { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); font-size: 11px; color: var(--color-neutral-500); }
+.doc-edit-btn { margin-left: auto; height: 26px; font-size: 12px; }
 .doc-info-cards { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: var(--space-4) 0; }
 .doc-info-card { flex: 1; min-width: 180px; border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-sm); padding: var(--space-3); }
 .doc-info-card-label { font-size: 10px; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: 3px; }
