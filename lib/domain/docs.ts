@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { DocSection } from "@/lib/types";
 import { fail, type ActionResult } from "@/lib/actions/result";
 import { bumpMinorVersion } from "@/lib/docVersion";
+import { slugify } from "@/lib/slug";
 
 // Nghiệp vụ tài liệu dùng chung giữa server action (người, F12) và MCP `docs.append` (agent, F16.5).
 // Không có "use server": client không gọi thẳng được; nơi gọi tự kiểm tra danh tính/quyền.
@@ -132,4 +133,76 @@ export async function rejectRevision(revisionId: string, reason: string): Promis
     data: { status: "rejected", rejectedReason: parsed.data },
   });
   return count === 0 ? fail("Revision này không còn chờ duyệt") : { ok: true };
+}
+
+const newDocSchema = z.object({
+  projectId: z.string().trim().min(1, "Thiếu dự án"),
+  /** null = "Kho tri thức chung" */
+  featureId: z.string().trim().min(1).nullable(),
+  title: z.string().trim().min(1, "Nhập tiêu đề").max(200, "Tiêu đề tối đa 200 ký tự"),
+  summary: z.string().trim().min(1, "Nhập tóm tắt").max(2000, "Tóm tắt tối đa 2000 ký tự"),
+  sections: docSectionsSchema,
+});
+
+export type NewDocInput = z.input<typeof newDocSchema>;
+
+/** Id trống đầu tiên trong `slug`, `slug-2`, `slug-3`… (id Doc là khoá toàn cục, không theo dự án). */
+async function freeDocId(slug: string): Promise<string> {
+  const taken = new Set(
+    (await prisma.doc.findMany({ where: { id: { startsWith: slug } }, select: { id: true } })).map((d) => d.id),
+  );
+  if (!taken.has(slug)) return slug;
+  let n = 2;
+  while (taken.has(`${slug}-${n}`)) n++;
+  return `${slug}-${n}`;
+}
+
+const isUniqueViolation = (e: unknown) => typeof e === "object" && e !== null && (e as { code?: unknown }).code === "P2002";
+
+/**
+ * Tạo tài liệu mới do người viết (F12.5): id slug từ tiêu đề, version v1.0, "Bản nháp", kèm dòng lịch sử
+ * "Tạo tài liệu" (đã duyệt bởi chính tác giả). Hai người tạo trùng tiêu đề cùng lúc → thử id kế tiếp.
+ */
+export async function createDoc(authorId: string, input: NewDocInput): Promise<ActionResult<{ docId: string }>> {
+  const parsed = newDocSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+  const data = parsed.data;
+
+  if (data.featureId) {
+    const feature = await prisma.feature.findUnique({ where: { id: data.featureId }, select: { projectId: true } });
+    if (!feature || feature.projectId !== data.projectId) return fail("Feature không thuộc dự án này");
+  } else if (!(await prisma.project.findUnique({ where: { id: data.projectId }, select: { id: true } }))) {
+    return fail("Không tìm thấy dự án");
+  }
+
+  const slug = slugify(data.title);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const id = await freeDocId(slug);
+    const now = new Date();
+    try {
+      await prisma.doc.create({
+        data: {
+          id,
+          projectId: data.projectId,
+          featureId: data.featureId,
+          title: data.title,
+          agentWritten: false,
+          version: "v1.0",
+          status: "Bản nháp",
+          summary: data.summary,
+          updatedAt: now,
+          authorId,
+          readBy: [],
+          sections: data.sections,
+          revisions: {
+            create: { authorId, what: "Tạo tài liệu", createdAt: now, status: "approved", baseVersion: "v1.0", approvedById: authorId, approvedAt: now },
+          },
+        },
+      });
+      return { ok: true, docId: id };
+    } catch (e) {
+      if (!isUniqueViolation(e)) throw e;
+    }
+  }
+  return fail("Không tạo được id tài liệu, thử lại");
 }

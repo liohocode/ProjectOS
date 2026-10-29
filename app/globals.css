@@ -247,6 +247,8 @@ img { display: block; max-width: 100%; }
 .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .field-label { font-size: 12px; color: var(--color-neutral-400); }
 .field-hint { font-size: 11px; color: var(--color-neutral-600); }
+.input.textarea { height: auto; padding: var(--space-2) var(--space-3); resize: vertical; font: inherit; font-size: 13px; line-height: 1.5; }
+.input.textarea-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); }
 
 /* ══════════════ App shell — sidebar + header (xem docs/features/F01-app-shell.md) ══════════════ */

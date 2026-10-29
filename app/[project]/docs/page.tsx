@@ -4,6 +4,8 @@ import { KnowledgeStrip } from "@/components/docs/KnowledgeStrip";
 import { DocTree } from "@/components/docs/DocTree";
 import { DocBodyView } from "@/components/docs/DocBodyView";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { NewDocDialog } from "@/components/docs/NewDocDialog";
+import { getFeaturesByProject } from "@/lib/data/features";
 
 export default async function DocsPage(props: PageProps<"/[project]/docs">) {
   const { project: projectId } = await props.params;
@@ -23,6 +25,8 @@ export default async function DocsPage(props: PageProps<"/[project]/docs">) {
   const requestedDoc = typeof searchParams.doc === "string" ? searchParams.doc : undefined;
   const docId = requestedDoc ?? groups[0]?.items[0]?.id ?? null;
   const body = docId ? await getDocBody(docId) : null;
+  // "Tài liệu mới" ở header đặt ?new=1 (ADR-018).
+  const features = searchParams.new === "1" ? await getFeaturesByProject(projectId) : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
@@ -45,6 +49,7 @@ export default async function DocsPage(props: PageProps<"/[project]/docs">) {
           </div>
         )}
       </div>
+      {features && <NewDocDialog projectId={projectId} features={features.map(({ id, name }) => ({ id, name }))} />}
     </div>
   );
 }

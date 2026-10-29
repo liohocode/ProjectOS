@@ -23,7 +23,7 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 | F12.2 | Duyệt = áp nội dung vào bản chính, tăng version | S | F12.1 | Xong — 2026-10-28 |
 | F12.3 | Từ chối revision + xem diff trước khi duyệt | M | F12.1 | Xong |
 | F12.4 | Lịch sử hiển thị người duyệt / bị từ chối | S | F12.1 | Xong |
-| F12.5 | "Tài liệu mới" | M | F11.4 | Chưa làm |
+| F12.5 | "Tài liệu mới" | M | F11.4 | Xong |
 | F12.6 | Người sửa tài liệu trực tiếp | M | F12.1, F11.4 | Chưa làm |
 | F12.7 | `approveRevision` theo quy ước action (ADR-017) | S | — | Xong — 2026-10-28 |
 
@@ -52,7 +52,7 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 ### F12.5 — Tài liệu mới
 **Làm gì**: dùng khuôn mẫu dialog theo URL (ADR "Dialog điều khiển bằng URL", tạo ở F11.4) cho màn docs: tiêu đề, gắn feature (hoặc "Kho tri thức chung"), tóm tắt, nội dung (textarea markdown — tách section theo dòng `## `). Action `createDoc` sinh id slug từ tiêu đề (bỏ dấu tiếng Việt), thêm hậu tố nếu trùng (id `Doc` là khoá toàn cục). Người tạo = tác giả, `agentWritten=false`, version `v1.0`. Sau khi tạo điều hướng `?doc=<id>`.
 **Hoàn thành khi**:
-- [ ] Tạo tài liệu tiếng Việt có dấu → id slug hợp lệ, hiển thị trong cây đúng nhóm
+- [x] Tạo tài liệu tiếng Việt có dấu → id slug hợp lệ, hiển thị trong cây đúng nhóm (e2e `new-doc.spec.ts`)
 
 ### F12.6 — Người sửa trực tiếp
 **Làm gì**: nút "Sửa" ở thân tài liệu → form (tóm tắt + nội dung markdown). Lưu: tạo revision `approved` do chính người sửa (để có lịch sử), áp nội dung, tăng version. Agent **không** có đường này (chỉ `docs.append`).
@@ -65,6 +65,7 @@ Hiện revision chỉ có **mô tả** ("Revision mới: cập nhật mục Tiê
 - [x] Integration test: duyệt lại, revision dự án khác, revision không tồn tại, input rỗng → `{ ok: false }` và không ghi DB
 
 ## Quyết định / ghi chú
+- **F12.5 (2026-10-29)**: `lib/slug.ts` (bỏ dấu bằng NFD + `đ→d`, tối đa 60 ký tự) và `lib/markdownSections.ts` (`markdownToSections` / `sectionsToMarkdown` — F12.6 dùng lại cho form sửa; phần trước `## ` đầu tiên vào mục "Nội dung", các dòng trong một đoạn nối bằng dấu cách). `createDoc` ở `lib/domain/docs.ts`: id trống đầu tiên trong `slug`, `slug-2`…; bắt lỗi unique (P2002) khi hai người tạo trùng cùng lúc rồi thử id kế (tối đa 5 lần). Tài liệu mới có dòng lịch sử "Tạo tài liệu" do chính tác giả "duyệt" (giống dữ liệu seed, F12.4 hiện "Đã duyệt bởi …"). Danh sách feature cho dialog chỉ tải khi `?new=1`. Nội dung rỗng → lỗi "Tài liệu cần ít nhất một mục" (dùng lại `docSectionsSchema`).
 - **F12.4 (2026-10-28)**: `getDocBody` trả `approvedBy` / `approvedWhen` (từ `approvedById`/`approvedAt`); `RevisionItem` hiện "Đã duyệt bởi <tên> · <thời gian>" hoặc "Bị từ chối: <lý do>" (cắt bằng ellipsis, đủ lý do ở tooltip). Revision đã duyệt trong seed / trước F12.2 không có người duyệt → chỉ "Đã duyệt" (không bịa người duyệt trong seed). `ApproveButton` bỏ state `approved` cục bộ — sau `revalidatePath` dòng render lại từ server nên không còn lỗi "nút biến mất không phản hồi". Không thêm cột người từ chối (spec chỉ cần lý do; cần thì thêm migration chỉ-thêm sau).
 - **F12.3 (2026-10-28)**: `lib/diffSections.ts` (hàm thuần, LCS theo đoạn; mục ghép theo tiêu đề, mục bị xoá chèn lại đúng vị trí cũ) — `getDocBody` tính sẵn `diff`/`summaryChange` cho revision đang chờ (so với bản hiện tại, không phải `baseVersion`: người duyệt cần biết duyệt thì bản chính đổi thế nào). `rejectRevision` domain ở `lib/domain/docs.ts` (`updateMany where status=pending`, lý do 1–500 ký tự; F16 dùng lại được), action ở `lib/actions/docs.ts`. UI: `RevisionItem` (client) thay cho dòng revision — "Xem thay đổi" (chỉ hiện mục có đổi), "Từ chối" mở form lý do tại chỗ, "Duyệt". Dòng bị từ chối hiện "— Từ chối: <lý do>" (F12.4 làm đầy đủ trạng thái lịch sử). Cả duyệt và từ chối giờ `revalidatePath("/<dự án>", "layout")` để badge "Docs" ở sidebar cập nhật (trước chỉ revalidate `/docs`). Badge nav "Docs" đếm số tài liệu, revision chờ thể hiện bằng màu cảnh báo — e2e kiểm tra cảnh báo tắt khi hết revision chờ.
 - **F12.2 (2026-10-28)**: logic nằm ở `lib/domain/docs.ts` → `applyRevision(revisionId, approverId)` (F12.6 người sửa trực tiếp dùng lại); `approveRevision` (server action) chỉ kiểm tra dự án rồi gọi. Ghi tài liệu bằng `updateMany where { version: baseVersion }` (khoá lạc quan) → hai revision cùng gốc duyệt đồng thời: đúng một thành công, cái còn lại "Tài liệu đã thay đổi từ khi revision được tạo" và vẫn chờ (test integration chạy song song). Version: `lib/docVersion.ts` `bumpMinorVersion` (`v4.2` → `v4.3`, `v1.9` → `v1.10`). Revision cũ không có nội dung đề xuất: chỉ đánh dấu approved, không đổi version.
