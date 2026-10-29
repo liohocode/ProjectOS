@@ -45,7 +45,7 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 |---|---|---|---|---|
 | F19.1 | Quyết định hạ tầng | S | — | Xong — 2026-10-14 (ADR-016, ADR-015) |
 | F19.2 | Dockerfile production + chạy thử container ở local | M | — | Xong — 2026-10-28 |
-| F19.3 | Thiết lập Google Cloud + budget alert (hướng dẫn cho người dùng) | S | — | Đang làm — hạ tầng xong (2026-10-29), chờ người dùng đặt budget alert |
+| F19.3 | Thiết lập Google Cloud + budget alert (hướng dẫn cho người dùng) | S | — | Xong — 2026-10-29 |
 | F19.4 | Neon production + kết nối Prisma | S | — | Chưa làm |
 | F19.5 | Secrets (Secret Manager) + kiểm tra biến môi trường | S | F19.3 | Chưa làm |
 | F19.6 | Deploy thủ công lần đầu lên Cloud Run | S | F19.2, F19.3, F19.4, F19.5 | Chưa làm |
@@ -75,7 +75,7 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 Hướng dẫn: `docs/guides/deploy-cloud-run.md` → phần 1 (lệnh chạy trong Cloud Shell).
 **Hoàn thành khi**:
 - [x] Có `PROJECT_ID`, region, tên repo Artifact Registry, provider WIF để dùng ở F19.7 — xem "Giá trị đã thiết lập" trong `docs/guides/deploy-cloud-run.md`
-- [ ] Budget alert 5 USD (bỏ chọn credit) — người dùng làm trên console (cần quyền billing)
+- [x] Budget alert 5 USD (bỏ chọn credit) — người dùng đặt 2026-10-29
 
 ### F19.4 — Neon production
 **Làm gì**: hướng dẫn người dùng tạo project Neon (region Singapore, Postgres 16), lấy **pooled connection string** (cho app) và **direct connection string** (cho `prisma migrate deploy`). `lib/prisma.ts` giữ `@prisma/adapter-pg`, giới hạn pool nhỏ (vd `max: 5`) cho môi trường serverless — đọc skill Prisma về cấu hình adapter. Chạy `npx prisma migrate deploy` lần đầu bằng direct URL. **Không seed dữ liệu mẫu** vào production; tạo thành viên thật (ít nhất tài khoản tech lead có email Google — cần cho F15.2) bằng script `scripts/bootstrap-prod.ts` hoặc qua Prisma Studio trỏ vào Neon.

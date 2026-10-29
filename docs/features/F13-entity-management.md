@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 2 | F11.2, F11.4 | FR-PF-04, FR-TM-06, FR-TM-07, FR-MC-04 |
+| Đang làm | 2 | F11.2, F11.4 | FR-PF-04, FR-TM-06, FR-TM-07, FR-MC-04 |
 
 ## Mục tiêu
 Các nút hành động còn "chết" ở Portfolio, Team, MCP hoạt động thật: tạo dự án, thêm thành viên, giao task / xem log từ panel thành viên, sửa cấu hình agent, đăng ký MCP server ngoài.
@@ -18,7 +18,7 @@ Các nút hành động còn "chết" ở Portfolio, Team, MCP hoạt động th
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F13.1 | "Dự án mới" | M | F11.4 | Chưa làm |
+| F13.1 | "Dự án mới" | M | F11.4 | Xong |
 | F13.2 | "Thêm thành viên" (gán người có sẵn / tạo mới) | M | F11.4 | Chưa làm |
 | F13.3 | Panel thành viên: "Giao task" | S | F11.2 | Chưa làm |
 | F13.4 | Panel thành viên: "Xem log" | S | F14.3 | Chưa làm |
@@ -29,7 +29,7 @@ Các nút hành động còn "chết" ở Portfolio, Team, MCP hoạt động th
 ### F13.1 — Dự án mới
 **Làm gì**: dialog ở màn portfolio: mã 2 ký tự, tên, id (gợi ý slug từ tên, cho sửa), mô tả, trạng thái, sprint đầu tiên (nếu F09.1 xong). Action `createProject`: kiểm tra id/mã không trùng, tự gán người tạo vào `ProjectMember`. Tạo xong → `/<id>/work` (sẽ thấy empty state F10.4).
 **Hoàn thành khi**:
-- [ ] Dự án mới xuất hiện ở portfolio + project switcher
+- [x] Dự án mới xuất hiện ở portfolio + project switcher (e2e `new-project.spec.ts`)
 
 ### F13.2 — Thêm thành viên
 **Làm gì**: dialog ở màn team 2 tab: (a) "Từ tổ chức" — chọn người/agent chưa thuộc dự án → `addProjectMember`; (b) "Tạo mới" — tên, handle, người/agent, role, skills (+ cấu hình nếu là agent, dùng form F13.5) → `createMember` (id: `agent-<slug>` cho agent, slug tên cho người) rồi gán vào dự án.
@@ -62,4 +62,5 @@ Các nút hành động còn "chết" ở Portfolio, Team, MCP hoạt động th
 - [ ] Cả hai thao tác có xác nhận và kiểm tra ràng buộc
 
 ## Quyết định / ghi chú
+- **F13.1 (2026-10-29)**: `lib/actions/projects.ts` `createProject` + `lib/projectRules.ts` (trạng thái chọn được, id dành riêng, regex id/mã, gợi ý mã). Id dự án là đoạn đầu URL nên chặn trùng route gốc (`api`, `login`, `_next`…); id 2–40 ký tự `[a-z0-9-]`, không đổi sau khi tạo. Mã 2 ký tự không có unique ở DB — action kiểm tra trùng trước khi tạo (đủ cho quy mô hiện tại; tạo trùng đồng thời chỉ ra hai mã giống nhau, không hỏng dữ liệu). Form tự gợi ý id (slug) + mã theo tên cho tới khi người dùng sửa tay. Sprint đầu tiên tuỳ chọn (tên + 2 ngày) → tạo `Sprint` và đặt `currentSprintId` trong cùng transaction. Người tạo vào `ProjectMember` nên thấy dự án ngay ở switcher (F15.3 chỉ hiện dự án mình thuộc về).
 - Giữ `Member.config` (Json) cho tới khi F13.5 xong, sau đó xoá cột trong cùng migration.

@@ -4,7 +4,7 @@ Hướng dẫn cho F19 (ADR-016, ADR-015). Mỗi phần ghi rõ **ai làm**: ng�
 
 | Phần | Task | Ai làm | Trạng thái |
 |---|---|---|---|
-| [1. Thiết lập Google Cloud](#1-thiết-lập-google-cloud-f193) | F19.3 | Người dùng | Xong, trừ budget alert |
+| [1. Thiết lập Google Cloud](#1-thiết-lập-google-cloud-f193) | F19.3 | Người dùng + agent | Xong |
 | 2. Neon production | F19.4 | Agent + người dùng | Chưa viết |
 | 3. Secrets | F19.5 | Agent + người dùng | Chưa viết |
 | 4. Deploy thủ công lần đầu | F19.6 | Người dùng chạy lệnh agent soạn | Chưa viết |

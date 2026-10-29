@@ -15,7 +15,7 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     title: "Tất cả dự án đang phát triển",
     searchPlaceholder: "Tìm feature, task, docs…",
     primaryAction: "Dự án mới",
-    primaryDialog: false,
+    primaryDialog: true,
   },
   docs: {
     kicker: "Module 1",

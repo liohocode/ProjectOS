@@ -2,9 +2,11 @@ import { getPortfolioSummaries } from "@/lib/data/portfolio";
 import { getTeam } from "@/lib/data/team";
 import { ProjectCard } from "@/components/portfolio/ProjectCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { NewProjectDialog } from "@/components/portfolio/NewProjectDialog";
 
 export default async function PortfolioPage(props: PageProps<"/[project]/portfolio">) {
   const { project: currentProjectId } = await props.params;
+  const { new: newParam } = await props.searchParams;
   const [summaries, orgTeam] = await Promise.all([getPortfolioSummaries(), getTeam()]);
   const totalBlocked = summaries.reduce((sum, p) => sum + p.blockedCount, 0);
 
@@ -22,6 +24,8 @@ export default async function PortfolioPage(props: PageProps<"/[project]/portfol
           ))}
         </div>
       )}
+      {/* "Dự án mới" ở header đặt ?new=1 (ADR-018) */}
+      {newParam === "1" && <NewProjectDialog />}
     </div>
   );
 }
