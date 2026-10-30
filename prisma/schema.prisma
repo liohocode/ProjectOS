@@ -336,6 +336,8 @@ model McpSession {
   toolCalls  Int
   tokensUsed Int           @default(0)
   result     SessionResult
+  /// Lệnh MCP cuối (F16.2) — phiên do endpoint thật tạo; quá 30 phút không có lệnh → đóng. null = dữ liệu mẫu
+  lastCallAt DateTime?
 
   @@index([projectId])
   @@map("mcp_sessions")

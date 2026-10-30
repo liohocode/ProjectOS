@@ -17,8 +17,12 @@ beforeAll(async () => {
     ],
   });
 });
+const startedAt = new Date();
 afterAll(async () => {
   await prisma.agentToken.deleteMany({ where: { name: { startsWith: "IT mcp" } } });
+  // F16.2: nhật ký + phiên do các lệnh trong file này tạo ra.
+  await prisma.mcpLogEntry.deleteMany({ where: { agentId: "agent-vega", at: { gte: startedAt } } });
+  await prisma.mcpSession.deleteMany({ where: { agentId: "agent-vega", startedAt: { gte: startedAt } } });
 });
 
 let nextId = 1;
@@ -74,6 +78,17 @@ describe("POST /api/mcp (F16.1)", () => {
     expect(mine.tasks.length).toBeGreaterThan(0);
     expect(mine.tasks.every((t) => t.assigneeId === "agent-vega")).toBe(true);
     expect((await callTool({ projectId: "crm" })).count).toBe(0);
+  });
+
+  it("mỗi lệnh ghi nhật ký 'tasks.list'; lệnh có dự án gắn vào phiên đang chạy của agent (F16.2)", async () => {
+    const log = await prisma.mcpLogEntry.findMany({ where: { agentId: "agent-vega", at: { gte: startedAt } } });
+    expect(log.length).toBe(4); // 4 lệnh tasks_list ở test trên
+    expect(log.every((l) => l.tool === "tasks.list" && l.result === "OK")).toBe(true);
+    expect(log.map((l) => l.target)).toContain("rv-web · Dev");
+    const session = await prisma.mcpSession.findFirstOrThrow({ where: { agentId: "agent-vega", projectId: "rv-web", startedAt: { gte: startedAt } } });
+    expect(session).toMatchObject({ result: "DangChay", endedAt: null });
+    // crm: Vega không thuộc → không mở phiên cho crm.
+    expect(await prisma.mcpSession.count({ where: { agentId: "agent-vega", projectId: "crm", startedAt: { gte: startedAt } } })).toBe(0);
   });
 
   it("GET / DELETE → 405 (không stream SSE ở chế độ stateless)", async () => {
