@@ -1,5 +1,7 @@
 # Tài liệu Meridian (PMOS)
 
+> **Phiên agent mới**: đọc [`HANDOFF.md`](HANDOFF.md) trước — trạng thái, việc tiếp theo, giới hạn môi trường.
+
 ## Đọc gì trước
 | Bạn muốn… | Đọc |
 |---|---|
