@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { PROJECT_CODE_PATTERN, PROJECT_ID_PATTERN, PROJECT_STATUSES, RESERVED_PROJECT_IDS } from "@/lib/projectRules";
+import { authorize } from "@/lib/auth/authorize";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
 
@@ -33,7 +34,8 @@ export type NewProjectInput = z.input<typeof newProjectSchema>;
 
 /** Tạo dự án (F13.1): kiểm tra id/mã không trùng, người tạo thành thành viên, tuỳ chọn sprint đầu tiên. */
 export async function createProject(input: NewProjectInput): Promise<ActionResult<{ projectId: string }>> {
-  // TODO(F15.4): kiểm tra quyền
+  const denied = await authorize("project.create");
+  if (denied) return fail(denied);
   const parsed = newProjectSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0].message);
   const data = parsed.data;
@@ -55,6 +57,7 @@ export async function createProject(input: NewProjectInput): Promise<ActionResul
           name: data.name,
           desc: data.desc,
           status: data.status,
+          createdById: creatorId,
           members: { create: { memberId: creatorId } },
         },
       });
@@ -81,19 +84,14 @@ export async function createProject(input: NewProjectInput): Promise<ActionResul
   return { ok: true, projectId: data.id };
 }
 
-/** Lưu trữ / khôi phục dự án (F13.7). Chỉ thành viên dự án; dữ liệu giữ nguyên, chỉ ẩn khỏi switcher. */
+/** Lưu trữ / khôi phục dự án (F13.7). Tech lead thuộc dự án (F15.4); dữ liệu giữ nguyên, chỉ ẩn khỏi switcher. */
 export async function setProjectArchived(projectId: string, archived: boolean): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền (vd chỉ tech lead)
   const id = z.string().trim().min(1, "Thiếu dự án").safeParse(projectId);
   if (!id.success) return fail(id.error.issues[0].message);
-  const userId = await getCurrentUserId();
+  const denied = await authorize("project.archive", id.data);
+  if (denied) return fail(denied);
 
-  const project = await prisma.project.findUnique({
-    where: { id: id.data },
-    select: { name: true, archivedAt: true, members: { where: { memberId: userId }, select: { memberId: true } } },
-  });
-  // Không thuộc dự án → trả như không tồn tại (giống layout, không lộ dự án).
-  if (!project || project.members.length === 0) return fail("Không tìm thấy dự án");
+  const project = await prisma.project.findUniqueOrThrow({ where: { id: id.data }, select: { name: true, archivedAt: true } });
   if (archived === (project.archivedAt !== null)) return fail(archived ? "Dự án đã được lưu trữ" : "Dự án chưa được lưu trữ");
 
   await prisma.project.update({ where: { id: id.data }, data: { archivedAt: archived ? new Date() : null } });

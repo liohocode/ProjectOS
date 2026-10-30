@@ -158,6 +158,7 @@ const TEAM: Member[] = [
     kind: "human",
     email: "hieu@example.com",
     role: "Tech lead",
+    isTechLead: true,
     skills: ["Product", "Review", "Kiến trúc"],
     current: "Review T-396, T-399 và revision docs",
     status: "Đang review",

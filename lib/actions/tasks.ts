@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { parseTaskStatus, TASK_STATUS_LABEL } from "@/lib/taskFormat";
+import { authorize } from "@/lib/auth/authorize";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
 
@@ -27,11 +28,13 @@ function revalidateTaskViews() {
 }
 
 export async function updateTaskStage(taskId: string, stage: string): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
   const input = z.object({ taskId: taskIdSchema, stage: stageSchema }).safeParse({ taskId, stage });
   if (!input.success) return fail(input.error.issues[0].message);
 
-  if (!(await findTaskProject(input.data.taskId))) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const projectId = await findTaskProject(input.data.taskId);
+  if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const denied = await authorize("task.write", projectId);
+  if (denied) return fail(denied);
   await prisma.task.update({ where: { id: input.data.taskId }, data: { stage: input.data.stage } });
   await recordActivity("ph-arrow-right", `Chuyển ${input.data.taskId} sang ${input.data.stage}`);
   revalidateTaskViews();
@@ -39,11 +42,13 @@ export async function updateTaskStage(taskId: string, stage: string): Promise<Ac
 }
 
 export async function updateTaskStatus(taskId: string, status: string): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
   const input = z.object({ taskId: taskIdSchema, status: statusSchema }).safeParse({ taskId, status });
   if (!input.success) return fail(input.error.issues[0].message);
 
-  if (!(await findTaskProject(input.data.taskId))) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const projectId = await findTaskProject(input.data.taskId);
+  if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const denied = await authorize("task.write", projectId);
+  if (denied) return fail(denied);
   await prisma.task.update({ where: { id: input.data.taskId }, data: { status: parseTaskStatus(input.data.status) } });
   await recordActivity("ph-check-circle", `Đổi trạng thái ${input.data.taskId} → ${input.data.status}`);
   revalidateTaskViews();
@@ -52,12 +57,13 @@ export async function updateTaskStatus(taskId: string, status: string): Promise<
 
 /** Giao task cho người/agent — chỉ thành viên thuộc dự án của task (bảng ProjectMember). */
 export async function assignTask(taskId: string, memberId: string): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
   const input = z.object({ taskId: taskIdSchema, memberId: memberIdSchema }).safeParse({ taskId, memberId });
   if (!input.success) return fail(input.error.issues[0].message);
 
   const projectId = await findTaskProject(input.data.taskId);
   if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const denied = await authorize("task.write", projectId);
+  if (denied) return fail(denied);
   const membership = await prisma.projectMember.findUnique({
     where: { projectId_memberId: { projectId, memberId: input.data.memberId } },
     include: { member: { select: { name: true } } },
@@ -99,12 +105,13 @@ export type NewTaskInput = z.input<typeof newTaskSchema>;
  * để hai request tạo cùng lúc không lấy trùng số.
  */
 export async function createTask(input: NewTaskInput): Promise<ActionResult<{ taskId: string }>> {
-  // TODO(F15.4): kiểm tra quyền
   const parsed = newTaskSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0].message);
   const data = parsed.data;
 
   const feature = await prisma.feature.findUnique({ where: { id: data.featureId }, select: { projectId: true } });
+  const denied = await authorize("task.write", data.projectId);
+  if (denied) return fail(denied);
   if (!feature || feature.projectId !== data.projectId) return fail("Feature không thuộc dự án này");
   const membership = await prisma.projectMember.findUnique({
     where: { projectId_memberId: { projectId: data.projectId, memberId: data.assigneeId } },
@@ -145,11 +152,13 @@ const blockSchema = z
 
 /** Đặt block (lý do ngắn hiện ở hàng task/banner, mô tả đầy đủ trong drawer) hoặc gỡ block khi `block = null`. */
 export async function setTaskBlocked(taskId: string, block: { short: string; full: string } | null): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
   const input = z.object({ taskId: taskIdSchema, block: blockSchema }).safeParse({ taskId, block });
   if (!input.success) return fail(input.error.issues[0].message);
 
-  if (!(await findTaskProject(input.data.taskId))) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const projectId = await findTaskProject(input.data.taskId);
+  if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const denied = await authorize("task.write", projectId);
+  if (denied) return fail(denied);
   const value = input.data.block;
   await prisma.task.update({
     where: { id: input.data.taskId },
@@ -171,11 +180,13 @@ export type TaskPatch = z.input<typeof taskPatchSchema>;
 
 /** Sửa nhanh tiêu đề / ước lượng / hạn (field không có trong patch giữ nguyên). */
 export async function updateTask(taskId: string, patch: TaskPatch): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
   const input = z.object({ taskId: taskIdSchema, patch: taskPatchSchema }).safeParse({ taskId, patch });
   if (!input.success) return fail(input.error.issues[0].message);
 
-  if (!(await findTaskProject(input.data.taskId))) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const projectId = await findTaskProject(input.data.taskId);
+  if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
+  const denied = await authorize("task.write", projectId);
+  if (denied) return fail(denied);
   const { title, estimatePoints, dueDate } = input.data.patch;
   await prisma.task.update({
     where: { id: input.data.taskId },

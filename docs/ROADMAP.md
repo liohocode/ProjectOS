@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **78/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **79/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -33,7 +33,7 @@ Cập nhật lần cuối: 2026-10-30 · Tổng: **78/104 task xong** (Phase 0 h
 ## Phase 3 — Danh tính
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F15](features/F15-auth-permissions.md) | Đăng nhập **Google** (Better Auth), phân quyền, token cho agent | F11.1 | Đang làm — đăng nhập Google thật chạy trên production; F15.4 chờ người dùng xác nhận ma trận quyền | 2/6 |
+| [F15](features/F15-auth-permissions.md) | Đăng nhập **Google** (Better Auth), phân quyền, token cho agent | F11.1 | Đang làm — đăng nhập Google thật chạy trên production; F15.4 phân quyền xong | 3/6 |
 
 ## Phase 4 — Nền tảng agent (lõi sản phẩm)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -51,7 +51,8 @@ Cập nhật lần cuối: 2026-10-30 · Tổng: **78/104 task xong** (Phase 0 h
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
 | Task | Vì sao |
 |---|---|
-| [F15.4](features/F15-auth-permissions.md) Ma trận quyền + `can()` | Mọi server action còn `TODO(F15.4)`; **chờ người dùng xác nhận ma trận quyền** |
+| [F15.5](features/F15-auth-permissions.md) Token cho agent | Mở khoá F16 (MCP server thật) |
+| [F15.6](features/F15-auth-permissions.md) UI theo quyền + đăng xuất ở footer | Ẩn/khoá nút theo `can()` (F15.4) |
 | [F19.7](features/F19-deployment.md) Thử rollback | Đường deploy còn lại |
 | [F19.8](features/F19-deployment.md) Sao lưu Neon + hướng dẫn khôi phục | Production đã có dữ liệu |
 
@@ -62,7 +63,6 @@ Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Ghi chú |
 |---|---|---|
-| Ma trận quyền đề xuất ở F15.4 có đúng không? | F15.4 | Người dùng sẽ xem và xác nhận sau |
 | Nhà cung cấp embedding | F18 | Đang hoãn theo lựa chọn của người dùng |
 
 ### Đã chốt
@@ -75,6 +75,7 @@ Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: 
 | Embedding / kho tri thức ngữ nghĩa: để sau | 2026-10-14 | — (F18 hoãn) |
 | Feature chưa giao vẫn hiện ở list view | 2026-10-14 | — (ghi trong F09.3) |
 | Thư viện đăng nhập: **Better Auth** thay Auth.js (Auth.js chỉ còn vá bảo mật, v5 vẫn beta); consent screen External | 2026-10-28 | ADR-020 |
+| Ma trận quyền F15.4 duyệt nguyên bản; tech lead là cờ `Member.isTechLead` | 2026-10-30 | ADR-021 |
 | Giữ Neon Free (không Cloud SQL); một môi trường deploy từ `main`; làm F15.2–F15.3 trước khi chia sẻ URL | 2026-10-28 | ADR-015 (xác nhận lại), F19 |
 
 ## Nhật ký

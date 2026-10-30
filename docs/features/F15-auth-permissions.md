@@ -22,7 +22,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 | F15.1 | Quyết định phương án đăng nhập | S | — | Xong — 2026-10-14 (ADR-013) |
 | F15.2 | Better Auth + Google: tài khoản, đăng nhập/đăng xuất, trang login | M | F15.1 | Đang làm — đăng nhập Google thật trên production chạy được (2026-10-30); còn thử đăng xuất + email lạ |
 | F15.3 | Bảo vệ route bằng `proxy.ts`; `getCurrentUser()` đọc từ session | S | F15.2, F11.1 | Xong — 2026-10-28 |
-| F15.4 | Ma trận quyền + `can()`; áp vào mọi server action | M | F15.3 | Chưa làm |
+| F15.4 | Ma trận quyền + `can()`; áp vào mọi server action | M | F15.3 | Xong — 2026-10-30 |
 | F15.5 | Token cho agent (tạo / thu hồi) | M | F15.4 | Chưa làm |
 | F15.6 | UI theo quyền: ẩn/khoá nút, footer người dùng thật, đăng xuất | S | F15.4 | Chưa làm |
 
@@ -49,7 +49,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 - [x] Mở `/rv-web/work` khi chưa đăng nhập → bị đẩy về `/login`; đăng nhập xong quay lại đúng trang (e2e `access.spec.ts`)
 
 ### F15.4 — Ma trận quyền
-**Làm gì**: `lib/auth/permissions.ts` với `can(user, action, resource)`. Đề xuất ban đầu (xác nhận lại với người dùng):
+**Làm gì**: `lib/auth/permissions.ts` với `can(user, action, resource)`. Người dùng duyệt nguyên bản (2026-10-30):
 
 | Hành động | Ai được làm |
 |---|---|
@@ -60,7 +60,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 
 Áp `can()` ở đầu mọi action trong `lib/actions/*` (tìm `TODO(F15.4)`), trả lỗi rõ ràng.
 **Hoàn thành khi**:
-- [ ] Test integration: người không đủ quyền gọi action bị từ chối
+- [x] Test integration: người không đủ quyền gọi action bị từ chối (`lib/actions/permissions.integration.test.ts`, unit `lib/auth/permissions.test.ts`)
 
 ### F15.5 — Token cho agent
 **Làm gì**: model `AgentToken(id, memberId, name, tokenHash, createdAt, lastUsedAt, revokedAt)`; chỉ lưu hash (vd SHA-256). Trong panel agent (màn team): "Tạo token" (hiện token **một lần duy nhất**), danh sách token + "Thu hồi". Hàm `verifyAgentToken(raw)` → `Member` agent (F16.1 dùng).
@@ -73,6 +73,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 - [ ] Đăng nhập bằng tài khoản không phải tech lead → không thấy nút "Duyệt"
 
 ## Quyết định / ghi chú
+- **F15.4 (2026-10-30)** — ADR-021. Migration `permissions_tech_lead_project_creator` (chỉ thêm cột + chuyển dữ liệu `role = 'Tech lead'` → `isTechLead`): `Member.isTechLead`, `Project.createdById` (`createProject` ghi người tạo; dự án mẫu = null → chỉ tech lead duyệt). `authorize()` ở đầu mọi action ghi: task (6) + `createTask` → `task.write`; `approveRevision`/`rejectRevision` → `doc.review`; `editDoc` → `doc.edit`; `createDoc` → `doc.create`; `createProject` → `project.create`; `setProjectArchived` → `project.archive` (thêm ngoài ma trận: tech lead); `addProjectMember`/`removeProjectMember`/`createMember` → `member.manage`; `updateAgentConfig` → `agent.configure`; MCP server (3) → `mcpServer.manage`. Action chỉ đọc (`loadMore*`, `loadMemberActivity`, `searchProject`) giữ như cũ. UI chưa ẩn nút — người không đủ quyền bấm sẽ thấy thông báo lỗi trong dialog (ẩn/khoá nút là F15.6). Chưa có UI gán tech lead.
 - **F15.3 (2026-10-28)**:
   - `proxy.ts` chỉ kiểm tra cookie session **có tồn tại** (`getSessionCookie`, không đọc DB) → về `/login?from=<path+query>`; bỏ qua `/login`, `/api/auth`, `/api/mcp`, `/_next/*`. Kiểm tra thật ở `getCurrentUserId()` (`lib/auth/session.ts` → `auth.api.getSession`, cookie cache 5 phút): không session / Member đã xoá → `redirect("/login")`. Vì vậy page, layout và server action gọi `getCurrentUser*` đều được bảo vệ kể cả khi cookie giả lọt proxy (e2e có test).
   - Chỉ thành viên (`ProjectMember`) xem được dự án: layout `[project]` → 404 (không lộ dự án có tồn tại hay không); project switcher và trang 404 chỉ liệt kê dự án của người dùng (`getProjectsByMember`). `/` → dự án đầu tiên của người dùng (trước: cố định `rv-web`; Trung Hiếu thuộc cả 3 dự án nên giờ vào `crm`). Portfolio và màn MCP vẫn hiện mọi dự án — phân quyền xem thuộc F15.4.

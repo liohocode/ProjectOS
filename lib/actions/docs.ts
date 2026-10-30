@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { applyRevision, createDoc as createDocDomain, editDoc as editDocDomain, rejectRevision as rejectRevisionDomain } from "@/lib/domain/docs";
 import { markdownToSections } from "@/lib/markdownSections";
+import { authorize } from "@/lib/auth/authorize";
 import { fail, ok, type ActionResult } from "./result";
 
 const approveSchema = z.object({
@@ -15,13 +16,14 @@ const approveSchema = z.object({
 
 /** Duyệt revision đang chờ — chỉ revision thuộc tài liệu của `projectId` (projectId do client gửi); áp nội dung vào bản chính (F12.2). */
 export async function approveRevision(revisionId: string, projectId: string): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
   const input = approveSchema.safeParse({ revisionId, projectId });
   if (!input.success) return fail(input.error.issues[0].message);
   const { revisionId: id, projectId: project } = input.data;
 
   const revision = await prisma.docRevision.findUnique({ where: { id }, select: { doc: { select: { projectId: true } } } });
   if (!revision || revision.doc.projectId !== project) return fail("Không tìm thấy revision trong dự án này");
+  const denied = await authorize("doc.review", project);
+  if (denied) return fail(denied);
 
   // Áp nội dung đề xuất + tăng version trong transaction (F12.2, lib/domain/docs.ts).
   const result = await applyRevision(id, await getCurrentUserId());
@@ -34,13 +36,14 @@ export async function approveRevision(revisionId: string, projectId: string): Pr
 
 /** Từ chối revision đang chờ kèm lý do (F12.3) — chỉ revision thuộc tài liệu của `projectId`. */
 export async function rejectRevision(revisionId: string, projectId: string, reason: string): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
   const input = approveSchema.safeParse({ revisionId, projectId });
   if (!input.success) return fail(input.error.issues[0].message);
   const { revisionId: id, projectId: project } = input.data;
 
   const revision = await prisma.docRevision.findUnique({ where: { id }, select: { doc: { select: { projectId: true } } } });
   if (!revision || revision.doc.projectId !== project) return fail("Không tìm thấy revision trong dự án này");
+  const denied = await authorize("doc.review", project);
+  if (denied) return fail(denied);
 
   const result = await rejectRevisionDomain(id, reason);
   if (!result.ok) return result;
@@ -61,7 +64,8 @@ export interface NewDocFormInput {
 
 /** Tạo tài liệu mới (F12.5) — người đang đăng nhập là tác giả. */
 export async function createDoc(input: NewDocFormInput): Promise<ActionResult<{ docId: string }>> {
-  // TODO(F15.4): kiểm tra quyền
+  const denied = await authorize("doc.create", String(input.projectId ?? ""));
+  if (denied) return fail(denied);
   const result = await createDocDomain(await getCurrentUserId(), {
     projectId: input.projectId,
     featureId: input.featureId?.trim() ? input.featureId : null,
@@ -87,9 +91,10 @@ export interface EditDocFormInput {
 
 /** Người sửa trực tiếp tài liệu (F12.6) — chỉ tài liệu thuộc `projectId`. */
 export async function editDoc(input: EditDocFormInput): Promise<ActionResult<{ version: string }>> {
-  // TODO(F15.4): kiểm tra quyền
   const doc = await prisma.doc.findUnique({ where: { id: String(input.docId ?? "") }, select: { projectId: true } });
   if (!doc || doc.projectId !== input.projectId) return fail("Không tìm thấy tài liệu trong dự án này");
+  const denied = await authorize("doc.edit", doc.projectId);
+  if (denied) return fail(denied);
 
   const result = await editDocDomain(await getCurrentUserId(), {
     docId: input.docId,

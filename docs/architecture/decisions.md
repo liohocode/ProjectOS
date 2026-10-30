@@ -130,3 +130,11 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 - Session lưu DB (bảng `auth_sessions`) + **cookie cache 5 phút** (cookie ký) → phần lớn request không đọc DB, giữ đúng tinh thần "ít query" của ADR-016/ADR-019 mà vẫn thu hồi được session (chậm tối đa 5 phút).
 - Env: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (thay tên `AUTH_*` dự kiến ở F19.5). Thiếu Google → nút đăng nhập bị khoá, app vẫn chạy (dev/CI). Thiếu `BETTER_AUTH_SECRET` ở production → Better Auth từ chối chạy (CI/e2e dùng giá trị giả).
 **Hệ quả**: thêm phụ thuộc `better-auth` (pin bản chính xác như Prisma); `telemetry` tắt. Trang `/login` không có trong spec UI gốc — dựng từ khung `.error-page` + token Nocturne. Đăng xuất tạm ở `/login`; nút ở footer sidebar thuộc F15.6.
+
+### ADR-021 — Phân quyền: cờ `isTechLead` + `can()` thuần (2026-10-30)
+**Bối cảnh**: F15.4 — người dùng duyệt ma trận quyền đề xuất (tech lead / người tạo dự án / thành viên dự án). Trước đó mọi server action chỉ kiểm tra đăng nhập.
+**Quyết định**:
+- "Tech lead" là cờ **`Member.isTechLead`**, không suy từ `Member.role` (chuỗi tự do — ai tạo thành viên cũng gõ được "Tech lead" và tự cấp quyền). Migration chuyển dữ liệu một lần: người có `role = 'Tech lead'` → `true` (production giữ nguyên quyền của tech lead mẫu). Thêm `Project.createdById` để biết "người tạo dự án".
+- `lib/auth/permissions.ts`: `can(actor, action, project?)` thuần (không DB) — dùng lại được cho UI theo quyền (F15.6). `lib/auth/authorize.ts`: `authorize(action, projectId?)` nạp actor từ session + dự án, trả `null` hoặc thông báo lỗi; gọi ở đầu mọi action ghi trong `lib/actions/*` (sau khi xác định dự án của tài nguyên).
+- Hành động gắn dự án luôn yêu cầu thuộc dự án (kể cả tech lead); không thuộc / không tồn tại → "Không tìm thấy dự án" (không lộ dự án, như layout F15.3). Lưu trữ dự án (F13.7, ngoài ma trận gốc) xếp chung nhóm tech lead.
+**Hệ quả**: mỗi action ghi thêm 1–2 query nhỏ. Agent gọi qua MCP (F16) sẽ cần nhánh actor riêng (token F15.5 + `AgentConfig`), không dùng `isTechLead`. Chưa có UI gán/bỏ tech lead — sửa qua DB (ghi vào F15.6 nếu cần).

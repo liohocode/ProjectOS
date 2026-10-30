@@ -1,0 +1,67 @@
+// Ma trận quyền (F15.4, ADR-021) — hàm thuần, không đọc DB: dùng được ở server action và (sau này) UI theo quyền (F15.6).
+//
+// | Hành động                                                        | Ai được làm                          |
+// |------------------------------------------------------------------|--------------------------------------|
+// | Duyệt / từ chối revision, sửa trực tiếp tài liệu                 | Tech lead, người tạo dự án           |
+// | Tạo dự án, quản lý MCP server, sửa cấu hình agent (toàn tổ chức) | Tech lead                            |
+// | Thêm / gỡ thành viên, lưu trữ dự án                              | Tech lead                            |
+// | Tạo / sửa / giao / chuyển stage task, tạo tài liệu               | Thành viên dự án                     |
+// Hành động gắn dự án luôn yêu cầu là thành viên dự án đó (kể cả tech lead) — như quyền xem (F15.3).
+
+export type PermissionAction =
+  | "project.create"
+  | "mcpServer.manage"
+  | "agent.configure"
+  | "project.archive"
+  | "member.manage"
+  | "doc.review"
+  | "doc.edit"
+  | "doc.create"
+  | "task.write";
+
+export interface Actor {
+  id: string;
+  isTechLead: boolean;
+  /** Dự án actor thuộc về (ProjectMember) */
+  projectIds: readonly string[];
+}
+
+export interface ProjectRef {
+  id: string;
+  createdById: string | null;
+}
+
+/** Hành động toàn tổ chức — không gắn dự án nào. */
+const ORG_ACTIONS: ReadonlySet<PermissionAction> = new Set(["project.create", "mcpServer.manage", "agent.configure"]);
+
+export const isOrgAction = (action: PermissionAction) => ORG_ACTIONS.has(action);
+
+/** `project` bắt buộc với hành động gắn dự án; thiếu (dự án không tồn tại) → không được. */
+export function can(actor: Actor, action: PermissionAction, project?: ProjectRef | null): boolean {
+  if (isOrgAction(action)) return actor.isTechLead;
+  if (!project || !actor.projectIds.includes(project.id)) return false;
+  switch (action) {
+    case "doc.review":
+    case "doc.edit":
+      return actor.isTechLead || project.createdById === actor.id;
+    case "project.archive":
+    case "member.manage":
+      return actor.isTechLead;
+    default:
+      return true;
+  }
+}
+
+const DENIED: Record<PermissionAction, string> = {
+  "project.create": "Chỉ tech lead được tạo dự án",
+  "mcpServer.manage": "Chỉ tech lead được quản lý MCP server",
+  "agent.configure": "Chỉ tech lead được sửa cấu hình agent",
+  "project.archive": "Chỉ tech lead được lưu trữ / khôi phục dự án",
+  "member.manage": "Chỉ tech lead được thêm / gỡ thành viên",
+  "doc.review": "Chỉ tech lead hoặc người tạo dự án được duyệt / từ chối revision",
+  "doc.edit": "Chỉ tech lead hoặc người tạo dự án được sửa trực tiếp tài liệu",
+  "doc.create": "Chỉ thành viên dự án được tạo tài liệu",
+  "task.write": "Chỉ thành viên dự án được thao tác task",
+};
+
+export const deniedMessage = (action: PermissionAction): string => DENIED[action];
