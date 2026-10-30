@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 4 | F09, F12.1, F13.5, F15.5 (một số task chạy trước được, xem cột phụ thuộc) | FR-AG-01…08 |
+| Đang làm | 4 | F09, F12.1, F13.5, F15.5 (một số task chạy trước được, xem cột phụ thuộc) | FR-AG-01…08 |
 
 ## Mục tiêu
 Đây là thứ biến Meridian từ "bảng theo dõi" thành **nơi agent làm việc thật**: Meridian tự chạy MCP server; agent (Claude Code, v.v.) kết nối bằng token, đọc task/tài liệu, claim task, cập nhật trạng thái, đề xuất thay đổi tài liệu (thành revision chờ người duyệt). Mọi lệnh và mọi phiên được ghi vào `McpLogEntry` / `McpSession` — dữ liệu mà màn MCP đang hiển thị từ seed.
@@ -26,7 +26,7 @@
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F16.1 | Spike + khung endpoint MCP, xác thực token, tool `tasks_list` | M | — (F15.5 nếu có) | Chưa làm |
+| F16.1 | Spike + khung endpoint MCP, xác thực token, tool `tasks_list` | M | — (F15.5 nếu có) | Xong — 2026-10-30 |
 | F16.2 | Lớp bọc tool call: ghi `McpLogEntry`, vòng đời `McpSession` | M | F16.1, F09.4 | Chưa làm |
 | F16.3 | `tasks_claim` với giới hạn task đồng thời | M | F16.2, F09.2 | Chưa làm |
 | F16.4 | `tasks_update_status`, `tasks_comment` (+ model `TaskComment`, hiện trong drawer) | M | F16.3 | Chưa làm |
@@ -39,8 +39,8 @@
 ### F16.1 — Spike + khung endpoint
 **Làm gì**: đánh giá `@modelcontextprotocol/sdk` (transport Streamable HTTP) chạy trong Route Handler Next 16 (`app/api/mcp/route.ts`) — chạy được cả `npm run dev` lẫn trong container production (F19.2), chế độ stateless; hoặc adapter có sẵn cho Next; chọn và ghi ADR. Xác thực Bearer token: dùng `verifyAgentToken` (F15.5); nếu F15 chưa xong, tạm map token qua biến môi trường `MCP_DEV_TOKENS="token1:agent-atlas,token2:agent-vega"` (chỉ dev, ghi rõ trong `.env.example`). Tool đầu tiên `tasks_list(projectId?, stage?, assigneeId?)` chỉ đọc.
 **Hoàn thành khi**:
-- [ ] `claude mcp add --transport http meridian http://localhost:3000/api/mcp --header "Authorization: Bearer <token>"` kết nối được, gọi `tasks_list` trả đúng dữ liệu
-- [ ] Không có token / token sai → 401
+- [x] `claude mcp add --transport http meridian http://localhost:3000/api/mcp --header "Authorization: Bearer <token>"` kết nối được, gọi `tasks_list` trả đúng dữ liệu — *thử bằng MCP client của SDK (`StreamableHTTPClientTransport`) vào bản build production: initialize, `tools/list`, `tasks_list` đúng; Claude Code CLI không có trong container — người dùng thử lại bằng lệnh trên*
+- [x] Không có token / token sai → 401 (`app/api/mcp/route.integration.test.ts`)
 
 ### F16.2 — Ghi phiên và nhật ký
 **Làm gì**: hàm bọc mọi tool handler: ghi `McpLogEntry` (agent, tool hiển thị dạng `tasks.claim`, target, result `OK`/`Chờ review`/`Bị chặn`, thời điểm); quản lý `McpSession` theo MCP session id (tạo khi khởi tạo phiên, `toolCalls++`, `endedAt` khi đóng hoặc hết hạn, `projectId`/`taskId` theo task đang thao tác). Token đã dùng: ghi nếu client gửi kèm, không thì để 0.
@@ -83,3 +83,4 @@
 - [ ] Người mới làm theo hướng dẫn kết nối được trong < 5 phút
 
 ## Quyết định / ghi chú
+- **F16.1 (2026-10-30)** — ADR-022. `app/api/mcp/route.ts` (POST; GET/DELETE → 405), `lib/mcp/server.ts` (`createMeridianMcpServer(agent)`), `lib/domain/tasks.ts` (`listTasksForMember`). Không cần `MCP_DEV_TOKENS` vì F15.5 đã xong: token tạo ở panel agent (màn team, tech lead). `tasks_list(projectId?, stage?, assigneeId?)` — chỉ task trong dự án agent thuộc về, tối đa 200; `assigneeId: "me"` = chính agent. Kết quả trả JSON trong content text.
