@@ -63,6 +63,21 @@ enum FeatureStatus {
   rejected
 }
 
+/// Sự kiện hiện ở activity rail (F17.1)
+enum ActivityType {
+  task
+  doc
+  feature
+  mcp
+}
+
+enum ActivityTone {
+  run
+  ok
+  review
+  block
+}
+
 enum CommandResult {
   OK
   ChoReview @map("Chờ review")
@@ -88,6 +103,7 @@ model Project {
   docs     Doc[]
   sessions McpSession[]
   sprints  Sprint[]        @relation("ProjectSprints")
+  events   ActivityEvent[]
 
   @@map("projects")
 }
@@ -140,6 +156,7 @@ model Member {
   agentTokens       AgentToken[]
   taskComments      TaskComment[]    @relation("TaskCommentAuthor")
   proposedFeatures  Feature[]        @relation("FeatureProposer")
+  activityEvents    ActivityEvent[]  @relation("ActivityActor")
 
   @@map("members")
 }
@@ -339,6 +356,28 @@ model DocRevision {
 
   @@index([docId, createdAt(sort: Desc)])
   @@map("doc_revisions")
+}
+
+/// Sự kiện thật của dự án (F17.1) — activity rail "Agent đang làm gì" đọc bảng này; ghi từ server action và MCP tool.
+/// taskId/docId/featureId là chuỗi (không FK): sự kiện giữ lịch sử kể cả khi đối tượng bị xoá.
+model ActivityEvent {
+  id        String       @id @default(cuid())
+  projectId String
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actorId   String
+  actor     Member       @relation("ActivityActor", fields: [actorId], references: [id], onDelete: Cascade)
+  type      ActivityType
+  taskId    String?
+  docId     String?
+  featureId String?
+  text      String
+  /// Tool MCP dạng hiển thị (`tasks.claim`); null = thao tác trên web
+  tool      String?
+  tone      ActivityTone
+  at        DateTime     @default(now())
+
+  @@index([projectId, at(sort: Desc)])
+  @@map("activity_events")
 }
 
 model McpServer {

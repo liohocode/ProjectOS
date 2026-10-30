@@ -18,7 +18,7 @@ Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer h
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F17.1 | Model `ActivityEvent` + ghi từ server action và MCP tool | M | F11.7, F16.2 | Chưa làm |
+| F17.1 | Model `ActivityEvent` + ghi từ server action và MCP tool | M | F11.7, F16.2 | Xong — 2026-10-30 |
 | F17.2 | Endpoint lấy sự kiện mới theo con trỏ (cho polling ngắn) | S | F17.1 | Chưa làm |
 | F17.3 | Client polling: activity rail, nhật ký lệnh, badge | M | F17.2 | Chưa làm |
 | F17.4 | Log phiên chạy trong drawer lấy từ dữ liệu thật | S | F16.2, F17.1 | Chưa làm |
@@ -27,7 +27,7 @@ Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer h
 ### F17.1 — Bảng sự kiện
 **Làm gì**: model `ActivityEvent(id, projectId, actorId, type enum, taskId?, docId?, featureId?, text, tool?, tone enum {run, ok, review, block}, at)`. Đổi helper `recordActivity` (F11.7) thành ghi `ActivityEvent` (vẫn có thể ghi kèm `MemberActivity` hoặc thay hẳn — chọn và ghi chú). MCP tool (F16.2) cũng ghi. `getActivityFeed(projectId)` đọc bảng này (giữ chữ ký), xoá logic suy ra.
 **Hoàn thành khi**:
-- [ ] Activity rail hiện sự kiện thật theo thời gian, mới nhất trên cùng
+- [x] Activity rail hiện sự kiện thật theo thời gian, mới nhất trên cùng (`lib/data/activity.integration.test.ts`)
 
 ### F17.2 — Endpoint sự kiện theo con trỏ
 **Làm gì**: `app/api/projects/[project]/events/route.ts` (GET) nhận `?after=<cursor>` (id/thời điểm sự kiện cuối client đã có), trả JSON các `ActivityEvent`/`McpLogEntry` mới hơn (giới hạn số lượng) + cursor mới — request ngắn, trả về ngay. **Không** dùng SSE giữ kết nối hay Postgres `LISTEN/NOTIFY`: production trên Cloud Run tính tiền suốt thời gian request mở và Neon pooled không hỗ trợ LISTEN (ADR-016). Kiểm tra quyền xem dự án (F15.3 nếu đã có).
@@ -50,5 +50,6 @@ Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer h
 - [x] Để trang mở vài phút thấy số phút tăng (e2e `running-time.spec.ts`, đồng hồ giả của Playwright)
 
 ## Quyết định / ghi chú
+- **F17.1 (2026-10-30)**: migration `activity_events` chỉ thêm bảng + enum `ActivityType` (`task`/`doc`/`feature`/`mcp`) / `ActivityTone`; `taskId`/`docId`/`featureId` là chuỗi không FK (giữ lịch sử khi đối tượng bị xoá). **Chuyển dữ liệu** trong migration: dựng sự kiện ban đầu từ trạng thái hiện có (task đang chạy / bị block / chờ review, revision chờ duyệt) — đúng những gì rail từng suy ra — để rail production không trống; seed chạy cùng các câu SQL đó (`prisma/seed-data/activity.ts`). `recordActivity` **ghi cả hai**: `MemberActivity` (panel "Hoạt động gần đây" — giữ nguyên) + `ActivityEvent` khi truyền `event` (thao tác thuộc dự án: task, tài liệu, duyệt feature). Thao tác cấp tổ chức (thành viên, token, MCP server, dự án) không lên rail. MCP: `recordToolCall` nhận `event` — chỉ lệnh làm thay đổi (claim, cập nhật, bình luận, đề xuất tài liệu/feature), lệnh đọc không lên rail. Rail: 30 sự kiện mới nhất; dòng meta hiện tool MCP hoặc "web"; sự kiện claim của task vẫn đang chạy giữ "chạy N phút" tự tăng (F17.5). `getActivityFeed` giữ chữ ký, bỏ logic suy ra.
 - **F17.5 (2026-10-30)**: `Task.runningSince` / `ActivityItem.runningSince` / bước log drawer `runningSince` (ISO) + client component `components/ui/RunningTime.tsx`: render đầu dùng nhãn server đã tính (khớp hydration), sau đó tự tính lại bằng `formatRunning` mỗi 30 giây — không gọi server, không tốn request Cloud Run. **Lệch nhỏ**: bước log drawer đổi từ "Đang chạy — chạy 14 phút" / "vừa xong" thành "Đang chạy" / "chạy 14 phút" (dòng thời gian là phần tự tăng).
 - Production trên Cloud Run (ADR-016): chọn **polling ngắn từ client** thay cho SSE/WebSocket giữ kết nối — kết nối dài bị tính tiền suốt thời gian mở và giữ instance + Neon luôn thức, đốt hạn mức free. Độ trễ 10–15 giây chấp nhận được cho activity feed. Nếu sau này chuyển sang VPS (xem F19), có thể nâng cấp lên SSE + `LISTEN/NOTIFY` — ghi ADR khi đó.

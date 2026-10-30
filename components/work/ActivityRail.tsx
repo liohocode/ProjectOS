@@ -23,7 +23,7 @@ export function ActivityRail({
         </button>
       </div>
       {items.length === 0 && (
-        <EmptyState compact icon="ph-activity" title="Chưa có hoạt động nào" description="Việc agent đang chạy, task bị block và revision chờ duyệt sẽ hiện ở đây." />
+        <EmptyState compact icon="ph-activity" title="Chưa có hoạt động nào" description="Thao tác của người và agent trong dự án (claim task, chuyển stage, block, đề xuất tài liệu…) sẽ hiện ở đây." />
       )}
       {items.map((item, i) => {
         const body = (
