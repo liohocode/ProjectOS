@@ -37,6 +37,7 @@ docs/
   guides/
     deploy-cloud-run.md     triển khai Cloud Run + Neon (F19), từng bước cho người dùng và agent
     google-oauth.md         tạo OAuth client Google cho đăng nhập (F15.2)
+    connect-agent.md        kết nối AI agent (Claude Code) với MCP server của Meridian (F16)
                             (sẽ có thêm: kết nối agent F16.9, backup F19.8…)
 ```
 
