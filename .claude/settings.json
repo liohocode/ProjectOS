@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(gcloud secrets add-iam-policy-binding:*)",
       "Bash(gcloud secrets versions add:*)",
       "Bash(gcloud secrets create:*)",
       "Bash(npm run *)",
