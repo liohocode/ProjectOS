@@ -75,7 +75,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 |---|---|---|---|
 | FR-AG-01 | Meridian cung cấp MCP server thật cho agent kết nối | ✅ `/api/mcp` Streamable HTTP + token agent (F16.1) | F16 |
 | FR-AG-02 | Nhóm tool task: `tasks.list`, `tasks.claim`, `tasks.update_status`, `tasks.comment` | ✅ `tasks_list` (F16.1), `tasks_claim` (F16.3), `tasks_update_status` + `tasks_comment` (F16.4) | F16 |
-| FR-AG-03 | Nhóm tool docs: `docs.read`, `docs.search`, `docs.append` (chỉ append được ghi, luôn thành revision chờ duyệt) | ⬜ | F16 |
+| FR-AG-03 | Nhóm tool docs: `docs.read`, `docs.search`, `docs.append` (chỉ append được ghi, luôn thành revision chờ duyệt) | ✅ `docs_read`, `docs_search` (từ khoá), `docs_append` → revision (F16.5) | F16 |
 | FR-AG-04 | `features.propose` chỉ cho BA agent | ⬜ | F16 |
 | FR-AG-05 | `tasks.claim` giới hạn 2 task đồng thời mỗi agent | ✅ theo `AgentConfig.maxConcurrentTasks` (F16.3) | F16 |
 | FR-AG-06 | Quyền ghi docs theo cấu hình agent: Chỉ đọc / Append (chờ review) / Append + sửa spec | ⬜ | F16 |
