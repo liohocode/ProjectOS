@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 6 | F19 | NFR-10, FR-OR-01…03 |
+| Đang làm | 6 | F19 | NFR-10, FR-OR-01…03 |
 
 ## Mục tiêu
 Chuyển production từ bản demo sang **dữ liệu thật của công ty** an toàn: có backup trước, dự án mẫu được lưu trữ (không xoá), lead quản lý được thành viên / tech lead mà không cần đụng DB.
@@ -18,7 +18,7 @@ Chuyển production từ bản demo sang **dữ liệu thật của công ty** a
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F20.1 | Backup Neon hằng đêm + hướng dẫn khôi phục (= F19.8, đã duyệt) | S | — | Chưa làm |
+| F20.1 | Backup Neon hằng đêm + hướng dẫn khôi phục (= F19.8, đã duyệt) | S | — | Đang làm — Ali, 2026-10-30 (chờ lần chạy đầu trên production) |
 | F20.2 | Quản trị thành viên: sửa hồ sơ, email đăng nhập, gán / bỏ tech lead | M | — | Chưa làm |
 | F20.3 | Hướng dẫn onboarding dự án thật + checklist go-live | S | F20.1, F20.2 | Chưa làm |
 | F20.4 | Production không chạy seed demo; seed tách "demo" / "tối thiểu" | S | — | Chưa làm |

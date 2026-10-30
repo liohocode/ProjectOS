@@ -1,0 +1,66 @@
+name: Backup Neon
+
+# F20.1: sao lưu DB production hằng đêm (pg_dump định dạng custom) thành artifact giữ 7 ngày.
+# Khôi phục: docs/guides/backup-restore.md. Chạy tay: Actions → Backup Neon → Run workflow.
+on:
+  schedule:
+    - cron: "17 19 * * *" # 02:17 giờ Việt Nam (UTC+7)
+  workflow_dispatch:
+
+# Không chạy chồng nhau.
+concurrency:
+  group: backup-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # token OIDC cho Workload Identity Federation (giống workflow Deploy)
+
+env:
+  GCP_PROJECT_ID: pdos-513017
+  GCP_WIF_PROVIDER: projects/669737756643/locations/global/workloadIdentityPools/github/providers/github
+  GCP_DEPLOY_SA: meridian-deploy@pdos-513017.iam.gserviceaccount.com
+  # Client mới hơn server dump được; khôi phục cần pg_restore cùng bản hoặc mới hơn.
+  PG_IMAGE: postgres:17
+
+jobs:
+  backup:
+    name: pg_dump → artifact
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Dump
+        env:
+          DATABASE_URL_OVERRIDE: ${{ secrets.DATABASE_URL_DIRECT }}
+        run: |
+          DATABASE_URL="${DATABASE_URL_OVERRIDE:-$(gcloud secrets versions access latest --secret=DATABASE_URL_DIRECT --project "$GCP_PROJECT_ID")}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::Không đọc được DATABASE_URL_DIRECT"; exit 1; fi
+          echo "::add-mask::$DATABASE_URL"
+          STAMP=$(date -u +%Y%m%d-%H%M%S)
+          mkdir -p backup
+          # Định dạng custom (-Fc): nén sẵn, khôi phục chọn lọc được bằng pg_restore. Không kèm owner/quyền (Neon tự quản).
+          docker run --rm -e PGCONNECT_TIMEOUT=30 -v "$PWD/backup:/backup" "$PG_IMAGE" \
+            pg_dump "$DATABASE_URL" --format=custom --no-owner --no-privileges --file "/backup/meridian-$STAMP.dump"
+          # Kiểm tra file đọc được và có bảng chính.
+          docker run --rm -v "$PWD/backup:/backup" "$PG_IMAGE" pg_restore --list "/backup/meridian-$STAMP.dump" > backup/toc.txt
+          grep -q "TABLE public tasks" backup/toc.txt || { echo "::error::Bản dump thiếu bảng tasks"; exit 1; }
+          sha256sum "backup/meridian-$STAMP.dump" > "backup/meridian-$STAMP.dump.sha256"
+          ls -lh backup
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meridian-db-${{ env.STAMP }}
+          path: |
+            backup/*.dump
+            backup/*.sha256
+          retention-days: 7
+          if-no-files-found: error
