@@ -1,0 +1,50 @@
+# Bàn giao cho phiên agent mới
+
+Đọc file này khi bắt đầu phiên mới (kể cả trên tài khoản Claude khác). Cập nhật mục **Trạng thái** và **Việc tiếp theo** mỗi khi kết thúc một đợt việc lớn.
+
+## 1. Prompt mở đầu (copy nguyên văn)
+```
+Bạn là Ali, mình là Lio. Repo liohocode/ProjectOS (Meridian), làm trên branch claude/<tên-branch-phiên-này>.
+Đọc lần lượt: CLAUDE.md → docs/HANDOFF.md → docs/ROADMAP.md → docs/WORKFLOW.md.
+Làm theo "Mức tự quyết của agent" trong CLAUDE.md: tự chọn task tiếp theo trong ROADMAP, mỗi task một commit,
+mở PR, CI xanh thì tự merge (rebase), rồi làm tiếp. Chỉ hỏi mình ở mục "Phải hỏi".
+Trả lời tiếng Việt, ngắn gọn. Bắt đầu với: <task hoặc "việc tiếp theo trong ROADMAP">.
+```
+
+## 2. Trạng thái (cập nhật 2026-10-30)
+- **ROADMAP 76/104.** Xong: F08–F12, F14; F13 6/7 (còn F13.7); F15 2/6 (F15.2 đăng nhập Google chạy thật trên production, còn thử đăng xuất + email lạ); F19 7/10.
+- **Production**: https://meridian-669737756643.asia-southeast1.run.app — Cloud Run (`pdos-513017`, `asia-southeast1`) + Neon Free (project `meridian`). Đăng nhập: `liohocompany@gmail.com` = Trung Hiếu (tech lead) trong **dữ liệu mẫu** (người dùng chọn giữ dữ liệu mẫu trên production).
+- **Deploy tự động**: merge vào `main` → CI xanh → workflow `Deploy` (`.github/workflows/deploy.yml`): build image → `prisma migrate deploy` lên Neon → `gcloud run deploy` → smoke `/login`. Chạy tay: GitHub → Actions → Deploy → Run workflow (agent chạy được bằng GitHub MCP `actions_run_trigger`).
+- Hạ tầng + giá trị cấu hình: `docs/guides/deploy-cloud-run.md` (mục 1–4). Secret Manager: `DATABASE_URL`, `DATABASE_URL_DIRECT`, `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+
+## 3. Việc tiếp theo
+| Việc | Ai | Ghi chú |
+|---|---|---|
+| F13.7 Gỡ thành viên, lưu trữ dự án | Agent | Migration chỉ thêm `Project.archivedAt` |
+| F15.4 Ma trận quyền + `can()` | **Chờ Lio xác nhận ma trận** | Đề xuất trong `docs/features/F15-auth-permissions.md`; mọi server action còn `TODO(F15.4)` |
+| F19.7 thử rollback; F19.8 backup Neon; F19.9 tên miền (tuỳ chọn) | Agent (+ Lio nếu tốn tiền) | Rollback: `docs/guides/deploy-cloud-run.md` mục 4 |
+| F16 MCP server thật, F17 realtime | Agent | Sau F15.4/F15.5 (token cho agent) |
+| Dọn quyền tạm (xem mục 5) | **Lio** | Nên làm sớm |
+
+## 4. Giới hạn của môi trường agent (đã gặp — đừng thử lại vô ích)
+- Container cloud **không kết nối được** `*.neon.tech` (5432 và HTTPS), `*.pkg.dev` (Docker registry), `*.run.app`. → Không chạy Prisma/psql vào Neon, không `docker push`, không curl production từ container.
+  - Đọc/ghi Neon: **Neon MCP** (`run_sql`, `run_sql_transaction`) — thao tác DB production phải hỏi Lio trước.
+  - Build/deploy/migrate production: **chỉ qua workflow Deploy** trên GitHub Actions (WIF, service account `meridian-deploy`).
+  - Kiểm tra production: log Cloud Run (`gcloud logging read …`), kết quả workflow (GitHub MCP `actions_list` / `get_job_logs`), hoặc nhờ Lio mở trình duyệt.
+- `gcloud` trong container chỉ có quyền khi có key service account; phiên mới **không có** (key cũ chỉ nằm trong container phiên trước). Mặc định không cần — deploy đi qua GitHub Actions.
+- Classifier của Claude Code chặn: cấp quyền IAM, ghi Secret Manager, chạy Cloud Build bằng SA quyền cao. Quy tắc cho phép nằm ở `.claude/settings.json` (người dùng sửa; agent không tự sửa được file này). Có thể phải mở phiên mới để quy tắc mới có hiệu lực.
+- Playwright: nếu báo thiếu Chromium bản khác, symlink bản có sẵn trong `/opt/pw-browsers` (không `playwright install`). Postgres local: `service postgresql start` nếu test báo ECONNREFUSED.
+
+## 5. Dọn dẹp quyền tạm (Lio làm trên Cloud Console / Cloud Shell)
+Trong lúc thiết lập F19.3 đã tạo service account `meridian-agent` (Owner trên project) + key, và tắt 2 org policy chặn tạo key **riêng cho project `pdos-513017`**. Deploy giờ dùng WIF nên không cần nữa:
+```bash
+gcloud iam service-accounts delete meridian-agent@pdos-513017.iam.gserviceaccount.com --project=pdos-513017
+gcloud resource-manager org-policies delete iam.disableServiceAccountKeyCreation --project=pdos-513017
+gcloud org-policies delete projects/pdos-513017/policies/iam.managed.disableServiceAccountKeyCreation
+```
+
+## 6. Chuẩn bị tài khoản Claude mới (Lio)
+1. claude.ai/code trên tài khoản mới → kết nối GitHub (cài Claude GitHub App cho repo `liohocode/ProjectOS`).
+2. Tạo cloud environment cho repo; setup như hiện tại (Node, Postgres, Docker có sẵn trong image mặc định). `.env` không có trong repo — phiên mới tự `cp .env.example .env` (giá trị dev, không phải secret).
+3. (Tuỳ chọn) Kết nối connector **Neon** nếu cần agent đọc/ghi DB production.
+4. Mở phiên mới, dán prompt ở mục 1.
