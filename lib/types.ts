@@ -35,6 +35,8 @@ export interface Task {
   blocked?: string;
   blockedFull?: string;
   running?: string;
+  /** ISO — thời điểm bắt đầu chạy, để client tự tăng "chạy N phút" (F17.5) */
+  runningSince?: string;
 }
 
 export interface Feature {
@@ -149,11 +151,14 @@ export interface ActivityItem {
   tone: ActivityTone;
   /** Mục gắn với một task → rail mở task đó qua `?task=` (F14.1). */
   taskId?: string;
+  /** ISO — mục "đang chạy": `when` tự tăng phía client (F17.5) */
+  runningSince?: string;
 }
 
 export interface TaskDrawerInfo {
   contextDocs: string[];
-  sessionLog: { text: string; when: string }[];
+  /** `runningSince` (ISO): bước "Đang chạy" — `when` tự tăng phía client (F17.5) */
+  sessionLog: { text: string; when: string; runningSince?: string }[];
 }
 
 export interface McpServer {

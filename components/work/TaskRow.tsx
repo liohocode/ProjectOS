@@ -1,6 +1,7 @@
 import type { Task } from "@/lib/types";
 import { initials, stageTagClass, taskRowStyle } from "./taskStyle";
 import { buttonLikeProps } from "@/components/ui/a11y";
+import { RunningTime } from "@/components/ui/RunningTime";
 
 export function TaskRow({ task, onOpen }: { task: Task; onOpen: () => void }) {
   return (
@@ -18,7 +19,7 @@ export function TaskRow({ task, onOpen }: { task: Task; onOpen: () => void }) {
         {!task.blocked && task.running && (
           <>
             <i className="ph ph-circle-notch" aria-hidden />
-            <span>{task.running}</span>
+            <span>{task.runningSince ? <RunningTime since={task.runningSince} label={task.running} /> : task.running}</span>
           </>
         )}
       </span>

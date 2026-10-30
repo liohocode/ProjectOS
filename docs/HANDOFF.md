@@ -12,7 +12,7 @@ Trả lời tiếng Việt, ngắn gọn. Bắt đầu với: <task hoặc "vi�
 ```
 
 ## 2. Trạng thái (cập nhật 2026-10-30)
-- **ROADMAP 77/104.** Xong: F08–F14; F15 2/6 (F15.2 đăng nhập Google chạy thật trên production, còn thử đăng xuất + email lạ); F19 7/10.
+- **ROADMAP 78/104.** Xong: F08–F14; F17 1/5 (F17.5); F15 2/6 (F15.2 đăng nhập Google chạy thật trên production, còn thử đăng xuất + email lạ); F19 7/10.
 - **Production**: https://meridian-669737756643.asia-southeast1.run.app — Cloud Run (`pdos-513017`, `asia-southeast1`) + Neon Free (project `meridian`). Đăng nhập: `liohocompany@gmail.com` = Trung Hiếu (tech lead) trong **dữ liệu mẫu** (người dùng chọn giữ dữ liệu mẫu trên production).
 - **Deploy tự động**: merge vào `main` → CI xanh → workflow `Deploy` (`.github/workflows/deploy.yml`): build image → `prisma migrate deploy` lên Neon → `gcloud run deploy` → smoke `/login`. Chạy tay: GitHub → Actions → Deploy → Run workflow (agent chạy được bằng GitHub MCP `actions_run_trigger`).
 - Hạ tầng + giá trị cấu hình: `docs/guides/deploy-cloud-run.md` (mục 1–4). Secret Manager: `DATABASE_URL`, `DATABASE_URL_DIRECT`, `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.

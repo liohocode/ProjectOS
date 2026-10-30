@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 4 | F11, F16.2 | FR-WK-06, FR-WK-07, FR-MC-03 |
+| Đang làm | 4 | F11, F16.2 | FR-WK-06, FR-WK-07, FR-MC-03 |
 
 ## Mục tiêu
 Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer hiện là dữ liệu **suy ra** (ADR-008); nhật ký lệnh ở màn MCP là tĩnh. Feature này thay bằng bảng sự kiện thật và đẩy cập nhật lên trình duyệt ngay khi có thay đổi (spec: "nên là stream/websocket cho realtime feed và log").
@@ -22,7 +22,7 @@ Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer h
 | F17.2 | Endpoint lấy sự kiện mới theo con trỏ (cho polling ngắn) | S | F17.1 | Chưa làm |
 | F17.3 | Client polling: activity rail, nhật ký lệnh, badge | M | F17.2 | Chưa làm |
 | F17.4 | Log phiên chạy trong drawer lấy từ dữ liệu thật | S | F16.2, F17.1 | Chưa làm |
-| F17.5 | "chạy N phút" tự tăng phía client | S | F09.2 | Chưa làm |
+| F17.5 | "chạy N phút" tự tăng phía client | S | F09.2 | Xong — 2026-10-30 |
 
 ### F17.1 — Bảng sự kiện
 **Làm gì**: model `ActivityEvent(id, projectId, actorId, type enum, taskId?, docId?, featureId?, text, tool?, tone enum {run, ok, review, block}, at)`. Đổi helper `recordActivity` (F11.7) thành ghi `ActivityEvent` (vẫn có thể ghi kèm `MemberActivity` hoặc thay hẳn — chọn và ghi chú). MCP tool (F16.2) cũng ghi. `getActivityFeed(projectId)` đọc bảng này (giữ chữ ký), xoá logic suy ra.
@@ -47,7 +47,8 @@ Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer h
 ### F17.5 — Thời gian chạy live
 **Làm gì**: task row / drawer / activity rail nhận `runningSince` (thêm field vào type nếu cần) và hiển thị "chạy N phút" tự cập nhật mỗi 30s phía client.
 **Hoàn thành khi**:
-- [ ] Để trang mở vài phút thấy số phút tăng
+- [x] Để trang mở vài phút thấy số phút tăng (e2e `running-time.spec.ts`, đồng hồ giả của Playwright)
 
 ## Quyết định / ghi chú
+- **F17.5 (2026-10-30)**: `Task.runningSince` / `ActivityItem.runningSince` / bước log drawer `runningSince` (ISO) + client component `components/ui/RunningTime.tsx`: render đầu dùng nhãn server đã tính (khớp hydration), sau đó tự tính lại bằng `formatRunning` mỗi 30 giây — không gọi server, không tốn request Cloud Run. **Lệch nhỏ**: bước log drawer đổi từ "Đang chạy — chạy 14 phút" / "vừa xong" thành "Đang chạy" / "chạy 14 phút" (dòng thời gian là phần tự tăng).
 - Production trên Cloud Run (ADR-016): chọn **polling ngắn từ client** thay cho SSE/WebSocket giữ kết nối — kết nối dài bị tính tiền suốt thời gian mở và giữ instance + Neon luôn thức, đốt hạn mức free. Độ trễ 10–15 giây chấp nhận được cho activity feed. Nếu sau này chuyển sang VPS (xem F19), có thể nâng cấp lên SSE + `LISTEN/NOTIFY` — ghi ADR khi đó.
