@@ -9,6 +9,7 @@ import { AssignTaskDialog, type AssignableFeature } from "./AssignTaskDialog";
 import { MemberLogDialog } from "./MemberLogDialog";
 import { AgentConfigDialog } from "./AgentConfigDialog";
 import { RemoveMemberDialog } from "./RemoveMemberDialog";
+import { AgentTokensSection } from "./AgentTokensSection";
 import { useCan } from "@/components/auth/PermissionsProvider";
 
 export function MemberPanel({
@@ -68,6 +69,8 @@ export function MemberPanel({
           ))}
         </div>
       )}
+
+      {member.kind === "agent" && canConfigure && <AgentTokensSection key={member.id} member={member} />}
 
       <div className="panel-section">
         <div className="panel-section-title">Skills</div>

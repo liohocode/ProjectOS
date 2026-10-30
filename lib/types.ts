@@ -112,6 +112,17 @@ export interface MemberActivityEntry extends MemberActivity {
   id: string;
 }
 
+/** Token agent trong danh sách (F15.5) — không bao giờ chứa token gốc / hash. */
+export interface AgentTokenInfo {
+  id: string;
+  name: string;
+  lastFour: string;
+  created: string;
+  /** null = chưa dùng lần nào */
+  lastUsed: string | null;
+  revoked: boolean;
+}
+
 export interface Member {
   id: string;
   name: string;

@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { Member, MemberActivityEntry, MemberOption, Page } from "@/lib/types";
+import type { AgentTokenInfo, Member, MemberActivityEntry, MemberOption, Page } from "@/lib/types";
 import { toPage } from "./paging";
 import { agentConfigRows, DEFAULT_AGENT_CONFIG, type AgentConfigValues } from "@/lib/agentConfig";
 import { prisma } from "@/lib/prisma";
@@ -139,3 +139,20 @@ export const getMemberActivityPage = cache(
     return toPage(rows, limit, (a) => ({ id: a.id, icon: a.icon, text: a.text, when: formatRelativeVi(a.at) }));
   },
 );
+
+/** Token MCP của agent (F15.5), còn hiệu lực trước, mới tạo trước. */
+export const getAgentTokens = cache(async (memberId: string): Promise<AgentTokenInfo[]> => {
+  const rows = await prisma.agentToken.findMany({
+    where: { memberId },
+    orderBy: [{ revokedAt: { sort: "desc", nulls: "first" } }, { createdAt: "desc" }],
+    select: { id: true, name: true, lastFour: true, createdAt: true, lastUsedAt: true, revokedAt: true },
+  });
+  return rows.map((t) => ({
+    id: t.id,
+    name: t.name,
+    lastFour: t.lastFour,
+    created: formatRelativeVi(t.createdAt),
+    lastUsed: t.lastUsedAt ? formatRelativeVi(t.lastUsedAt) : null,
+    revoked: t.revokedAt !== null,
+  }));
+});

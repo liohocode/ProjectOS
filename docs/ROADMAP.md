@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **80/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **81/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -33,7 +33,7 @@ Cập nhật lần cuối: 2026-10-30 · Tổng: **80/104 task xong** (Phase 0 h
 ## Phase 3 — Danh tính
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F15](features/F15-auth-permissions.md) | Đăng nhập **Google** (Better Auth), phân quyền, token cho agent | F11.1 | Đang làm — phân quyền + UI theo quyền xong; còn F15.5 token agent, F15.2 thử đăng xuất/email lạ trên production | 4/6 |
+| [F15](features/F15-auth-permissions.md) | Đăng nhập **Google** (Better Auth), phân quyền, token cho agent | F11.1 | Đang làm — phân quyền, UI theo quyền, token agent xong; còn F15.2 thử đăng xuất/email lạ trên production (người dùng) | 5/6 |
 
 ## Phase 4 — Nền tảng agent (lõi sản phẩm)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -51,7 +51,7 @@ Cập nhật lần cuối: 2026-10-30 · Tổng: **80/104 task xong** (Phase 0 h
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
 | Task | Vì sao |
 |---|---|
-| [F15.5](features/F15-auth-permissions.md) Token cho agent | Mở khoá F16 (MCP server thật) |
+| [F16.1](features/F16-mcp-server.md) Khung endpoint MCP + xác thực token + `tasks_list` | F15.5 xong — lõi sản phẩm |
 | [F19.7](features/F19-deployment.md) Thử rollback | Đường deploy còn lại |
 | [F19.8](features/F19-deployment.md) Sao lưu Neon + hướng dẫn khôi phục | Production đã có dữ liệu |
 

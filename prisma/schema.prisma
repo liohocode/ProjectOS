@@ -130,6 +130,7 @@ model Member {
   authUser          AuthUser?
   agentConfig       AgentConfig?
   createdProjects   Project[]        @relation("ProjectCreator")
+  agentTokens       AgentToken[]
 
   @@map("members")
 }
@@ -157,6 +158,23 @@ model AgentConfig {
   extra               Json?
 
   @@map("agent_configs")
+}
+
+/// Token agent dùng để gọi MCP server (F15.5). Chỉ lưu SHA-256 của token — token gốc hiện một lần lúc tạo.
+model AgentToken {
+  id         String    @id @default(cuid())
+  memberId   String
+  member     Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  name       String
+  tokenHash  String    @unique
+  /// 4 ký tự cuối để nhận ra token trong danh sách (không đủ để đoán token)
+  lastFour   String
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+
+  @@index([memberId])
+  @@map("agent_tokens")
 }
 
 model MemberSkillRow {
