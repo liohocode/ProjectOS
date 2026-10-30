@@ -7,6 +7,7 @@ import { getCurrentUser, getCurrentUserId } from "@/lib/auth/currentUser";
 import { getMcpServers } from "@/lib/data/mcp";
 import { getPermissions } from "@/lib/data/permissions";
 import { PermissionsProvider } from "@/components/auth/PermissionsProvider";
+import { ProjectEventsProvider } from "@/components/realtime/ProjectEvents";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import type { ScreenId } from "@/lib/types";
@@ -55,6 +56,8 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
 
   return (
     <PermissionsProvider value={permissions}>
+      {/* F17.3: polling sự kiện mới khi tab đang hiển thị */}
+      <ProjectEventsProvider projectId={projectId}>
       <div className="app-shell">
         <Sidebar
           project={project}
@@ -74,6 +77,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
           <div className="content-area">{props.children}</div>
         </div>
       </div>
+      </ProjectEventsProvider>
     </PermissionsProvider>
   );
 }
