@@ -3,7 +3,9 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { DatabaseUnavailableError, isDatabaseConnectionError } from "@/lib/dbErrors";
 
 function createClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  // Cloud Run có thể chạy nhiều instance, mỗi instance một pool → giữ pool nhỏ (Neon Free giới hạn kết nối;
+  // production dùng connection string pooled của Neon). Đổi bằng DATABASE_POOL_MAX nếu cần.
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL, max: Number(process.env.DATABASE_POOL_MAX ?? 5) });
   // Mọi lỗi mất kết nối DB được chuẩn hoá thành DatabaseUnavailableError (message cố định)
   // để error boundary hiển thị hướng dẫn thay vì "Invalid prisma.x invocation".
   return new PrismaClient({ adapter }).$extends({

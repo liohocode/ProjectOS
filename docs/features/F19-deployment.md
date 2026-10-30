@@ -46,7 +46,7 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 | F19.1 | Quyết định hạ tầng | S | — | Xong — 2026-10-14 (ADR-016, ADR-015) |
 | F19.2 | Dockerfile production + chạy thử container ở local | M | — | Xong — 2026-10-28 |
 | F19.3 | Thiết lập Google Cloud + budget alert (hướng dẫn cho người dùng) | S | — | Xong — 2026-10-29 |
-| F19.4 | Neon production + kết nối Prisma | S | — | Chưa làm |
+| F19.4 | Neon production + kết nối Prisma | S | — | Xong — 2026-10-30 (chờ người dùng cất `DATABASE_URL` vào Secret Manager) |
 | F19.5 | Secrets (Secret Manager) + kiểm tra biến môi trường | S | F19.3 | Chưa làm |
 | F19.6 | Deploy thủ công lần đầu lên Cloud Run | S | F19.2, F19.3, F19.4, F19.5 | Chưa làm |
 | F19.7 | CD: GitHub Actions build → migrate → deploy | M | F19.6, F08.6 | Chưa làm |
@@ -80,7 +80,7 @@ Hướng dẫn: `docs/guides/deploy-cloud-run.md` → phần 1 (lệnh chạy tr
 ### F19.4 — Neon production
 **Làm gì**: hướng dẫn người dùng tạo project Neon (region Singapore, Postgres 16), lấy **pooled connection string** (cho app) và **direct connection string** (cho `prisma migrate deploy`). `lib/prisma.ts` giữ `@prisma/adapter-pg`, giới hạn pool nhỏ (vd `max: 5`) cho môi trường serverless — đọc skill Prisma về cấu hình adapter. Chạy `npx prisma migrate deploy` lần đầu bằng direct URL. **Không seed dữ liệu mẫu** vào production; tạo thành viên thật (ít nhất tài khoản tech lead có email Google — cần cho F15.2) bằng script `scripts/bootstrap-prod.ts` hoặc qua Prisma Studio trỏ vào Neon.
 **Hoàn thành khi**:
-- [ ] `prisma migrate status` trên Neon báo đã cập nhật; app ở local trỏ tạm vào Neon chạy được
+- [x] Neon có đủ 12 migration (checksum khớp `prisma/migrations`) + dữ liệu mẫu khớp từng bảng với DB dựng local. Không chạy được app local trỏ vào Neon (container agent bị chặn cổng 5432 / host `*.neon.tech`) — kiểm tra thật ở F19.6
 
 ### F19.5 — Secrets + env
 **Làm gì**: `lib/env.ts` validate biến môi trường lúc khởi động (zod): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (tên theo ADR-020), `MCP_DEV_TOKENS` (chỉ dev). Production: lưu trong **Secret Manager**, mount vào Cloud Run bằng `--set-secrets`. `.env.example` ghi rõ biến nào dùng ở môi trường nào.
@@ -130,6 +130,7 @@ Hướng dẫn: `docs/guides/deploy-cloud-run.md` → phần 1 (lệnh chạy tr
 - **F15 Auth**: OAuth client tạo trong cùng Google Cloud project; redirect URI production là URL `run.app` (hoặc tên miền F19.9).
 
 ## Quyết định / ghi chú
+- **F19.4 (2026-10-30)**: Neon project `meridian` (id `nameless-leaf-94347709`, `aws-ap-southeast-1`, Postgres 16), database `meridian`, role `meridian_owner`, branch `main`. **Người dùng chọn nạp dữ liệu mẫu** (khác kế hoạch "không seed") để vừa code vừa xem thực tế; `hieu` (Trung Hiếu, tech lead) mang email `liohocompany@gmail.com` để đăng nhập. Mạng của container agent chặn Postgres (5432) và HTTPS tới `*.neon.tech` → cách làm: dựng DB `meridian_prodstage` ở local (`migrate deploy` + `db seed` với `DEV_LOGIN_EMAIL`), `pg_dump --inserts`, chạy lên Neon qua Neon MCP (`run_sql_transaction`), rồi so md5 từng bảng + checksum `_prisma_migrations` giữa hai bên — khớp hết. Từ F19.7, migration production chạy bằng `prisma migrate deploy` trong GitHub Actions (có mạng tới Neon) với **direct URL** (host không có `-pooler`); app dùng **pooled URL**. `lib/prisma.ts`: pool `max` 5 (đổi bằng `DATABASE_POOL_MAX`).
 - **F19.3 (2026-10-29)**: project `pdos-513017` (organization `liohocompany-org`). Người dùng làm trên điện thoại nên agent chạy bước 1.4–1.6 + tạo secret `BETTER_AUTH_SECRET` bằng service account tạm `meridian-agent` (Owner trên project). Organization mặc định chặn tạo key (`iam.disableServiceAccountKeyCreation`, `iam.managed.disableServiceAccountKeyCreation`) → người dùng tắt **riêng cho project này**. **Sau khi F19.7 chạy (deploy qua WIF, không cần key): xoá key/SA `meridian-agent` và bỏ override 2 org policy trên.** Budget alert để người dùng làm (service account không có quyền billing — cố ý).
 - **F19.2 (2026-10-28)**: base `node:24-slim` (glibc, cùng họ với runner CI Ubuntu). Image 393 MB (`docker images`), nén ~90 MB (dung lượng thật khi push). Phần app chỉ ~47 MB — còn lại là base Node. Thử `node:24-alpine`: 306 MB / nén ~73 MB, vẫn không đạt < 300 MB và đổi sang musl → giữ slim. Kiểm tra: 5 màn 200 với DB local, `/_next/static` phục vụ được, chạy user `node`, image không chứa `.env`.
 - `npm run build` có `postbuild` copy `.next/static` vào `.next/standalone`; `npm start` = `node .next/standalone/server.js` (Next 16 cảnh báo `next start` không hỗ trợ `output: "standalone"`). E2E chạy đúng server này (cổng qua `PORT`) → test cùng cách container production chạy. Next tự copy `.env` vào `.next/standalone` khi build ở máy — vô hại (`.next` gitignore); Docker không có vì `.dockerignore` loại `.env*`.
