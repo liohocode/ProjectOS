@@ -1,16 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import type { CommandResult } from "@/lib/generated/prisma/enums";
+import { displayToolName } from "./tools";
 
 // Ghi phiên + nhật ký cho mọi lệnh MCP (F16.2). Endpoint stateless (ADR-022) nên không có MCP session id:
 // "phiên" = agent làm việc trên một dự án, còn mở khi lệnh cuối cách đây chưa tới SESSION_IDLE_MS;
 // phiên quá hạn được đóng lười ở lệnh kế tiếp của chính agent đó (không cần job nền — Cloud Run scale về 0).
 
 export const SESSION_IDLE_MS = 30 * 60_000;
-/** Server nội bộ nhận lệnh — cập nhật "lệnh cuối" trên thẻ ở màn MCP. */
-export const CORE_SERVER_ID = "meridian-core";
-
-/** `tasks_list` → `tasks.list` (UI/nhật ký hiển thị như MCP tool spec). */
-export const displayToolName = (tool: string) => tool.replace("_", ".");
+export { displayToolName } from "./tools";
 
 export interface ToolCallRecord {
   agentId: string;
@@ -32,7 +29,6 @@ export async function recordToolCall(call: ToolCallRecord, now: Date = new Date(
     await tx.mcpLogEntry.create({
       data: { agentId: call.agentId, tokenId: call.tokenId ?? null, tool: displayToolName(call.tool), target: call.target, result: call.result, at: now },
     });
-    await tx.mcpServer.updateMany({ where: { id: CORE_SERVER_ID }, data: { lastCommandAt: now } });
     if (!call.projectId) return;
 
     // Đóng phiên quá hạn của agent: kết thúc tại lệnh cuối, còn "Đang chạy" thì thành "Xong".

@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_AGENT_CONFIG, type DocsWritePermission } from "@/lib/agentConfig";
+import { TOOL_SERVER } from "./tools";
+
+export { TOOL_SERVER };
 
 // Luật governance trước mỗi lệnh MCP (F16.7, FR-AG-06/07): server được cấu hình cho agent, quyền ghi docs,
 // rate limit theo token. Quyền theo dự án nằm trong từng nghiệp vụ (agent chỉ thấy dự án mình thuộc).
@@ -7,17 +10,6 @@ import { DEFAULT_AGENT_CONFIG, type DocsWritePermission } from "@/lib/agentConfi
 
 export const RATE_LIMIT_PER_MINUTE = 60;
 
-/** Tool thuộc server nội bộ nào — agent phải có server đó trong `AgentConfig.mcpServers`. */
-export const TOOL_SERVER: Record<string, "meridian-core" | "meridian-docs"> = {
-  tasks_list: "meridian-core",
-  tasks_claim: "meridian-core",
-  tasks_update_status: "meridian-core",
-  tasks_comment: "meridian-core",
-  features_propose: "meridian-core",
-  docs_read: "meridian-docs",
-  docs_search: "meridian-docs",
-  docs_append: "meridian-docs",
-};
 
 /** Tool ghi tài liệu — chặn khi quyền ghi docs là "Chỉ đọc". */
 const DOC_WRITE_TOOLS = new Set(["docs_append"]);
@@ -39,7 +31,7 @@ export async function loadAgentPolicy(agentId: string): Promise<AgentPolicy> {
 
 /** Lý do chặn theo cấu hình agent, hoặc null nếu được gọi. */
 export function checkToolAllowed(policy: AgentPolicy, tool: string): string | null {
-  const server = TOOL_SERVER[tool];
+  const server = TOOL_SERVER[tool as keyof typeof TOOL_SERVER];
   if (server && !policy.mcpServers.includes(server)) return `Agent chưa được cấu hình MCP server ${server} — nhờ tech lead thêm ở panel agent`;
   if (DOC_WRITE_TOOLS.has(tool) && policy.docsWritePermission === "read_only") return "Quyền ghi docs của agent là \"Chỉ đọc\" — không đề xuất sửa tài liệu được";
   if (tool === "features_propose" && !policy.canProposeFeatures) return "Agent không được phép đề xuất feature";

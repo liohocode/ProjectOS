@@ -5,23 +5,65 @@ import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
 import { COMMAND_RESULT_LABEL, SESSION_RESULT_LABEL } from "./mcpLabels";
 import { formatTokens, sessionDurationMin } from "@/lib/mcpFormat";
+import { internalServerTools } from "@/lib/mcp/tools";
 
 /** Server nội bộ của Meridian — không cho sửa/xoá ở màn MCP (F13.6). */
 export const INTERNAL_MCP_SERVERS = ["meridian-core", "meridian-docs"];
 
+interface InternalStats {
+  server: string;
+  commands: bigint;
+  clients: bigint;
+  last: Date | null;
+}
+
+/**
+ * Số liệu thật của 2 server nội bộ (F16.8) từ nhật ký lệnh: lệnh 24h, số agent đã gọi trong 24h, lệnh cuối.
+ * Tool `docs.*` thuộc meridian-docs, còn lại meridian-core (khớp TOOL_SERVER ở lib/mcp/governance.ts).
+ */
+const getInternalServerStats = cache(async (): Promise<Map<string, InternalStats>> => {
+  const since = new Date(Date.now() - 24 * 60 * 60_000);
+  const rows = await prisma.$queryRaw<InternalStats[]>`
+    SELECT CASE WHEN tool LIKE 'docs.%' THEN 'meridian-docs' ELSE 'meridian-core' END AS server,
+           COUNT(*) FILTER (WHERE at > ${since}) AS commands,
+           COUNT(DISTINCT "agentId") FILTER (WHERE at > ${since}) AS clients,
+           MAX(at) AS last
+    FROM mcp_log_entries GROUP BY 1`;
+  return new Map(rows.map((r) => [r.server, r]));
+});
+
 export const getMcpServers = cache(async (): Promise<McpServer[]> => {
-  const rows = await prisma.mcpServer.findMany({ orderBy: { id: "asc" } });
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    status: row.status,
-    url: row.url,
-    tools: row.tools,
-    clients: row.clients,
-    commandsPerDay: row.commandsPerDay,
-    lastCommandAgo: row.lastCommandAt ? formatRelativeVi(row.lastCommandAt) : null,
-    internal: INTERNAL_MCP_SERVERS.includes(row.id),
-  }));
+  const [rows, stats] = await Promise.all([prisma.mcpServer.findMany({ orderBy: { id: "asc" } }), getInternalServerStats()]);
+  return rows.map((row) => {
+    const internal = INTERNAL_MCP_SERVERS.includes(row.id);
+    // Server nội bộ: endpoint /api/mcp chạy cùng app → luôn online; tool + số liệu lấy từ code / nhật ký thật.
+    // Server ngoài: giữ giá trị lưu (kiểm tra sức khoẻ server ngoài chưa làm).
+    if (internal) {
+      const s = stats.get(row.id);
+      return {
+        id: row.id,
+        name: row.name,
+        status: "online" as const,
+        url: row.url,
+        tools: internalServerTools(row.id),
+        clients: Number(s?.clients ?? 0),
+        commandsPerDay: Number(s?.commands ?? 0),
+        lastCommandAgo: s?.last ? formatRelativeVi(s.last) : null,
+        internal,
+      };
+    }
+    return {
+      id: row.id,
+      name: row.name,
+      status: row.status,
+      url: row.url,
+      tools: row.tools,
+      clients: row.clients,
+      commandsPerDay: row.commandsPerDay,
+      lastCommandAgo: row.lastCommandAt ? formatRelativeVi(row.lastCommandAt) : null,
+      internal,
+    };
+  });
 });
 
 export const MCP_PAGE_SIZE = 50;
