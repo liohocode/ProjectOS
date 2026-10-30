@@ -50,7 +50,7 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 | F19.5 | Secrets (Secret Manager) + kiểm tra biến môi trường | S | F19.3 | Xong — 2026-10-30 |
 | F19.6 | Deploy thủ công lần đầu lên Cloud Run | S | F19.2, F19.3, F19.4, F19.5 | Xong — 2026-10-30 |
 | F19.7 | CD: GitHub Actions build → migrate → deploy | M | F19.6, F08.6 | Đang làm — workflow chạy được (deploy thành công 2026-10-30); còn thử rollback |
-| F19.8 | Sao lưu Neon định kỳ + hướng dẫn khôi phục | S | F19.4 | Chưa làm |
+| F19.8 | Sao lưu Neon định kỳ + hướng dẫn khôi phục | S | F19.4 | Chuyển → F20.1 (2026-10-30) |
 | F19.9 | (Tuỳ chọn) Tên miền riêng qua Cloudflare DNS | S | F19.6 | Chưa làm |
 | F19.10 | Giảm số query mỗi request (`cache()` + hàm đếm cho badge) | S | — | Xong — 2026-10-28 (ADR-019) |
 
