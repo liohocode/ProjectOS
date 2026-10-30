@@ -14,7 +14,7 @@ Lead / người quản lý **theo dõi trạng thái và duyệt việc trên đ
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F25.1 | **Quyết định** hướng mobile: web responsive + PWA (khuyến nghị) / app native | S | — | Chưa làm |
+| F25.1 | **Quyết định** hướng mobile: web responsive + PWA (khuyến nghị) / app native | S | — | Xong — 2026-10-30 (web responsive + PWA) |
 | F25.2 | Màn "Cần tôi xử lý" (inbox): revision chờ duyệt, task Review, feature / task đề xuất, task bị block — dùng cả desktop | M | F22.2 | Chưa làm |
 | F25.3 | App shell responsive: sidebar → thanh điều hướng dưới, header gọn, drawer toàn màn (container query) | M | F25.1 | Chưa làm |
 | F25.4 | Các màn chính đọc được trên 390px: work (list), portfolio, docs (đọc + duyệt), team | M | F25.3 | Chưa làm |
@@ -26,4 +26,5 @@ Lead / người quản lý **theo dõi trạng thái và duyệt việc trên đ
 - [ ] Lead thấy mọi việc cần mình duyệt ở một chỗ, duyệt / trả lại tại chỗ; badge số lượng ở sidebar / tab bar
 
 ## Quyết định / ghi chú
+- **F25.1 (2026-10-30)** — người dùng chốt: web responsive + PWA, không làm app native.
 - Quy ước CLAUDE.md: responsive bằng **container query**, không media query.

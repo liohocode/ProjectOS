@@ -18,7 +18,7 @@ Agent lấy đủ ngữ cảnh trong **một lệnh**, tự chia task / đề xu
 | F24.2 | Tool `tasks_create` (TA agent chia task) — tạo task "đề xuất", lead duyệt như feature đề xuất | M | F21.1 | Chưa làm |
 | F24.3 | Tool `docs_create` — đề xuất tài liệu mới, lead duyệt mới xuất hiện | S | — | Chưa làm |
 | F24.4 | Template tài liệu (PRD, Tech spec, ADR, Runbook) khi tạo tài liệu — UI + MCP | S | — | Chưa làm |
-| F24.5 | `docs/guides/agent-workflow.md` + CLAUDE.md mẫu cho repo dùng Meridian: claim → context → làm → báo PR → Review → báo token | S | F22.4 | Chưa làm |
+| F24.5 | `docs/guides/agent-workflow.md` + CLAUDE.md mẫu cho repo dùng Meridian: claim → context → làm → báo PR → Review → báo token (thành skill dùng chung ở F27.8) | S | F22.4 | Chưa làm |
 | F24.6 | Gắn tài liệu ↔ task (task trỏ tới tài liệu spec; `context_get` trả kèm) | S | — | Chưa làm |
 
 ### F24.1 — `context_get`

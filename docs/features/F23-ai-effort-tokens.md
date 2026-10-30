@@ -14,7 +14,7 @@ Biết **mỗi task / feature / dự án tốn bao nhiêu token AI (và tiền)*
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F23.1 | **Quyết định** nguồn số token: agent tự báo qua MCP (khuyến nghị) / đọc từ API nhà cung cấp | S | — | Chưa làm |
+| F23.1 | **Quyết định** nguồn số token: agent tự báo qua MCP (khuyến nghị) / đọc từ API nhà cung cấp | S | — | Xong — 2026-10-30 (agent tự báo qua MCP) |
 | F23.2 | Model `TokenUsage` + MCP tool `usage_report` (model, input/output tokens, chi phí ước tính, task) | M | F23.1 | Chưa làm |
 | F23.3 | Tổng hợp + hiển thị: drawer task, panel agent, portfolio, phiên MCP (`tokensUsed` thật) | M | F23.2 | Chưa làm |
 | F23.4 | Ngân sách token theo dự án / agent / tháng + cảnh báo trong app; tuỳ chọn chặn MCP khi vượt | M | F23.3 | Chưa làm |
@@ -31,3 +31,4 @@ Biết **mỗi task / feature / dự án tốn bao nhiêu token AI (và tiền)*
 - [ ] Vượt ngân sách → cảnh báo hiện; bật chặn → lệnh MCP bị chặn kèm lý do
 
 ## Quyết định / ghi chú
+- **F23.1 (2026-10-30)** — người dùng chốt: agent tự báo token qua MCP (`usage_report`); không đọc hoá đơn nhà cung cấp.
