@@ -20,7 +20,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | F15.1 | Quyết định phương án đăng nhập | S | — | Xong — 2026-10-14 (ADR-013) |
-| F15.2 | Better Auth + Google: tài khoản, đăng nhập/đăng xuất, trang login | M | F15.1 | Đang làm — code xong, chờ người dùng tạo OAuth client để thử đăng nhập thật (2026-10-28) |
+| F15.2 | Better Auth + Google: tài khoản, đăng nhập/đăng xuất, trang login | M | F15.1 | Đang làm — code xong; OAuth client + secret `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` đã có (2026-10-30); thử đăng nhập thật sau deploy F19.6 |
 | F15.3 | Bảo vệ route bằng `proxy.ts`; `getCurrentUser()` đọc từ session | S | F15.2, F11.1 | Xong — 2026-10-28 |
 | F15.4 | Ma trận quyền + `can()`; áp vào mọi server action | M | F15.3 | Chưa làm |
 | F15.5 | Token cho agent (tạo / thu hồi) | M | F15.4 | Chưa làm |

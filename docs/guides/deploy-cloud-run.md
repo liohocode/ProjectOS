@@ -5,7 +5,7 @@ Hướng dẫn cho F19 (ADR-016, ADR-015). Mỗi phần ghi rõ **ai làm**: ng�
 | Phần | Task | Ai làm | Trạng thái |
 |---|---|---|---|
 | [1. Thiết lập Google Cloud](#1-thiết-lập-google-cloud-f193) | F19.3 | Người dùng + agent | Xong |
-| 2. Neon production | F19.4 | Agent + người dùng | Chưa viết |
+| [2. Neon production](#2-neon-production-f194) | F19.4 | Agent + người dùng | Xong — người dùng cất `DATABASE_URL` |
 | 3. Secrets | F19.5 | Agent + người dùng | Chưa viết |
 | 4. Deploy thủ công lần đầu | F19.6 | Người dùng chạy lệnh agent soạn | Chưa viết |
 | 5. Deploy tự động từ `main` | F19.7 | Agent | Chưa viết |
@@ -19,6 +19,22 @@ npx prisma migrate deploy && npx prisma db seed
 docker compose --profile app up --build   # build Dockerfile → http://localhost:8080
 ```
 Hoặc không qua compose: `docker build -t meridian .` rồi `docker run -p 8080:8080 -e DATABASE_URL=... meridian`. Container không chạy migrate; production sẽ do CI chạy `prisma migrate deploy` trước khi deploy (F19.7).
+
+---
+
+## 2. Neon production (F19.4)
+Agent đã tạo và nạp sẵn (2026-10-30):
+| | |
+|---|---|
+| Project | `meridian` — id `nameless-leaf-94347709`, region `aws-ap-southeast-1` (Singapore), Postgres 16 |
+| Database / role | `meridian` / `meridian_owner` |
+| Pooled host (app, Cloud Run) | `ep-dark-dream-aoli3013-pooler.c-2.ap-southeast-1.aws.neon.tech` |
+| Direct host (`prisma migrate deploy`, CI) | `ep-dark-dream-aoli3013.c-2.ap-southeast-1.aws.neon.tech` |
+| Dữ liệu | 12 migration + dữ liệu mẫu; Trung Hiếu (tech lead) đăng nhập bằng `liohocompany@gmail.com` |
+
+Mật khẩu **không** ghi ở đây. Lấy connection string đầy đủ ở https://console.neon.tech → project `meridian` → **Connect** (bật/tắt "Connection pooling" để lấy pooled/direct), rồi cất vào Secret Manager:
+- `DATABASE_URL` = pooled URL (có `-pooler`), thêm `?sslmode=require` nếu thiếu — Cloud Run đọc secret này.
+- `DATABASE_URL_DIRECT` = direct URL — GitHub Actions dùng để chạy migration (F19.7).
 
 ---
 
@@ -156,7 +172,7 @@ GCP_WIF_PROVIDER=projects/669737756643/locations/global/workloadIdentityPools/gi
 GCP_DEPLOY_SA=meridian-deploy@pdos-513017.iam.gserviceaccount.com
 GCP_RUN_SA=meridian-run@pdos-513017.iam.gserviceaccount.com
 ```
-Secret Manager hiện có: `BETTER_AUTH_SECRET`. Còn thiếu: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (người dùng, sau khi tạo OAuth client), `DATABASE_URL` (F19.4).
+Secret Manager hiện có: `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. Còn thiếu: `DATABASE_URL`, `DATABASE_URL_DIRECT` (mục 2).
 
 ### Kiểm tra đã xong F19.3
 - [ ] Budget alert 5 USD tồn tại, đã bỏ chọn credit
