@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **82/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **83/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -38,7 +38,7 @@ Cập nhật lần cuối: 2026-10-30 · Tổng: **82/104 task xong** (Phase 0 h
 ## Phase 4 — Nền tảng agent (lõi sản phẩm)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F16](features/F16-mcp-server.md) | MCP server thật cho agent: tool task/docs, governance, ghi phiên + nhật ký | F09, F12.1, F13.5, F15.5 | Đang làm — endpoint MCP + `tasks_list` chạy (ADR-022) | 1/9 |
+| [F16](features/F16-mcp-server.md) | MCP server thật cho agent: tool task/docs, governance, ghi phiên + nhật ký | F09, F12.1, F13.5, F15.5 | Đang làm — endpoint MCP + `tasks_list` + ghi phiên/nhật ký (ADR-022) | 2/9 |
 | [F17](features/F17-realtime-activity.md) | Bảng sự kiện thật + SSE realtime | F11, F16.2 | Đang làm — F17.5 xong (phần còn lại chờ F16.2) | 1/5 |
 | [F18](features/F18-knowledge-index.md) | pgvector, index tài liệu, tìm kiếm ngữ nghĩa | F12, F16.5 | Hoãn (người dùng chọn để sau) | 0/6 |
 
@@ -51,7 +51,8 @@ Cập nhật lần cuối: 2026-10-30 · Tổng: **82/104 task xong** (Phase 0 h
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
 | Task | Vì sao |
 |---|---|
-| [F16.2](features/F16-mcp-server.md) Ghi phiên + nhật ký MCP | Nền cho mọi tool ghi (F16.3–F16.8) và F17 |
+| [F16.3](features/F16-mcp-server.md) `tasks_claim` (giới hạn task đồng thời) | Tool ghi đầu tiên; nối tiếp F16.4, F16.9 |
+| [F16.5](features/F16-mcp-server.md) `docs_read` / `docs_search` / `docs_append` | Song song với F16.3 (đụng file khác) |
 | [F19.7](features/F19-deployment.md) Thử rollback | Đường deploy còn lại |
 | [F19.8](features/F19-deployment.md) Sao lưu Neon + hướng dẫn khôi phục | Production đã có dữ liệu |
 

@@ -2,6 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { AgentPrincipal } from "@/lib/auth/agentToken";
 import { listTasksForMember } from "@/lib/domain/tasks";
+import { prisma } from "@/lib/prisma";
+import { recordToolCall, type ToolCallRecord } from "./audit";
 
 // MCP server của Meridian (F16, ADR-022). Mỗi request HTTP dựng một instance mới gắn với agent đã xác thực
 // (stateless — Cloud Run có thể nhiều instance / scale về 0, ADR-016). Tool chỉ là lớp vỏ: nghiệp vụ ở lib/domain.
@@ -13,6 +15,31 @@ export const SERVER_INFO = { name: "meridian", version: "0.1.0" } as const;
 
 function json(value: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] };
+}
+
+type Logged = Omit<ToolCallRecord, "agentId" | "tool">;
+
+/**
+ * Bọc handler tool (F16.2): mọi lệnh ghi một dòng nhật ký + cập nhật phiên. Handler trả kèm `log`
+ * (target, kết quả, dự án/task); lỗi bất ngờ ghi "Bị chặn" rồi ném tiếp cho SDK trả lỗi JSON-RPC.
+ */
+async function logged<T>(agent: AgentPrincipal, tool: string, run: () => Promise<{ value: T; log: Logged }>): Promise<T> {
+  try {
+    const { value, log } = await run();
+    await recordToolCall({ agentId: agent.memberId, tool, ...log });
+    return value;
+  } catch (e) {
+    await recordToolCall({ agentId: agent.memberId, tool, target: "lỗi", result: "BiChan" }).catch(() => {});
+    throw e;
+  }
+}
+
+/** Dự án gắn phiên: `projectId` nếu agent thuộc dự án đó; không truyền mà agent chỉ thuộc một dự án → dự án đó. */
+async function sessionProject(agentId: string, projectId: string | undefined): Promise<string | null> {
+  const memberships = await prisma.projectMember.findMany({ where: { memberId: agentId }, select: { projectId: true } });
+  const ids = memberships.map((m) => m.projectId);
+  if (projectId) return ids.includes(projectId) ? projectId : null;
+  return ids.length === 1 ? ids[0] : null;
 }
 
 export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
@@ -33,14 +60,18 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
       },
       annotations: { readOnlyHint: true },
     },
-    async ({ projectId, stage, assigneeId }) => {
-      const tasks = await listTasksForMember(agent.memberId, {
-        projectId,
-        stage,
-        assigneeId: assigneeId === "me" ? agent.memberId : assigneeId,
-      });
-      return json({ count: tasks.length, tasks });
-    },
+    async ({ projectId, stage, assigneeId }) =>
+      logged(agent, "tasks_list", async () => {
+        const tasks = await listTasksForMember(agent.memberId, {
+          projectId,
+          stage,
+          assigneeId: assigneeId === "me" ? agent.memberId : assigneeId,
+        });
+        return {
+          value: json({ count: tasks.length, tasks }),
+          log: { target: [projectId ?? "mọi dự án", stage].filter(Boolean).join(" · "), result: "OK", projectId: await sessionProject(agent.memberId, projectId) },
+        };
+      }),
   );
 
   return server;
