@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { AgentPrincipal } from "@/lib/auth/agentToken";
 import { revalidatePath } from "next/cache";
+import { appendDocForAgent, readDocForAgent, searchDocsForAgent } from "@/lib/domain/agentDocs";
 import { AGENT_STAGES, AGENT_STATUSES, claimTask, commentOnTask, listTasksForMember, updateTaskByAgent } from "@/lib/domain/tasks";
 import { prisma } from "@/lib/prisma";
 import { recordToolCall, type ToolCallRecord } from "./audit";
@@ -142,6 +143,72 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
         return {
           value: result.ok ? json({ commented: true, commentId: result.commentId }) : { ...json({ commented: false, reason: result.reason }), isError: true },
           log: { target: taskId, result: result.ok ? "OK" : "BiChan", projectId: result.projectId, taskId: result.ok ? taskId : null },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "docs_read",
+    {
+      title: "Đọc tài liệu",
+      description: "Đọc toàn bộ một tài liệu (tóm tắt + các mục) trong dự án của agent.",
+      inputSchema: { docId: z.string().trim().min(1).describe("Id tài liệu, vd mcp-spec") },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ docId }) =>
+      logged(agent, "docs_read", async () => {
+        const result = await readDocForAgent(agent, docId);
+        return {
+          value: result.ok ? json(result.doc) : { ...json({ reason: result.reason }), isError: true },
+          log: { target: docId, result: result.ok ? "OK" : "BiChan", projectId: result.ok ? result.doc.projectId : null },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "docs_search",
+    {
+      title: "Tìm tài liệu",
+      description: "Tìm tài liệu theo từ khoá (tiêu đề, tóm tắt, nội dung; không phân biệt dấu) trong các dự án của agent. Tối đa 10 kết quả.",
+      inputSchema: {
+        query: z.string().trim().min(2).max(200).describe("Từ khoá"),
+        projectId: z.string().trim().min(1).optional().describe("Giới hạn trong một dự án"),
+      },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ query, projectId }) =>
+      logged(agent, "docs_search", async () => {
+        const hits = await searchDocsForAgent(agent.memberId, query, projectId);
+        return {
+          value: json({ count: hits.length, docs: hits }),
+          log: { target: `"${query}"`, result: "OK", projectId: await sessionProject(agent.memberId, projectId) },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "docs_append",
+    {
+      title: "Đề xuất sửa tài liệu",
+      description:
+        "Đề xuất thay đổi một tài liệu. KHÔNG sửa trực tiếp: luôn tạo revision chờ người duyệt. `content` (markdown: `## Mục`, đoạn cách nhau bằng dòng trống) thay toàn bộ nội dung khi được duyệt — đọc bằng docs_read và gửi lại đủ các mục; `summary` thay tóm tắt. Cần ít nhất một trong hai.",
+      inputSchema: {
+        docId: z.string().trim().min(1).describe("Id tài liệu"),
+        what: z.string().trim().min(1).max(300).describe("Mô tả ngắn thay đổi, hiện trong lịch sử revision"),
+        summary: z.string().trim().max(2000).optional().describe("Tóm tắt mới"),
+        content: z.string().max(100_000).optional().describe("Toàn bộ nội dung mới dạng markdown"),
+      },
+    },
+    async ({ docId, what, summary, content }) =>
+      logged(agent, "docs_append", async () => {
+        const result = await appendDocForAgent(agent.memberId, { docId, what, summary, content });
+        // Badge "Docs" (revision chờ duyệt) + danh sách revision.
+        if (result.ok) revalidatePath("/[project]", "layout");
+        return {
+          value: result.ok
+            ? json({ proposed: true, revisionId: result.revisionId, status: "Chờ review — người duyệt sẽ áp vào tài liệu" })
+            : { ...json({ proposed: false, reason: result.reason }), isError: true },
+          log: { target: docId, result: result.ok ? "ChoReview" : "BiChan", projectId: result.projectId },
         };
       }),
   );
