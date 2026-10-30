@@ -30,7 +30,7 @@
 | F16.2 | Lớp bọc tool call: ghi `McpLogEntry`, vòng đời `McpSession` | M | F16.1, F09.4 | Xong — 2026-10-30 |
 | F16.3 | `tasks_claim` với giới hạn task đồng thời | M | F16.2, F09.2 | Xong — 2026-10-30 |
 | F16.4 | `tasks_update_status`, `tasks_comment` (+ model `TaskComment`, hiện trong drawer) | M | F16.3 | Xong — 2026-10-30 |
-| F16.5 | `docs_read`, `docs_search` (từ khoá), `docs_append` → revision chờ duyệt | M | F16.2, F12.1 | Chưa làm |
+| F16.5 | `docs_read`, `docs_search` (từ khoá), `docs_append` → revision chờ duyệt | M | F16.2, F12.1 | Xong — 2026-10-30 |
 | F16.6 | `features_propose` (chỉ BA agent) + UI duyệt feature đề xuất | M | F16.2 | Chưa làm |
 | F16.7 | Quyền theo cấu hình agent + rate limit 60 lệnh/phút | S | F16.2, F13.5 | Chưa làm |
 | F16.8 | Trạng thái server thật cho `meridian-core` / `meridian-docs` | S | F16.2 | Chưa làm |
@@ -60,7 +60,7 @@
 ### F16.5 — Tool tài liệu
 **Làm gì**: `docs_read(docId)` trả nội dung + ghi agent vào danh sách đã đọc (F18.6 sẽ chuyển sang tính từ log). `docs_search(projectId, query)` — tìm theo từ khoá trong tiêu đề/tóm tắt/section (F18.5 nâng cấp ngữ nghĩa). `docs_append(docId, what, proposedSections)` → gọi `createRevision` (F12.1), kết quả log `Chờ review`; **không bao giờ** sửa trực tiếp `Doc`.
 **Hoàn thành khi**:
-- [ ] Agent append → màn docs thấy revision chờ duyệt, người duyệt được (F12.2)
+- [x] Agent append → màn docs thấy revision chờ duyệt, người duyệt được (F12.2) (`lib/domain/agentDocs.integration.test.ts`)
 
 ### F16.6 — `features_propose`
 **Làm gì**: thêm `Feature.status` enum (`proposed`, `active`, `rejected`). Chỉ agent có `canProposeFeatures` (BA agent) gọi được. Feature đề xuất hiện ở màn work trong khu "Feature đề xuất — chờ duyệt" với nút Duyệt/Từ chối cho lead; list chính và timeline chỉ hiện `active`.
@@ -83,6 +83,7 @@
 - [ ] Người mới làm theo hướng dẫn kết nối được trong < 5 phút
 
 ## Quyết định / ghi chú
+- **F16.5 (2026-10-30)**: `lib/domain/agentDocs.ts`. `docs_read` thêm tên agent vào `Doc.readBy` (bỏ "—" của dữ liệu mẫu; giữ "Tất cả agent"). `docs_search(query, projectId?)` — ILIKE + `unaccent` trên tiêu đề / tóm tắt / `sections::text`, chỉ dự án agent thuộc, tiêu đề khớp xếp trước, tối đa 10; `projectId` tuỳ chọn (spec ghi bắt buộc — agent thường chưa biết id). `docs_append(docId, what, summary?, content?)`: `content` là **markdown** (cùng định dạng form sửa tài liệu, `markdownToSections`) thay vì mảng `proposedSections` — dễ cho agent; luôn `createRevision` (F12.1), nhật ký "Chờ review". Quyền ghi docs theo `AgentConfig.docsWritePermission` là F16.7.
 - **F16.4 (2026-10-30)**: migration chỉ thêm `task_comments`. `updateTaskByAgent` / `commentOnTask` (`lib/domain/tasks.ts`). Agent **chỉ sửa task đang giao cho mình** (phải `tasks_claim` trước) — thêm ngoài spec để agent không sửa việc của người khác; bình luận thì được trên mọi task trong dự án của mình. Stage cho phép BA/TA/Dev/Review, trạng thái "Đang làm"/"Chờ"/"Chờ review"; Done / "Xong" bị chặn (enum của tool không có Done, domain chặn lần nữa); "Đang chạy" phải qua `tasks_claim`. Đổi trạng thái = rời "Đang chạy" → xoá `runningSince` (nhả task khỏi giới hạn F16.3). Nhật ký: chuyển sang Review / "Chờ review" ghi kết quả "Chờ review". Drawer: mục "Bình luận" (cũ trước) trên "Log phiên chạy"; bình luận của cả dự án tải một query (`getTaskCommentsByProject`). Người chưa bình luận được từ UI (ngoài phạm vi — thêm sau nếu cần).
 - **F16.3 (2026-10-30)**: `claimTask` (`lib/domain/tasks.ts`) trong transaction, khoá dòng `members` của agent (`SELECT … FOR UPDATE`) để hai lệnh claim đồng thời không cùng vượt giới hạn. Giới hạn = `AgentConfig.maxConcurrentTasks` (mặc định 2); "đang chạy" = task giao cho agent có `runningSince`. Thêm chặn ngoài spec: task đang được người/agent khác chạy; task không thuộc dự án của agent (báo như không tồn tại). Claim lại task mình đang chạy → OK, không đổi. Claim thành công ghi `Member.current` + hoạt động "Claim T-xxx qua MCP" và revalidate layout. Bị chặn → kết quả tool `isError: true` kèm `reason`, nhật ký "Bị chặn". Chưa có "nhả task" — `tasks_update_status` (F16.4) sẽ xoá `runningSince` khi chuyển khỏi "Đang chạy".
 - **F16.2 (2026-10-30)**: endpoint stateless (ADR-022) nên **không có MCP session id** → "phiên" = (agent, dự án), còn mở khi lệnh cuối cách đây < 30 phút (`SESSION_IDLE_MS`); phiên quá hạn đóng **lười** ở lệnh kế tiếp của agent (`endedAt` = lệnh cuối, "Đang chạy" → "Xong") — không cần job nền. Migration chỉ thêm `McpSession.lastCallAt` (null = dữ liệu mẫu, không bị đóng tự động). `lib/mcp/audit.ts` `recordToolCall` (một transaction: dòng `McpLogEntry` tên dạng `tasks.list`, `meridian-core.lastCommandAt`, phiên). `logged()` trong `lib/mcp/server.ts` bọc mọi handler; lỗi bất ngờ ghi "Bị chặn". Dự án của phiên: tham số `projectId` nếu agent thuộc dự án đó, không truyền mà agent chỉ thuộc một dự án → dự án đó, ngược lại chỉ ghi nhật ký. `tokensUsed` để 0 (client chưa gửi). Thời lượng phiên mở vẫn tính tới hiện tại cho tới khi được đóng lười — chấp nhận.
