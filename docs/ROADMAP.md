@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-28 · Tổng: **74/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-28 · Tổng: **75/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -45,7 +45,7 @@ Cập nhật lần cuối: 2026-10-28 · Tổng: **74/104 task xong** (Phase 0 h
 ## Phase 5 — Vận hành
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F19](features/F19-deployment.md) | Deploy **Google Cloud Run + Neon Postgres** (gói Free), CD từ GitHub, budget alert, backup | F08.6, F15 | Đang làm — F19.5 secrets / F19.6 deploy đầu tiên | 5/10 |
+| [F19](features/F19-deployment.md) | Deploy **Google Cloud Run + Neon Postgres** (gói Free), CD từ GitHub, budget alert, backup | F08.6, F15 | Đang làm — F19.6/F19.7 workflow deploy sẵn sàng, chờ GitHub secret | 6/10 |
 
 ## Việc nên nhận tiếp theo
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
@@ -53,7 +53,7 @@ Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhi�
 |---|---|
 | [F13.7](features/F13-entity-management.md) Gỡ thành viên, lưu trữ dự án | Task cuối của F13 (F13.1–F13.6 xong) |
 | [F15.4](features/F15-auth-permissions.md) Ma trận quyền + `can()` | Mọi server action còn `TODO(F15.4)`; **chờ người dùng xác nhận ma trận quyền** |
-| [F19.5](features/F19-deployment.md) Secrets + `lib/env.ts` → [F19.6](features/F19-deployment.md) deploy đầu tiên | Neon production xong (F19.4); **người dùng** cất `DATABASE_URL` vào Secret Manager |
+| [F19.6](features/F19-deployment.md) Deploy lần đầu (workflow) | **Người dùng**: GitHub secret `DATABASE_URL_DIRECT` + redirect URI `run.app` trong OAuth client, rồi chạy Actions → Deploy |
 | [F15.2](features/F15-auth-permissions.md) Đăng nhập Google | Code + OAuth client xong (2026-10-30); thử thật sau F19.6 (thêm redirect URI `run.app`) |
 
 Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 ✓ → F13 (F14 ✓) → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.
@@ -89,4 +89,4 @@ Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: 
 - 2026-10-14 — **F09 xong**: Sprint thành model, field task/phiên MCP/trạng thái thành viên kiểu thật, timeline đọc từ DB, feature chưa giao hiện ở list view. F08 xong phần code (unit 38, integration 30, e2e 10 test) — còn chờ push để CI chạy lần đầu.
 - 2026-10-14 — **F10 xong**: skeleton loading 5 màn, error boundary nhận diện mất kết nối DB, trang 404, empty state, thao tác bàn phím (drawer có focus trap). Phase 1 chỉ còn F08.6 chờ push để CI chạy.
 - 2026-10-15 — F08.6 đóng: CI GitHub Actions xanh (sửa build không cần DB, chuẩn bị DB test trước khi Playwright start server). **F11 xong**: `lib/auth/currentUser.ts`, server action task (zod + `ActionResult`, ADR-017), drawer ghi DB (chuyển stage, giao, block, sửa nhanh), dialog điều khiển bằng URL + "Task mới" (ADR-018), ghi hoạt động người thao tác.
-- 2026-10-28 — Rà repo + 2 sửa nhỏ (F12.7 approveRevision theo ADR-017, F19.10 dedupe query: màn work 131 → 33 SQL). Chốt hạ tầng: Cloud Run + Neon Free, F19.2 Dockerfile, F19.3 hướng dẫn Google Cloud. **F15.2–F15.3**: đăng nhập Google bằng Better Auth (ADR-020), chặn route, chỉ thành viên xem dự án. **F12 xong** (F12.3–F12.6): từ chối + diff revision, lịch sử người duyệt / lý do từ chối, tạo tài liệu mới, người sửa trực tiếp. **F19.3 xong**: hạ tầng Google Cloud (project `pdos-513017`) + budget alert. **F13.1–F13.6**: dự án mới, thêm thành viên, giao task / xem log từ panel, `AgentConfig` có cấu trúc + form, MCP server ngoài. **F19.4**: Neon production (dữ liệu mẫu). **F14 xong**: deep link màn work, tìm kiếm không dấu (`unaccent`), nút Lọc theo màn, phân trang bảng MCP. Agent tự merge PR khi CI xanh (quy ước mới trong CLAUDE.md).
+- 2026-10-28 — Rà repo + 2 sửa nhỏ (F12.7 approveRevision theo ADR-017, F19.10 dedupe query: màn work 131 → 33 SQL). Chốt hạ tầng: Cloud Run + Neon Free, F19.2 Dockerfile, F19.3 hướng dẫn Google Cloud. **F15.2–F15.3**: đăng nhập Google bằng Better Auth (ADR-020), chặn route, chỉ thành viên xem dự án. **F12 xong** (F12.3–F12.6): từ chối + diff revision, lịch sử người duyệt / lý do từ chối, tạo tài liệu mới, người sửa trực tiếp. **F19.3 xong**: hạ tầng Google Cloud (project `pdos-513017`) + budget alert. **F13.1–F13.6**: dự án mới, thêm thành viên, giao task / xem log từ panel, `AgentConfig` có cấu trúc + form, MCP server ngoài. **F19.4–F19.5**: Neon production (dữ liệu mẫu), kiểm tra env lúc khởi động, workflow deploy. **F14 xong**: deep link màn work, tìm kiếm không dấu (`unaccent`), nút Lọc theo màn, phân trang bảng MCP. Agent tự merge PR khi CI xanh (quy ước mới trong CLAUDE.md).

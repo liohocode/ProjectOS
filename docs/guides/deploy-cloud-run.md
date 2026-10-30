@@ -6,9 +6,9 @@ Hướng dẫn cho F19 (ADR-016, ADR-015). Mỗi phần ghi rõ **ai làm**: ng�
 |---|---|---|---|
 | [1. Thiết lập Google Cloud](#1-thiết-lập-google-cloud-f193) | F19.3 | Người dùng + agent | Xong |
 | [2. Neon production](#2-neon-production-f194) | F19.4 | Agent + người dùng | Xong — người dùng cất `DATABASE_URL` |
-| 3. Secrets | F19.5 | Agent + người dùng | Chưa viết |
-| 4. Deploy thủ công lần đầu | F19.6 | Người dùng chạy lệnh agent soạn | Chưa viết |
-| 5. Deploy tự động từ `main` | F19.7 | Agent | Chưa viết |
+| [3. Secrets](#3-secrets-f195) | F19.5 | Agent + người dùng | Xong |
+| [4. Deploy](#4-deploy-f196f197) | F19.6 | GitHub Actions | Sẵn sàng — người dùng thêm GitHub secret + chạy workflow |
+| 5. Deploy tự động từ `main` | F19.7 | Agent | Cùng workflow mục 4 |
 
 > **Chưa chia sẻ URL production cho tới khi F15.3 xong** (đăng nhập Google + chặn route). Trước đó ai có link cũng sửa được dữ liệu.
 
@@ -19,6 +19,29 @@ npx prisma migrate deploy && npx prisma db seed
 docker compose --profile app up --build   # build Dockerfile → http://localhost:8080
 ```
 Hoặc không qua compose: `docker build -t meridian .` rồi `docker run -p 8080:8080 -e DATABASE_URL=... meridian`. Container không chạy migrate; production sẽ do CI chạy `prisma migrate deploy` trước khi deploy (F19.7).
+
+---
+
+## 3. Secrets (F19.5)
+| Biến | Ở đâu | Dùng cho |
+|---|---|---|
+| `DATABASE_URL` | Secret Manager (pooled URL) | Cloud Run |
+| `DATABASE_URL_DIRECT` | Secret Manager + **GitHub secret** cùng tên (direct URL) | `prisma migrate deploy` trong workflow |
+| `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Secret Manager | Cloud Run |
+| `BETTER_AUTH_URL`, `DATABASE_POOL_MAX` | biến thường trong workflow | Cloud Run |
+
+Server kiểm tra lúc khởi động (`lib/env.ts`): thiếu biến bắt buộc → dừng với danh sách biến thiếu (xem log Cloud Run).
+
+## 4. Deploy (F19.6/F19.7)
+Workflow `.github/workflows/deploy.yml` chạy khi CI xanh trên `main`, hoặc chạy tay: GitHub → **Actions → Deploy → Run workflow**.
+
+Một lần trước khi chạy:
+1. GitHub → repo → **Settings → Secrets and variables → Actions → New repository secret**: `DATABASE_URL_DIRECT` = direct URL của Neon (không có `-pooler`).
+2. OAuth client (Google Auth Platform → Clients → `Meridian web`): thêm
+   - Authorized JavaScript origins: `https://meridian-669737756643.asia-southeast1.run.app`
+   - Authorized redirect URIs: `https://meridian-669737756643.asia-southeast1.run.app/api/auth/callback/google`
+
+Rollback: `gcloud run services update-traffic meridian --region asia-southeast1 --to-revisions <revision>=100` (danh sách revision: `gcloud run revisions list --service meridian --region asia-southeast1`).
 
 ---
 
