@@ -11,13 +11,21 @@ export const ACTIVITY_FEED_LIMIT = 30;
  * Activity rail "Agent đang làm gì" — sự kiện thật của dự án (F17.1), mới nhất trước. Sự kiện "đang chạy" của task
  * vẫn đang chạy bởi chính người đó kèm `runningSince` → rail hiện "chạy N phút" tự tăng (F17.5).
  */
-export const getActivityFeed = cache(async (projectId: string): Promise<ActivityItem[]> => {
-  const rows = await prisma.activityEvent.findMany({
-    where: { projectId },
-    orderBy: [{ at: "desc" }, { id: "desc" }],
-    take: ACTIVITY_FEED_LIMIT,
-    select: { text: true, tool: true, tone: true, at: true, taskId: true, actorId: true, actor: { select: { name: true, kind: true } } },
-  });
+const EVENT_SELECT = {
+  id: true,
+  text: true,
+  tool: true,
+  tone: true,
+  at: true,
+  taskId: true,
+  actorId: true,
+  actor: { select: { name: true, kind: true } },
+} as const;
+
+type EventRow = Awaited<ReturnType<typeof prisma.activityEvent.findMany<{ select: typeof EVENT_SELECT }>>>[number];
+
+/** Sự kiện → mục rail; claim của task vẫn đang chạy bởi chính người đó kèm `runningSince` (F17.5). */
+async function toActivityItems(rows: EventRow[]): Promise<ActivityItem[]> {
   const runIds = [...new Set(rows.filter((r) => r.tone === "run" && r.taskId).map((r) => r.taskId!))];
   const running = runIds.length
     ? await prisma.task.findMany({ where: { id: { in: runIds }, runningSince: { not: null } }, select: { id: true, assigneeId: true, runningSince: true } })
@@ -28,6 +36,7 @@ export const getActivityFeed = cache(async (projectId: string): Promise<Activity
     const live = r.tone === "run" && r.taskId ? runningById.get(r.taskId) : undefined;
     const stillRunning = live && live.assigneeId === r.actorId ? live.runningSince! : null;
     return {
+      id: r.id,
       who: r.actor.name,
       kind: r.actor.kind,
       text: r.text,
@@ -38,4 +47,28 @@ export const getActivityFeed = cache(async (projectId: string): Promise<Activity
       ...(stillRunning && { runningSince: stillRunning.toISOString(), when: formatRunning(stillRunning, new Date()) }),
     };
   });
+}
+
+/**
+ * Activity rail "Agent đang làm gì" — sự kiện thật của dự án (F17.1), mới nhất trước.
+ */
+export const getActivityFeed = cache(async (projectId: string): Promise<ActivityItem[]> => {
+  const rows = await prisma.activityEvent.findMany({
+    where: { projectId },
+    orderBy: [{ at: "desc" }, { id: "desc" }],
+    take: ACTIVITY_FEED_LIMIT,
+    select: EVENT_SELECT,
+  });
+  return toActivityItems(rows);
 });
+
+/** Sự kiện mới hơn `after` (polling F17.2), mới nhất trước, kèm thời điểm của sự kiện mới nhất để làm con trỏ. */
+export async function getActivityEventsAfter(projectId: string, after: Date, limit: number): Promise<{ items: ActivityItem[]; latest: Date | null }> {
+  const rows = await prisma.activityEvent.findMany({
+    where: { projectId, at: { gt: after } },
+    orderBy: [{ at: "desc" }, { id: "desc" }],
+    take: limit,
+    select: EVENT_SELECT,
+  });
+  return { items: await toActivityItems(rows), latest: rows[0]?.at ?? null };
+}
