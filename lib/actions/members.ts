@@ -8,6 +8,7 @@ import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { getMemberActivityPage } from "@/lib/data/team";
 import type { MemberActivityEntry, Page } from "@/lib/types";
 import { DEFAULT_AGENT_CONFIG, DOCS_WRITE_PERMISSIONS } from "@/lib/agentConfig";
+import { authorize } from "@/lib/auth/authorize";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
 
@@ -21,10 +22,11 @@ const revalidateMemberViews = () => revalidatePath("/[project]", "layout");
 
 /** Gán người/agent có sẵn trong tổ chức vào dự án. */
 export async function addProjectMember(projectId: string, memberId: string): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
   const input = z.object({ projectId: projectIdSchema, memberId: memberIdSchema }).safeParse({ projectId, memberId });
   if (!input.success) return fail(input.error.issues[0].message);
   const { projectId: project, memberId: member } = input.data;
+  const denied = await authorize("member.manage", project);
+  if (denied) return fail(denied);
 
   const [projectRow, memberRow, existing] = await Promise.all([
     prisma.project.findUnique({ where: { id: project }, select: { name: true } }),
@@ -46,10 +48,11 @@ export async function addProjectMember(projectId: string, memberId: string): Pro
  * được giao cho họ trong dự án (phải giao lại trước), và chặn tự gỡ chính mình (tránh tự khoá khỏi dự án).
  */
 export async function removeProjectMember(projectId: string, memberId: string): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
   const input = z.object({ projectId: projectIdSchema, memberId: memberIdSchema }).safeParse({ projectId, memberId });
   if (!input.success) return fail(input.error.issues[0].message);
   const { projectId: project, memberId: member } = input.data;
+  const denied = await authorize("member.manage", project);
+  if (denied) return fail(denied);
 
   const [projectRow, memberRow, link, openTasks, openFeatures] = await Promise.all([
     prisma.project.findUnique({ where: { id: project }, select: { name: true } }),
@@ -98,12 +101,12 @@ async function freeMemberId(base: string): Promise<string> {
 
 /** Tạo thành viên mới cho tổ chức rồi gán vào dự án. Id: slug tên (người) hoặc `agent-<slug>` (agent). */
 export async function createMember(input: NewMemberInput): Promise<ActionResult<{ memberId: string }>> {
-  // TODO(F15.4): kiểm tra quyền
   const parsed = newMemberSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0].message);
   const data = parsed.data;
-
-  if (!(await prisma.project.findUnique({ where: { id: data.projectId }, select: { id: true } }))) return fail("Không tìm thấy dự án");
+  // authorize → "Không tìm thấy dự án" nếu dự án không tồn tại / không thuộc.
+  const denied = await authorize("member.manage", data.projectId);
+  if (denied) return fail(denied);
   if (data.email && (await prisma.member.findUnique({ where: { email: data.email }, select: { id: true } }))) {
     return fail("Email này đã thuộc một thành viên khác");
   }
@@ -160,7 +163,8 @@ export type AgentConfigInput = z.input<typeof agentConfigSchema>;
 
 /** Sửa cấu hình agent (F13.5). `extra` (token tuần này, embedding…) không sửa ở đây. */
 export async function updateAgentConfig(memberId: string, input: AgentConfigInput): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
+  const denied = await authorize("agent.configure");
+  if (denied) return fail(denied);
   const id = memberIdSchema.safeParse(memberId);
   if (!id.success) return fail(id.error.issues[0].message);
   const parsed = agentConfigSchema.safeParse(input);

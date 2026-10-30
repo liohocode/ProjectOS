@@ -1,5 +1,6 @@
 "use server";
 
+import { authorize } from "@/lib/auth/authorize";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -29,7 +30,8 @@ const parseTools = (tools: string) => [...new Set(tools.split(/[,\n]/).map((t) =
 const revalidateServerViews = () => revalidatePath("/[project]", "layout");
 
 export async function createMcpServer(input: McpServerInput): Promise<ActionResult<{ serverId: string }>> {
-  // TODO(F15.4): kiểm tra quyền
+  const denied = await authorize("mcpServer.manage");
+  if (denied) return fail(denied);
   const parsed = serverSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0].message);
   const data = parsed.data;
@@ -57,7 +59,8 @@ async function editableServer(id: string): Promise<{ ok: true; name: string } | 
 }
 
 export async function updateMcpServer(serverId: string, input: McpServerInput): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
+  const denied = await authorize("mcpServer.manage");
+  if (denied) return fail(denied);
   const id = serverIdSchema.safeParse(serverId);
   if (!id.success) return fail(id.error.issues[0].message);
   const parsed = serverSchema.safeParse(input);
@@ -78,7 +81,8 @@ export async function updateMcpServer(serverId: string, input: McpServerInput): 
 
 /** Xoá server ngoài; gỡ luôn khỏi danh sách MCP server trong cấu hình agent (F13.5). */
 export async function deleteMcpServer(serverId: string): Promise<ActionResult> {
-  // TODO(F15.4): kiểm tra quyền
+  const denied = await authorize("mcpServer.manage");
+  if (denied) return fail(denied);
   const id = serverIdSchema.safeParse(serverId);
   if (!id.success) return fail(id.error.issues[0].message);
   const server = await editableServer(id.data);

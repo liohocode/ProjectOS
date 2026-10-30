@@ -119,6 +119,7 @@ async function main() {
         kind: m.kind,
         email: memberEmail(m),
         role: m.role,
+        isTechLead: m.isTechLead ?? false,
         skills: m.skills,
         current: m.current,
         status: parseMemberStatus(m.status),

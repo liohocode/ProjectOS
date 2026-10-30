@@ -47,6 +47,8 @@ export interface SeedMember {
   /** Email đăng nhập Google — chỉ người (F15.2). Dữ liệu mẫu dùng @example.com; DEV_LOGIN_EMAIL thay cho "hieu". */
   email?: string;
   role: string;
+  /** Quyền quản trị (F15.4) */
+  isTechLead?: boolean;
   skills: string[];
   current: string;
   status: string;

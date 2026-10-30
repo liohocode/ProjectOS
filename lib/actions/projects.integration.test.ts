@@ -28,6 +28,8 @@ describe("createProject (F13.1)", () => {
     const project = (await getProjects()).find((p) => p.id === "it-partner");
     expect(project).toMatchObject({ code: "IP", name: base.name, status: "Chuẩn bị", sprint: "Sprint 1 · 02–13/11" });
     expect((await getProjectsByMember(await getCurrentUserId())).map((p) => p.id)).toContain("it-partner");
+    // F15.4: người tạo được duyệt / sửa tài liệu của dự án.
+    expect((await prisma.project.findUniqueOrThrow({ where: { id: "it-partner" } })).createdById).toBe("hieu");
     expect(revalidatePath).toHaveBeenCalledWith("/[project]", "layout");
   });
 

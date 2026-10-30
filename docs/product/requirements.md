@@ -94,6 +94,6 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | NFR-06 | Phân trang cho danh sách lớn (nhật ký lệnh, phiên chạy) | ✅ cursor 50 dòng + "Xem thêm" (F14.4) | F14 |
 | NFR-07 | Có test tự động (unit, integration với DB, e2e smoke) và CI chạy lint/type/build/test | 🟡 test đủ 3 tầng; CI chờ push để chạy lần đầu | F08 |
 | NFR-08 | Không commit secret; mọi cấu hình qua biến môi trường (`.env.example` liệt kê đủ) | ✅ | — |
-| NFR-09 | Có đăng nhập (**Google**, chỉ người đã có trong danh sách thành viên); thao tác ghi kiểm tra quyền | 🟡 đăng nhập Google (F15.2), chặn route + chỉ thành viên xem dự án (F15.3); chưa phân quyền thao tác (F15.4) | F15 |
+| NFR-09 | Có đăng nhập (**Google**, chỉ người đã có trong danh sách thành viên); thao tác ghi kiểm tra quyền | 🟡 đăng nhập Google (F15.2), chặn route + chỉ thành viên xem dự án (F15.3); phân quyền thao tác ghi (F15.4) | F15 |
 | NFR-10 | Triển khai được lên môi trường thật **miễn phí**: Google Cloud Run + Neon Postgres gói Free, deploy tự động từ GitHub; migrate khi deploy; budget alert; backup DB | ⬜ | F19 |
 | NFR-11 | Dữ liệu thời gian lưu kiểu thời gian thật (không lưu chuỗi "chạy 14 phút", "22/08") | ✅ | F09 |

@@ -72,6 +72,9 @@ model Project {
   currentSprint   Sprint? @relation("CurrentSprint", fields: [currentSprintId], references: [id], onDelete: SetNull)
   /// Lưu trữ (F13.7): ẩn khỏi project switcher, hiện mờ ở portfolio. null = đang hoạt động
   archivedAt      DateTime?
+  /// Người tạo (F15.4) — được duyệt/sửa tài liệu của dự án như tech lead. null = dự án mẫu / người tạo đã bị xoá
+  createdById     String?
+  createdBy       Member? @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   members  ProjectMember[]
   features Feature[]
@@ -110,6 +113,9 @@ model Member {
   config  Json?
   /// Email Google để đăng nhập — chỉ người (kind = human). Đăng nhập chỉ chấp nhận email có ở đây (ADR-020).
   email   String?      @unique
+  /// Quyền quản trị (F15.4, ADR-021): tạo dự án, quản lý thành viên / cấu hình agent / MCP server, duyệt tài liệu.
+  /// Cờ riêng, không suy từ `role` (chuỗi tự do — ai tạo thành viên cũng gõ được "Tech lead").
+  isTechLead Boolean   @default(false)
 
   skillRows         MemberSkillRow[]
   activity          MemberActivity[]
@@ -123,6 +129,7 @@ model Member {
   mcpLogEntries     McpLogEntry[]
   authUser          AuthUser?
   agentConfig       AgentConfig?
+  createdProjects   Project[]        @relation("ProjectCreator")
 
   @@map("members")
 }
