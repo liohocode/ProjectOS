@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(gcloud secrets versions add)",
       "Bash(npm run *)",
       "Bash(npm test*)",
       "Bash(npm ci*)",
