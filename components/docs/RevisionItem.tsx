@@ -5,6 +5,7 @@ import type { DocRevision } from "@/lib/types";
 import { rejectRevision } from "@/lib/actions/docs";
 import { ApproveButton } from "./ApproveButton";
 import { RevisionDiff } from "./RevisionDiff";
+import { useCan } from "@/components/auth/PermissionsProvider";
 
 // Một dòng revision: đang chờ → "Xem thay đổi", "Từ chối" (nhập lý do), "Duyệt" (F12.3);
 // đã xử lý → "Đã duyệt bởi … · …" / "Bị từ chối: <lý do>" lấy từ server (F12.4).
@@ -16,6 +17,8 @@ export function RevisionItem({ rev, projectId }: { rev: DocRevision; projectId: 
   const [isPending, startTransition] = useTransition();
   const diffId = useId();
   const reasonId = useId();
+  // F15.6: không có quyền duyệt → chỉ xem thay đổi, không có nút Duyệt / Từ chối.
+  const canReview = useCan("doc.review");
   const pending = rev.status === "pending";
   const hasDiff = Boolean(rev.diff || rev.summaryChange);
 
@@ -51,14 +54,14 @@ export function RevisionItem({ rev, projectId }: { rev: DocRevision; projectId: 
             <i className={`ph ${showDiff ? "ph-caret-up" : "ph-caret-down"}`} aria-hidden /> Xem thay đổi
           </button>
         )}
-        {pending && !rejecting && (
+        {pending && canReview && !rejecting && (
           <button type="button" className="btn btn-secondary revision-approve" onClick={() => setRejecting(true)}>
             Từ chối
           </button>
         )}
-        {pending && <ApproveButton revisionId={rev.id} projectId={projectId} />}
+        {pending && canReview && <ApproveButton revisionId={rev.id} projectId={projectId} />}
       </div>
-      {pending && rejecting && (
+      {pending && canReview && rejecting && (
         <form className="revision-reject" onSubmit={submitReject}>
           <label htmlFor={reasonId} className="revision-reject-label">
             Lý do từ chối

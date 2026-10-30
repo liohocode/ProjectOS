@@ -6,6 +6,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Field } from "@/components/ui/Field";
 import { useUrlDialog } from "@/components/ui/urlDialog";
 import { editDoc } from "@/lib/actions/docs";
+import { useCan } from "@/components/auth/PermissionsProvider";
 
 const FORM_ID = "edit-doc-form";
 export const EDIT_DIALOG_PARAM = "edit";
@@ -13,6 +14,8 @@ export const EDIT_DIALOG_PARAM = "edit";
 /** Nút "Sửa" ở thân tài liệu — đặt `?edit=1` (ADR-018), page render `EditDocDialog`. */
 export function EditDocButton() {
   const { openHref } = useUrlDialog(EDIT_DIALOG_PARAM);
+  // F15.6: chỉ tech lead / người tạo dự án sửa trực tiếp; người khác đề xuất qua revision (agent, F16.5).
+  if (!useCan("doc.edit")) return null;
   return (
     <Link href={openHref} scroll={false} className="btn btn-secondary doc-edit-btn">
       <i className="ph ph-pencil-simple" aria-hidden /> Sửa

@@ -6,3 +6,5 @@ export const E2E_AUTH_SECRET = "+Iq92LhXRCY98rYw7ATsJhqW7xgabLYH7UyYTJBr+QI="; /
 export const E2E_GOOGLE_CLIENT_ID = "e2e-google-client-id";
 /** Phiên đăng nhập của Trung Hiếu (tech lead, thuộc cả 3 dự án mẫu) — mọi spec dùng mặc định. */
 export const E2E_STORAGE_STATE = "e2e/.auth/hieu.json";
+/** Nguyễn Nam — thành viên thường (không phải tech lead), thuộc rv-web + crm — spec phân quyền UI (F15.6). */
+export const E2E_NAM_STORAGE_STATE = "e2e/.auth/nam.json";

@@ -5,6 +5,7 @@ import type { Member, Project, ScreenId } from "@/lib/types";
 import { NAV_ITEMS } from "./screenMeta";
 import { ProjectSwitcher } from "./ProjectSwitcher";
 import { NavItem } from "./NavItem";
+import { UserMenu } from "./UserMenu";
 
 export function Sidebar({
   project,
@@ -70,22 +71,8 @@ export function Sidebar({
             MCP: {mcpOnline}/{mcpTotal} server online
           </span>
         </div>
-        <div className="sidebar-footer-user">
-          <span className="avatar avatar-human">{initials(currentUser.name)}</span>
-          <span>
-            {currentUser.name} · {currentUser.role}
-          </span>
-        </div>
+        <UserMenu user={currentUser} />
       </div>
     </aside>
   );
-}
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 }

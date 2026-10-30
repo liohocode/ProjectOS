@@ -9,6 +9,7 @@ import { AssignTaskDialog, type AssignableFeature } from "./AssignTaskDialog";
 import { MemberLogDialog } from "./MemberLogDialog";
 import { AgentConfigDialog } from "./AgentConfigDialog";
 import { RemoveMemberDialog } from "./RemoveMemberDialog";
+import { useCan } from "@/components/auth/PermissionsProvider";
 
 export function MemberPanel({
   member,
@@ -33,6 +34,8 @@ export function MemberPanel({
   const [editingConfig, setEditingConfig] = useState(false);
   const [removing, setRemoving] = useState(false);
   const projectId = usePathname().split("/")[1];
+  const canManageMembers = useCan("member.manage");
+  const canConfigure = useCan("agent.configure");
   return (
     <aside className="team-aside">
       <div className="panel-header">
@@ -51,7 +54,7 @@ export function MemberPanel({
         <div className="panel-section">
           <div className="panel-section-title panel-section-title-row">
             Cấu hình agent
-            {member.agentConfig && (
+            {member.agentConfig && canConfigure && (
               <button type="button" className="btn btn-ghost panel-section-action" onClick={() => setEditingConfig(true)}>
                 <i className="ph ph-pencil-simple" aria-hidden /> Sửa
               </button>
@@ -100,7 +103,7 @@ export function MemberPanel({
       </div>
 
       <div className="panel-footer">
-        {inProject && (
+        {inProject && canManageMembers && (
           <button type="button" className="btn btn-ghost" aria-label="Gỡ khỏi dự án" title="Gỡ khỏi dự án" onClick={() => setRemoving(true)}>
             <i className="ph ph-user-minus" aria-hidden />
           </button>

@@ -485,6 +485,23 @@ img { display: block; max-width: 100%; }
   align-items: center;
   gap: var(--space-2);
 }
+/* F15.6: footer người dùng là nút mở menu đăng xuất (mở lên trên) */
+.user-menu { position: relative; }
+.user-menu-btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  margin: -4px;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.user-menu-btn:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.user-menu-name { flex: 1; min-width: 0; }
+.user-menu-dropdown { top: auto; bottom: calc(100% + 4px); }
 .avatar {
   width: 24px;
   height: 24px;
