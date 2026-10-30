@@ -36,7 +36,7 @@ Tên sản phẩm: **Meridian**. Tên dự án/repo: **Project Management OS (PM
 Chi tiết UI (layout, token, kích thước, hành vi): `docs/design/design-reference.md`.
 
 ## Phạm vi hiện tại vs. đích
-- **Đã có (v1)**: cả 5 màn + app shell chạy trên Postgres thật, dữ liệu mẫu seed sẵn; duyệt revision ghi xuống DB. Xem `docs/ROADMAP.md`.
-- **Chưa có**: phần lớn thao tác ghi (tạo/sửa task, doc, dự án, thành viên), đăng nhập/phân quyền, **MCP server thật cho agent kết nối** (lõi sản phẩm), realtime, index/embedding tài liệu, test/CI, deploy.
+- **Giai đoạn 1 — MVP (gần xong)**: 5 màn trên Postgres thật, ghi dữ liệu đầy đủ, đăng nhập Google + phân quyền, **MCP server thật** cho agent (task, tài liệu, đề xuất feature, governance, nhật ký), sự kiện thật + polling, production trên Cloud Run + Neon.
+- **Giai đoạn 2 — đích (chốt 2026-10-30)**: Meridian là **data foundation cho các dự án của công ty** — quản lý tiến độ / công việc / coding agent, quy trình đảm bảo chất lượng và kiểm soát effort / AI token, người theo dõi + review chi tiết, hỗ trợ coding agent qua MCP, tài liệu feature / task / kỹ thuật, người quản lý dùng được trên mobile. Kế hoạch: `docs/ROADMAP.md` (F20–F26).
 
 Yêu cầu đầy đủ đánh số + trạng thái đáp ứng: `docs/product/requirements.md`.

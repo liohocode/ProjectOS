@@ -2,66 +2,97 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **94/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **94/140 task xong** · Giai đoạn 1 (MVP) gần xong 94/103 · Giai đoạn 2 vừa lập kế hoạch 0/37.
 
-## Phase 0 — UI v1 + backend (xong)
+## Mục tiêu giai đoạn 2 (người dùng chốt 2026-10-30)
+Meridian là **data foundation cho các dự án của công ty**: quản lý tiến độ, công việc và coding agent; quy trình đảm bảo **chất lượng** và kiểm soát **effort / AI token**; người thật theo dõi trạng thái và review chi tiết; hỗ trợ coding agent làm việc qua MCP; tài liệu feature / task / kỹ thuật; người quản lý làm việc được trên **mobile**.
+
+## Đánh giá giai đoạn 1 (review 2026-10-30)
+**Đã có**: 5 màn chạy trên Postgres thật, ghi dữ liệu đầy đủ cho task / tài liệu / thành viên / MCP server; đăng nhập Google + ma trận quyền; MCP server thật (8 tool, governance, phiên + nhật ký); sự kiện thật + polling; production trên Cloud Run + Neon, deploy tự động, 3 tầng test + CI.
+
+**Khoảng trống so với mục tiêu mới** (đã kiểm trong code):
+| Khoảng trống | Hệ quả | Xử lý |
+|---|---|---|
+| Lead không tạo / sửa feature, không quản lý sprint; % tiến độ feature là **số tĩnh** từ seed | Không dùng thật được để theo dõi tiến độ | F21 |
+| Task không có cổng review của người, không có tiêu chí hoàn thành, không gắn PR, không có lịch sử chuyển trạng thái | Không đảm bảo / đo được chất lượng việc agent làm | F22 |
+| `tokensUsed` luôn 0 — không biết agent tốn bao nhiêu token | Không kiểm soát được effort / chi phí AI | F23 |
+| Agent phải gọi 4–5 lệnh mới đủ ngữ cảnh; không chia task / tạo tài liệu được; chưa có quy ước làm việc chuẩn cho repo | Agent làm kém hiệu quả, mỗi repo một kiểu | F24 |
+| Giao diện chỉ cho desktop | Người quản lý không theo dõi / duyệt trên điện thoại | F25 |
+| Không có API / báo cáo cho hệ thống khác | Chưa là "data foundation" | F26 |
+| Production vẫn là dữ liệu demo, chưa có backup, tech lead chỉ sửa được qua DB | Chưa an toàn để dùng thật | F20 |
+| Nợ kỹ thuật nhỏ: cột `Member.config` thừa, nhật ký MCP không có cột task (drawer quét theo chuỗi), hai mức "append" quyền ghi docs chưa khác nhau | — | F20.5, ghi chú trong F17 / F16 |
+
+## Giai đoạn 1 — MVP (gần xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
 |---|---|---|---|
-| [F01](features/F01-app-shell.md) | App shell: sidebar, header, routing, project switcher | Xong | 4/4 |
-| [F02](features/F02-feature-task.md) | Màn Feature & Task | Xong (v1) | 6/6 |
-| [F03](features/F03-docs.md) | Màn Docs dự án | Xong (v1) | 4/4 |
-| [F04](features/F04-team.md) | Màn Dev & AI agents | Xong (v1) | 3/3 |
-| [F05](features/F05-mcp-screen.md) | Màn MCP (quản trị) | Xong (v1) | 3/3 |
-| [F06](features/F06-portfolio.md) | Màn Portfolio | Xong (v1) | 2/2 |
-| [F07](features/F07-backend-postgres.md) | Backend Postgres + Prisma | Xong | 5/5 |
+| F01–F07 | UI v1 5 màn + backend Postgres | Xong | 27/27 |
+| [F08](features/F08-test-ci.md)–[F10](features/F10-ux-states-a11y.md) | Test + CI, chuẩn hoá data model, UX states | Xong | 16/16 |
+| [F11](features/F11-task-mutations.md)–[F14](features/F14-search-filter.md) | Ghi dữ liệu: task, tài liệu, thực thể, tìm kiếm / lọc | Xong | 25/25 |
+| [F15](features/F15-auth-permissions.md) | Đăng nhập Google, phân quyền, token agent | Còn F15.2 — **người dùng thử** đăng xuất / email lạ trên production | 5/6 |
+| [F16](features/F16-mcp-server.md) | MCP server thật cho agent | Xong | 9/9 |
+| [F17](features/F17-realtime-activity.md) | Sự kiện thật + polling ngắn | Xong | 5/5 |
+| [F18](features/F18-knowledge-index.md) | pgvector, tìm kiếm ngữ nghĩa | Hoãn — cần chọn nhà cung cấp embedding | 0/6 |
+| [F19](features/F19-deployment.md) | Deploy Cloud Run + Neon, CD | Còn F19.7 rollback (chờ duyệt), F19.9 tên miền (tuỳ chọn); F19.8 chuyển sang F20.1 | 7/9 |
 
-## Phase 1 — Nền tảng (làm trước để các phase sau an toàn)
+## Giai đoạn 2 — Data foundation cho các dự án công ty
+### Phase 6 — Dùng thật nội bộ
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F08](features/F08-test-ci.md) | Test tự động (unit, integration, e2e) + CI | F07 | Xong | 6/6 |
-| [F09](features/F09-data-model-hardening.md) | Chuẩn hoá data model: bỏ field chuỗi hiển thị, Sprint, timeline vào DB | F07 | Xong | 5/5 |
-| [F10](features/F10-ux-states-a11y.md) | Loading / error / empty / 404, thao tác bàn phím | F07 | Xong | 5/5 |
+| [F20](features/F20-go-live.md) | Backup, quản trị thành viên / tech lead, onboarding dự án thật (lưu trữ dự án mẫu) | F19 | Chưa bắt đầu | 0/5 |
 
-## Phase 2 — Ghi dữ liệu
+### Phase 7 — Quản lý công việc & chất lượng
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F11](features/F11-task-mutations.md) | Thao tác task ghi DB; khuôn mẫu dialog hành động chính | F07 (+F09.2) | Xong | 7/7 |
-| [F12](features/F12-doc-authoring.md) | Revision có nội dung, duyệt áp vào bản chính, từ chối, diff, tạo/sửa tài liệu | F11.4 | Xong | 7/7 |
-| [F13](features/F13-entity-management.md) | Dự án mới, thêm thành viên, cấu hình agent, MCP server ngoài | F11 | Xong | 7/7 |
-| [F14](features/F14-search-filter.md) | Tìm kiếm, lọc, deep link, phân trang | F07 | Xong | 4/4 |
+| [F21](features/F21-work-management.md) | Feature CRUD, tiến độ tính từ task, sprint, lưu trữ task, bình luận, acceptance criteria | F11, F16.6 | Chưa bắt đầu | 0/6 |
+| [F22](features/F22-process-quality.md) | Lịch sử trạng thái, cổng review của người, Definition of Done, liên kết PR, chỉ số chất lượng | F16.4, F21.6 | Chưa bắt đầu | 0/5 |
 
-## Phase 3 — Danh tính
+### Phase 8 — Agent & effort
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F15](features/F15-auth-permissions.md) | Đăng nhập **Google** (Better Auth), phân quyền, token cho agent | F11.1 | Đang làm — phân quyền, UI theo quyền, token agent xong; còn F15.2 thử đăng xuất/email lạ trên production (người dùng) | 5/6 |
+| [F23](features/F23-ai-effort-tokens.md) | Ghi nhận token AI theo task / agent / dự án, ngân sách, ước lượng vs thực tế | F16, F22.1 | Chưa bắt đầu | 0/5 |
+| [F24](features/F24-coding-agent-support.md) | `context_get`, agent chia task / đề xuất tài liệu, template tài liệu, quy ước làm việc cho repo | F16, F21.6 | Chưa bắt đầu | 0/6 |
 
-## Phase 4 — Nền tảng agent (lõi sản phẩm)
+### Phase 9 — Mobile cho người quản lý
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F16](features/F16-mcp-server.md) | MCP server thật cho agent: tool task/docs, governance, ghi phiên + nhật ký | F09, F12.1, F13.5, F15.5 | Xong — MCP server thật: 8 tool, governance, phiên/nhật ký, số liệu server, hướng dẫn kết nối | 9/9 |
-| [F17](features/F17-realtime-activity.md) | Bảng sự kiện thật + polling ngắn | F11, F16.2 | Xong — sự kiện thật, polling ngắn khi tab hiển thị, log phiên thật | 5/5 |
-| [F18](features/F18-knowledge-index.md) | pgvector, index tài liệu, tìm kiếm ngữ nghĩa | F12, F16.5 | Hoãn (người dùng chọn để sau) | 0/6 |
+| [F25](features/F25-mobile-manager.md) | Inbox "Cần tôi xử lý", giao diện responsive, PWA | F22.2 | Chưa bắt đầu | 0/6 |
 
-## Phase 5 — Vận hành
+### Phase 10 — Data foundation & tích hợp
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F19](features/F19-deployment.md) | Deploy **Google Cloud Run + Neon Postgres** (gói Free), CD từ GitHub, budget alert, backup | F08.6, F15 | Đang làm — production chạy, deploy tự động; còn rollback, backup, tên miền | 7/10 |
+| [F26](features/F26-data-foundation.md) | API đọc cho hệ thống khác, báo cáo định kỳ + CSV, tích hợp GitHub | F22, F23 | Chưa bắt đầu | 0/4 |
+
+## Thứ tự làm
+1. **F20.1 backup** (đã duyệt) → F20.2, F20.4 → F20.3 (Lio onboarding dự án thật, lưu trữ dự án mẫu).
+2. **F21** (song song F22.1, F22.4) → **F22.2 cổng review** → F22.3, F22.5.
+3. **F24.1 `context_get`** + F24.5 quy ước agent sớm để dogfooding với Claude Code; **F23** sau khi chốt F23.1.
+4. **F25.2 inbox** ngay sau F22.2 (giá trị cao cả desktop) → F25.3–F25.6 sau khi chốt F25.1.
+5. **F26** khi dữ liệu thật đã chảy (sau F22.5, F23.3).
 
 ## Việc nên nhận tiếp theo
-Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
 | Task | Vì sao |
 |---|---|
-| [F19.7](features/F19-deployment.md) Thử rollback | Đường deploy còn lại — **chờ người dùng duyệt** (thao tác hạ tầng production) |
-| [F19.8](features/F19-deployment.md) Sao lưu Neon + hướng dẫn khôi phục | Production đã có dữ liệu — **chờ người dùng duyệt** (đụng DB production) |
-
-Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 ✓ → F13 ✓ (F14 ✓) → F15 (còn F15.2 thử thật) → F16 ✓ → F17 ✓ → F19 (phần còn lại). F18 đang hoãn.
-
-**Đường deploy (chốt 2026-10-28)**: F19.2 ✓ + F19.3 ✓ → F15.2 ✓ (code + OAuth client) → F15.3 ✓ → F19.4 ✓ → F19.5 → F19.6 → F19.7 — không chia sẻ URL production trước F15.3.
+| [F20.1](features/F20-go-live.md) Backup Neon | Đã duyệt; bắt buộc trước khi dùng thật |
+| [F21.2](features/F21-work-management.md) % tiến độ tính từ task | Nhỏ, sửa số liệu sai đang hiện ở portfolio |
+| [F22.1](features/F22-process-quality.md) Lịch sử chuyển trạng thái | Nền cho cổng review + chỉ số chất lượng + effort |
+| [F21.1](features/F21-work-management.md) Feature CRUD | Lead tự quản lý feature |
+| [F20.2](features/F20-go-live.md) Quản trị thành viên / tech lead | Cần cho onboarding dự án thật |
 
 ## Quyết định đang mở (cần người dùng chốt)
-| Câu hỏi | Chặn | Ghi chú |
+| Câu hỏi | Chặn | Khuyến nghị |
 |---|---|---|
-| Nhà cung cấp embedding | F18 | Đang hoãn theo lựa chọn của người dùng |
+| Nguồn số token AI | F23.1 | Agent tự báo qua MCP (`usage_report`) — không phụ thuộc nhà cung cấp, làm được ngay |
+| Hướng mobile | F25.1 | Web responsive + PWA (một codebase, không phát hành store) |
+| Tích hợp GitHub (GitHub App, quyền repo) | F26.3 | Làm sau khi F22 chạy thật; Lio tạo GitHub App |
+| Nhà cung cấp embedding | F18 | Vẫn hoãn — tìm kiếm từ khoá đủ cho giai đoạn đầu |
+| Thử rollback trên production | F19.7 | Đề xuất đã gửi; không chặn việc khác |
+| Xoá cột `Member.config` (mất dữ liệu) | F20.5 | Duyệt sau khi có backup |
+
+## Backlog (chưa xếp lịch)
+- Thông báo ra ngoài (Slack / email / push) — người dùng chọn để sau (2026-10-30).
+- Nhiều tổ chức (multi-tenant), mời thành viên qua email.
+- OAuth cho MCP (thay token tĩnh).
+- Tên miền riêng (F19.9).
 
 ### Đã chốt
 | Quyết định | Ngày | ADR |
@@ -74,6 +105,7 @@ Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: 
 | Feature chưa giao vẫn hiện ở list view | 2026-10-14 | — (ghi trong F09.3) |
 | Thư viện đăng nhập: **Better Auth** thay Auth.js (Auth.js chỉ còn vá bảo mật, v5 vẫn beta); consent screen External | 2026-10-28 | ADR-020 |
 | Ma trận quyền F15.4 duyệt nguyên bản; tech lead là cờ `Member.isTechLead` | 2026-10-30 | ADR-021 |
+| Mục tiêu giai đoạn 2: data foundation cho dự án công ty; lưu trữ dự án mẫu khi dùng thật; duyệt backup Neon; thông báo ra ngoài để sau | 2026-10-30 | — |
 | Giữ Neon Free (không Cloud SQL); một môi trường deploy từ `main`; làm F15.2–F15.3 trước khi chia sẻ URL | 2026-10-28 | ADR-015 (xác nhận lại), F19 |
 
 ## Nhật ký
@@ -91,3 +123,4 @@ Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: 
 - 2026-10-30 — **F13 xong** (F13.7): gỡ thành viên khỏi dự án (chặn còn task/feature chưa Done, chặn tự gỡ), lưu trữ / khôi phục dự án (`Project.archivedAt` — ẩn khỏi switcher, mờ ở portfolio).
 - 2026-10-30 — **F15 gần xong** (F15.4 ma trận quyền + `can()`, F15.5 token agent, F15.6 UI theo quyền + đăng xuất) và **F16 xong**: MCP server thật ở `/api/mcp` (Streamable HTTP stateless, ADR-022) với 8 tool (task, docs, đề xuất feature), governance (server/quyền theo cấu hình agent, 60 lệnh/phút/token), phiên + nhật ký thật, số liệu server thật, hướng dẫn `docs/guides/connect-agent.md`.
 - 2026-10-30 — **F17 xong**: bảng sự kiện `ActivityEvent` (activity rail thôi suy ra), endpoint sự kiện theo con trỏ + polling ngắn chỉ khi tab hiển thị (ADR-016), log phiên chạy + context docs trong drawer từ dữ liệu thật.
+- 2026-10-30 — **Review + lập lại kế hoạch**: giai đoạn 1 (MVP) 94/103; giai đoạn 2 "data foundation" gồm F20–F26 (37 task) — dùng thật, quản lý công việc, chất lượng, token AI, hỗ trợ coding agent, mobile, API.
