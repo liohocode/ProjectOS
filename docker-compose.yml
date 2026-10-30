@@ -23,6 +23,9 @@ services:
     build: .
     environment:
       DATABASE_URL: postgresql://meridian:meridian@db:5432/meridian
+      # Bắt buộc ở production (lib/env.ts) — giá trị chỉ để chạy thử ở máy, không dùng thật.
+      BETTER_AUTH_SECRET: local-compose-only-secret-0123456789abcdef
+      BETTER_AUTH_URL: http://localhost:8080
     ports:
       - "8080:8080"
     depends_on:

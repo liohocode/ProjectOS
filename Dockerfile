@@ -15,6 +15,9 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 # prisma7.config.ts đọc DATABASE_URL, nhưng generate và build không kết nối DB → URL giả là đủ.
 ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
+# Better Auth từ chối khởi tạo ở production nếu thiếu secret (lúc build Next thu thập dữ liệu trang).
+# Chỉ ở stage build — image chạy thật nhận secret thật từ Secret Manager (F19.5), không mang giá trị này.
+ENV BETTER_AUTH_SECRET=build-stage-only-not-a-real-secret-0000000
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate && npm run build

@@ -1,0 +1,98 @@
+name: Deploy
+
+# F19.6/F19.7: CI xanh trên main → build image → migrate Neon → deploy Cloud Run.
+# Chạy tay được (Actions → Deploy → Run workflow) cho lần deploy đầu hoặc deploy lại.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# Không deploy chồng nhau; bản sau chờ bản trước xong (không huỷ giữa chừng lúc đang migrate).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # token OIDC cho Workload Identity Federation
+
+# Không phải secret — xem docs/guides/deploy-cloud-run.md "Giá trị đã thiết lập".
+env:
+  GCP_PROJECT_ID: pdos-513017
+  GCP_REGION: asia-southeast1
+  GCP_ARTIFACT_REPO: asia-southeast1-docker.pkg.dev/pdos-513017/meridian
+  GCP_WIF_PROVIDER: projects/669737756643/locations/global/workloadIdentityPools/github/providers/github
+  GCP_DEPLOY_SA: meridian-deploy@pdos-513017.iam.gserviceaccount.com
+  GCP_RUN_SA: meridian-run@pdos-513017.iam.gserviceaccount.com
+  SERVICE: meridian
+  # URL cố định của service Cloud Run (dạng <service>-<project number>.<region>.run.app)
+  APP_URL: https://meridian-669737756643.asia-southeast1.run.app
+
+jobs:
+  deploy:
+    name: Build · migrate · deploy
+    # workflow_run: chỉ khi CI trên main thành công
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # workflow_run: deploy đúng commit CI vừa kiểm tra
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build + push image
+        id: image
+        run: |
+          IMAGE="$GCP_ARTIFACT_REPO/$SERVICE:$(git rev-parse --short=12 HEAD)"
+          gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Migrate Neon (direct URL)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::Thiếu GitHub secret DATABASE_URL_DIRECT"; exit 1; fi
+          npm ci
+          # Neon thêm channel_binding=require vào connection string; schema engine của Prisma không cần tham số này.
+          export DATABASE_URL="${DATABASE_URL//&channel_binding=require/}"
+          npx prisma migrate deploy
+
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --project "$GCP_PROJECT_ID" --region "$GCP_REGION" \
+            --image "${{ steps.image.outputs.image }}" \
+            --service-account "$GCP_RUN_SA" \
+            --allow-unauthenticated \
+            --min-instances 0 --max-instances 1 \
+            --cpu 1 --memory 512Mi --concurrency 80 --timeout 60 \
+            --set-env-vars "BETTER_AUTH_URL=$APP_URL,DATABASE_POOL_MAX=5" \
+            --set-secrets "DATABASE_URL=DATABASE_URL:latest,BETTER_AUTH_SECRET=BETTER_AUTH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest" \
+            --quiet
+
+      - name: Smoke check
+        run: |
+          # Chưa đăng nhập → /login trả 200 (proxy.ts chuyển hướng các trang khác về đây).
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/login") && [ "$code" = "200" ] && { echo "OK $APP_URL"; exit 0; }
+            echo "lần $i: HTTP $code — chờ 10s"; sleep 10
+          done
+          exit 1
