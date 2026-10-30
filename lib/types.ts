@@ -235,3 +235,12 @@ export interface Page<T> {
   items: T[];
   nextCursor: string | null;
 }
+
+/** Feature agent đề xuất chờ lead duyệt (F16.6) */
+export interface ProposedFeature {
+  id: string;
+  name: string;
+  proposal: string;
+  proposedBy: string;
+  when: string;
+}

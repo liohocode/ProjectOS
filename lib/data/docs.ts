@@ -8,7 +8,7 @@ const GENERAL_GROUP_NAME = "Kho tri thức chung";
 
 export const getDocGroupsByProject = cache(async (projectId: string): Promise<DocGroup[]> => {
   const features = await prisma.feature.findMany({
-    where: { projectId },
+    where: { projectId, status: "active" },
     include: { docs: { orderBy: { id: "asc" } } },
     orderBy: { id: "asc" },
   });

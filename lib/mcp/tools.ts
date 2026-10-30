@@ -13,15 +13,12 @@ export const TOOL_SERVER = {
   docs_append: "meridian-docs",
 } as const satisfies Record<string, "meridian-core" | "meridian-docs">;
 
-/** Chưa đăng ký ở lib/mcp/server.ts — không hiện trên thẻ server. Bỏ khi làm xong (F16.6). */
-const NOT_YET_REGISTERED = new Set<string>(["features_propose"]);
-
 /** `tasks_list` → `tasks.list`. */
 export const displayToolName = (tool: string) => tool.replace("_", ".");
 
 /** Tool (dạng hiển thị) của một server nội bộ — thẻ server ở màn MCP (F16.8). */
 export function internalServerTools(serverId: string): string[] {
   return Object.entries(TOOL_SERVER)
-    .filter(([tool, server]) => server === serverId && !NOT_YET_REGISTERED.has(tool))
+    .filter(([, server]) => server === serverId)
     .map(([tool]) => displayToolName(tool));
 }

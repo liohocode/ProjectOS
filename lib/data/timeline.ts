@@ -11,7 +11,7 @@ export const getTimelineByProject = cache(async (projectId: string): Promise<Tim
     where: { id: projectId },
     include: {
       currentSprint: true,
-      features: { include: { owner: true }, orderBy: { id: "asc" } },
+      features: { where: { status: "active" }, include: { owner: true }, orderBy: { id: "asc" } },
     },
   });
   if (!project?.currentSprint) return [];

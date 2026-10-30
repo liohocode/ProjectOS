@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { AgentPrincipal } from "@/lib/auth/agentToken";
 import { revalidatePath } from "next/cache";
 import { appendDocForAgent, readDocForAgent, searchDocsForAgent } from "@/lib/domain/agentDocs";
+import { proposeFeature } from "@/lib/domain/features";
 import { AGENT_STAGES, AGENT_STATUSES, claimTask, commentOnTask, listTasksForMember, updateTaskByAgent } from "@/lib/domain/tasks";
 import { prisma } from "@/lib/prisma";
 import { recordToolCall, type ToolCallRecord } from "./audit";
@@ -161,6 +162,31 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
         return {
           value: result.ok ? json({ commented: true, commentId: result.commentId }) : { ...json({ commented: false, reason: result.reason }), isError: true },
           log: { target: taskId, result: result.ok ? "OK" : "BiChan", projectId: result.projectId, taskId: result.ok ? taskId : null },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "features_propose",
+    {
+      title: "Đề xuất feature",
+      description:
+        "Đề xuất một feature mới cho dự án (chỉ agent được phép đề xuất — thường là BA agent). Feature ở trạng thái chờ duyệt, lead duyệt mới vào danh sách chính. Gọi nhiều lần để đề xuất nhiều feature con.",
+      inputSchema: {
+        projectId: z.string().trim().min(1).describe("Id dự án"),
+        name: z.string().trim().min(1).max(120).describe("Tên feature"),
+        description: z.string().trim().min(1).max(4000).describe("Mô tả: mục tiêu, phạm vi, vì sao cần"),
+      },
+    },
+    async ({ projectId, name, description }) =>
+      logged(agent, policy, "features_propose", async () => {
+        const result = await proposeFeature(agent.memberId, { projectId, name, description });
+        if (result.ok) revalidatePath("/[project]/work", "page");
+        return {
+          value: result.ok
+            ? json({ proposed: true, featureId: result.featureId, status: "Chờ lead duyệt" })
+            : { ...json({ proposed: false, reason: result.reason }), isError: true },
+          log: { target: result.ok ? `${result.featureId} ${name}` : name, result: result.ok ? "ChoReview" : "BiChan", projectId: result.projectId },
         };
       }),
   );

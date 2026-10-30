@@ -56,6 +56,13 @@ enum SessionResult {
   BiChan    @map("Bị chặn")
 }
 
+/// Feature agent đề xuất (F16.6) chờ lead duyệt; list chính / timeline chỉ hiện `active`.
+enum FeatureStatus {
+  proposed
+  active
+  rejected
+}
+
 enum CommandResult {
   OK
   ChoReview @map("Chờ review")
@@ -63,18 +70,18 @@ enum CommandResult {
 }
 
 model Project {
-  id              String  @id
+  id              String    @id
   code            String
   name            String
   status          String
   desc            String
-  currentSprintId String? @unique
-  currentSprint   Sprint? @relation("CurrentSprint", fields: [currentSprintId], references: [id], onDelete: SetNull)
+  currentSprintId String?   @unique
+  currentSprint   Sprint?   @relation("CurrentSprint", fields: [currentSprintId], references: [id], onDelete: SetNull)
   /// Lưu trữ (F13.7): ẩn khỏi project switcher, hiện mờ ở portfolio. null = đang hoạt động
   archivedAt      DateTime?
   /// Người tạo (F15.4) — được duyệt/sửa tài liệu của dự án như tech lead. null = dự án mẫu / người tạo đã bị xoá
   createdById     String?
-  createdBy       Member? @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy       Member?   @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   members  ProjectMember[]
   features Feature[]
@@ -100,22 +107,22 @@ model Sprint {
 }
 
 model Member {
-  id      String       @id
-  name    String
-  handle  String
-  kind    MemberKind
-  role    String
-  skills  String[]
-  current String
-  status  MemberStatus
+  id         String       @id
+  name       String
+  handle     String
+  kind       MemberKind
+  role       String
+  skills     String[]
+  current    String
+  status     MemberStatus
   /// CŨ (trước F13.5) — mảng hiển thị [["Model","claude-opus-4.1"], ...]. Không còn đọc/ghi; dữ liệu nằm ở AgentConfig.
   /// Giữ cột để không phải migration xoá dữ liệu; bỏ hẳn sau khi production đã chuyển xong.
-  config  Json?
+  config     Json?
   /// Email Google để đăng nhập — chỉ người (kind = human). Đăng nhập chỉ chấp nhận email có ở đây (ADR-020).
-  email   String?      @unique
+  email      String?      @unique
   /// Quyền quản trị (F15.4, ADR-021): tạo dự án, quản lý thành viên / cấu hình agent / MCP server, duyệt tài liệu.
   /// Cờ riêng, không suy từ `role` (chuỗi tự do — ai tạo thành viên cũng gõ được "Tech lead").
-  isTechLead Boolean   @default(false)
+  isTechLead Boolean      @default(false)
 
   skillRows         MemberSkillRow[]
   activity          MemberActivity[]
@@ -132,6 +139,7 @@ model Member {
   createdProjects   Project[]        @relation("ProjectCreator")
   agentTokens       AgentToken[]
   taskComments      TaskComment[]    @relation("TaskCommentAuthor")
+  proposedFeatures  Feature[]        @relation("FeatureProposer")
 
   @@map("members")
 }
@@ -215,18 +223,25 @@ model ProjectMember {
 }
 
 model Feature {
-  id           String    @id
-  projectId    String
-  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  name         String
-  stage        TaskStage
+  id             String        @id
+  projectId      String
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  stage          TaskStage
   /// null = feature đã lên kế hoạch nhưng chưa giao cho ai
-  ownerId      String?
-  owner        Member?   @relation("FeatureOwner", fields: [ownerId], references: [id])
-  pct          Int
+  ownerId        String?
+  owner          Member?       @relation("FeatureOwner", fields: [ownerId], references: [id])
+  pct            Int
   /// Kế hoạch cho view Timeline (tuần T1–T8 tính từ ngày bắt đầu sprint hiện tại)
-  plannedStart DateTime? @db.Date
-  plannedEnd   DateTime? @db.Date
+  plannedStart   DateTime?     @db.Date
+  plannedEnd     DateTime?     @db.Date
+  status         FeatureStatus @default(active)
+  /// F16.6: agent đề xuất (features_propose), mô tả / lý do đề xuất, lý do từ chối
+  proposedById   String?
+  proposedBy     Member?       @relation("FeatureProposer", fields: [proposedById], references: [id], onDelete: SetNull)
+  proposal       String?
+  proposedAt     DateTime?
+  rejectedReason String?
 
   tasks Task[]
   docs  Doc[]
@@ -371,7 +386,7 @@ model McpLogEntry {
   result  CommandResult
   /// Token agent đã dùng (F16.7, FR-AG-08) — rate limit đếm theo token. null = dữ liệu mẫu / token đã xoá
   tokenId String?
-  token   AgentToken? @relation(fields: [tokenId], references: [id], onDelete: SetNull)
+  token   AgentToken?   @relation(fields: [tokenId], references: [id], onDelete: SetNull)
 
   @@index([at(sort: Desc)])
   @@index([tokenId, at])

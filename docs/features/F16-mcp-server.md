@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Đang làm | 4 | F09, F12.1, F13.5, F15.5 (một số task chạy trước được, xem cột phụ thuộc) | FR-AG-01…08 |
+| Xong | 4 | F09, F12.1, F13.5, F15.5 (một số task chạy trước được, xem cột phụ thuộc) | FR-AG-01…08 |
 
 ## Mục tiêu
 Đây là thứ biến Meridian từ "bảng theo dõi" thành **nơi agent làm việc thật**: Meridian tự chạy MCP server; agent (Claude Code, v.v.) kết nối bằng token, đọc task/tài liệu, claim task, cập nhật trạng thái, đề xuất thay đổi tài liệu (thành revision chờ người duyệt). Mọi lệnh và mọi phiên được ghi vào `McpLogEntry` / `McpSession` — dữ liệu mà màn MCP đang hiển thị từ seed.
@@ -31,7 +31,7 @@
 | F16.3 | `tasks_claim` với giới hạn task đồng thời | M | F16.2, F09.2 | Xong — 2026-10-30 |
 | F16.4 | `tasks_update_status`, `tasks_comment` (+ model `TaskComment`, hiện trong drawer) | M | F16.3 | Xong — 2026-10-30 |
 | F16.5 | `docs_read`, `docs_search` (từ khoá), `docs_append` → revision chờ duyệt | M | F16.2, F12.1 | Xong — 2026-10-30 |
-| F16.6 | `features_propose` (chỉ BA agent) + UI duyệt feature đề xuất | M | F16.2 | Chưa làm |
+| F16.6 | `features_propose` (chỉ BA agent) + UI duyệt feature đề xuất | M | F16.2 | Xong — 2026-10-30 |
 | F16.7 | Quyền theo cấu hình agent + rate limit 60 lệnh/phút | S | F16.2, F13.5 | Xong — 2026-10-30 |
 | F16.8 | Trạng thái server thật cho `meridian-core` / `meridian-docs` | S | F16.2 | Xong — 2026-10-30 |
 | F16.9 | Hướng dẫn kết nối agent + test tích hợp gọi tool | S | F16.3, F16.5 | Xong — 2026-10-30 |
@@ -65,7 +65,7 @@
 ### F16.6 — `features_propose`
 **Làm gì**: thêm `Feature.status` enum (`proposed`, `active`, `rejected`). Chỉ agent có `canProposeFeatures` (BA agent) gọi được. Feature đề xuất hiện ở màn work trong khu "Feature đề xuất — chờ duyệt" với nút Duyệt/Từ chối cho lead; list chính và timeline chỉ hiện `active`.
 **Hoàn thành khi**:
-- [ ] Vega (TA) gọi → bị chặn; Bảo (BA) gọi → lead thấy và duyệt được
+- [x] Vega (TA) gọi → bị chặn; Bảo (BA) gọi → lead thấy và duyệt được (`lib/domain/features.integration.test.ts`, governance test, e2e `feature-proposals.spec.ts`)
 
 ### F16.7 — Quyền + rate limit
 **Làm gì**: kiểm tra trước mỗi tool: agent có quyền với dự án (thuộc `ProjectMember`), quyền ghi docs (`read_only` → chặn `docs_append`), server được cấu hình cho agent (`AgentConfig.mcpServers`). Rate limit 60 lệnh/phút/token — **không** đếm trong bộ nhớ (Cloud Run có thể nhiều instance / scale về 0, ADR-016): đếm số `McpLogEntry` của token trong 60 giây gần nhất (đã có index `at desc`). Vượt → `Bị chặn` + log.
@@ -83,6 +83,7 @@
 - [x] Người mới làm theo hướng dẫn kết nối được trong < 5 phút — *hướng dẫn `docs/guides/connect-agent.md` (3 bước); test luồng đầy đủ bằng MCP client SDK `app/api/mcp/client.integration.test.ts`. Cần Lio thử thật bằng Claude Code trên production để xác nhận thời gian.*
 
 ## Quyết định / ghi chú
+- **F16.6 (2026-10-30)**: migration chỉ thêm `FeatureStatus` (`proposed`/`active`/`rejected`, mặc định `active` → dữ liệu cũ không đổi) + `proposedById`, `proposal`, `proposedAt`, `rejectedReason`. `proposeFeature` (`lib/domain/features.ts`): mã `FEAT-<max+1>` toàn hệ thống (trùng khi đề xuất đồng thời → thử lại), stage BA, chưa giao ai. Chặn theo `canProposeFeatures` ở governance (F16.7). List chính, timeline, cây tài liệu, tìm kiếm và "Task mới" chỉ dùng feature `active`. Quyền duyệt: thêm `feature.review` vào ma trận (tech lead / người tạo dự án — giống duyệt revision; ADR-021). UI: khu "Feature đề xuất — chờ duyệt" trên list ở màn work (`ProposedFeatures`), ai cũng xem, người có quyền thấy Duyệt / Từ chối (bắt buộc lý do). Duyệt / từ chối ghi có điều kiện `status = proposed` (hai người cùng duyệt: người sau nhận lỗi).
 - **F16.8 (2026-10-30)**: hai server logic cùng một endpoint `/api/mcp` (đã chọn ở F16.1). `getMcpServers` tính cho `meridian-core` / `meridian-docs` từ `McpLogEntry` (một query gom nhóm): lệnh 24h, **số agent khác nhau đã gọi trong 24h** (= "client"), lệnh cuối; `status` luôn `online` (endpoint chạy cùng app); danh sách tool lấy từ code (`lib/mcp/tools.ts` — `TOOL_SERVER` chuyển sang đây, dùng chung với governance). Bỏ ghi `mcp_servers.lastCommandAt` ở mỗi lệnh. Server ngoài giữ số liệu lưu. **Hệ quả với dữ liệu mẫu**: thẻ server nội bộ không còn số giả (1284 lệnh/ngày…) mà là số thật từ nhật ký.
 - **F16.9 (2026-10-30)**: `docs/guides/connect-agent.md` (tạo token → `claude mcp add` → bảng tool → luật governance → gỡ lỗi). Integration test dùng `Client` + `StreamableHTTPClientTransport` của SDK, `fetch` nối thẳng vào route handler (không cần server chạy): liệt kê 7 tool + luồng list → claim → comment → Review → search → read → append, kiểm tra nhật ký đúng thứ tự.
 - **F16.7 (2026-10-30)**: `lib/mcp/governance.ts`, kiểm tra trong `logged()` trước mọi handler (rate limit trước, rồi cấu hình agent — đọc `AgentConfig` tối đa một lần mỗi request). Tool → server: `tasks_*`, `features_propose` → `meridian-core`; `docs_*` → `meridian-docs` — agent phải có server đó trong `AgentConfig.mcpServers` (dữ liệu mẫu: Vega không có `meridian-docs`, Scout không có `meridian-core` → bị chặn tương ứng; sửa ở panel agent). `docs_append` chặn khi "Chỉ đọc"; `features_propose` cần `canProposeFeatures` (F16.6 dùng). Rate limit 60 lệnh/phút/**token**: migration chỉ thêm `McpLogEntry.tokenId` (+ index `tokenId, at`), đếm cả lệnh bị chặn trong 60 giây gần nhất (spam liên tục vẫn bị chặn). Bị chặn → kết quả `isError` + `{ denied, reason }`, nhật ký "Bị chặn" target "rate limit" / "không đủ quyền". Tool vẫn hiện trong `tools/list` dù agent không được gọi (để lệnh bị chặn có nhật ký, đúng yêu cầu task). Phân biệt `append_review` / `append_edit_spec` chưa có tác dụng — cả hai đều chỉ tạo revision chờ duyệt.

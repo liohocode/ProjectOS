@@ -55,9 +55,9 @@ afterAll(async () => {
 const data = (r: Awaited<ReturnType<Client["callTool"]>>) => JSON.parse((r.content as { text: string }[])[0].text);
 
 describe("MCP client SDK → /api/mcp (F16.9)", () => {
-  it("liệt kê đủ 7 tool", async () => {
+  it("liệt kê đủ 8 tool", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
-    expect(names).toEqual(["docs_append", "docs_read", "docs_search", "tasks_claim", "tasks_comment", "tasks_list", "tasks_update_status"]);
+    expect(names).toEqual(["docs_append", "docs_read", "docs_search", "features_propose", "tasks_claim", "tasks_comment", "tasks_list", "tasks_update_status"]);
   });
 
   it("luồng làm việc: list → claim → comment → chuyển Review; đọc + đề xuất sửa tài liệu", async () => {

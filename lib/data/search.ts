@@ -24,7 +24,7 @@ export const searchProject = cache(async (projectId: string, q: string): Promise
       ORDER BY t.id LIMIT ${SEARCH_LIMIT}`,
     prisma.$queryRaw<SearchResults["features"]>`
       SELECT id, name FROM features
-      WHERE "projectId" = ${projectId}
+      WHERE "projectId" = ${projectId} AND status = 'active'
         AND (unaccent(id) ILIKE unaccent(${pattern}) OR unaccent(name) ILIKE unaccent(${pattern}))
       ORDER BY id LIMIT ${SEARCH_LIMIT}`,
     prisma.$queryRaw<SearchResults["docs"]>`
