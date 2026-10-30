@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { TaskStage } from "@/lib/generated/prisma/enums";
-import { formatDue, TASK_STATUS_LABEL, toIsoDate } from "@/lib/taskFormat";
+import { formatDue, parseTaskStatus, TASK_STATUS_LABEL, toIsoDate } from "@/lib/taskFormat";
 import { DEFAULT_AGENT_CONFIG } from "@/lib/agentConfig";
 
 // Nghiệp vụ task dùng chung cho MCP tool (agent, F16). Không có "use server"; nơi gọi tự xác thực danh tính.
@@ -138,4 +138,75 @@ export async function claimTask(agentId: string, taskId: string, now: Date = new
     const [view] = await listTasksForMemberTx(tx, agentId, taskId);
     return { ok: true, task: view, alreadyRunning, projectId };
   });
+}
+
+/** Stage / trạng thái agent được tự đặt (F16.4): không tự Done — người duyệt mới Done; "Đang chạy" đi qua tasks_claim. */
+export const AGENT_STAGES = ["BA", "TA", "Dev", "Review"] as const;
+export const AGENT_STATUSES = ["Đang làm", "Chờ", "Chờ review"] as const;
+
+export type TaskWriteResult = { ok: true; task: AgentTaskView; projectId: string } | { ok: false; reason: string; projectId: string | null };
+
+/** Task thuộc dự án của agent và đang giao cho agent đó (agent chỉ sửa task của mình). */
+async function findOwnTask(agentId: string, taskId: string) {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: {
+      title: true,
+      assigneeId: true,
+      runningSince: true,
+      feature: { select: { projectId: true, project: { select: { members: { where: { memberId: agentId }, select: { memberId: true } } } } } },
+    },
+  });
+  if (!task || task.feature.project.members.length === 0) return null;
+  return task;
+}
+
+/**
+ * Agent cập nhật stage / trạng thái task của mình (F16.4). Chặn: Done (stage hoặc trạng thái "Xong"), "Đang chạy"
+ * (dùng tasks_claim), task giao cho người/agent khác. Rời "Đang chạy" → xoá `runningSince` (nhả task, F16.3).
+ */
+export async function updateTaskByAgent(
+  agentId: string,
+  taskId: string,
+  change: { stage?: string; status?: string },
+): Promise<TaskWriteResult> {
+  const task = await findOwnTask(agentId, taskId);
+  if (!task) return { ok: false, reason: `Không tìm thấy task ${taskId} trong dự án của bạn`, projectId: null };
+  const projectId = task.feature.projectId;
+  if (task.assigneeId !== agentId) return { ok: false, reason: `${taskId} không giao cho bạn — dùng tasks_claim trước`, projectId };
+  if (!change.stage && !change.status) return { ok: false, reason: "Cần stage hoặc status", projectId };
+  if (change.stage === "Done" || change.status === "Xong") {
+    return { ok: false, reason: "Agent không tự đánh dấu Done — chuyển sang Review để người duyệt", projectId };
+  }
+  if (change.status === "Đang chạy") return { ok: false, reason: "Dùng tasks_claim để chạy task", projectId };
+  if (change.stage && !(AGENT_STAGES as readonly string[]).includes(change.stage)) return { ok: false, reason: `Stage không hợp lệ: ${change.stage}`, projectId };
+  if (change.status && !(AGENT_STATUSES as readonly string[]).includes(change.status)) {
+    return { ok: false, reason: `Trạng thái không hợp lệ: ${change.status}`, projectId };
+  }
+
+  await prisma.task.update({
+    where: { id: taskId },
+    data: {
+      ...(change.stage && { stage: change.stage as TaskStage }),
+      // Đổi trạng thái = rời "Đang chạy" → nhả task (không còn tính vào giới hạn task đồng thời).
+      ...(change.status && { status: parseTaskStatus(change.status), runningSince: null }),
+    },
+  });
+  const [view] = await listTasksForMemberTx(prisma, agentId, taskId);
+  return { ok: true, task: view, projectId };
+}
+
+/** Agent bình luận trên task trong dự án của mình (F16.4). */
+export async function commentOnTask(
+  authorId: string,
+  taskId: string,
+  body: string,
+): Promise<{ ok: true; commentId: string; projectId: string } | { ok: false; reason: string; projectId: string | null }> {
+  const text = body.trim();
+  if (!text) return { ok: false, reason: "Bình luận trống", projectId: null };
+  if (text.length > 4000) return { ok: false, reason: "Bình luận tối đa 4000 ký tự", projectId: null };
+  const task = await findOwnTask(authorId, taskId);
+  if (!task) return { ok: false, reason: `Không tìm thấy task ${taskId} trong dự án của bạn`, projectId: null };
+  const comment = await prisma.taskComment.create({ data: { taskId, authorId, body: text }, select: { id: true } });
+  return { ok: true, commentId: comment.id, projectId: task.feature.projectId };
 }

@@ -149,6 +149,26 @@ export function TaskDrawer({
           </div>
         )}
 
+        {info && info.comments.length > 0 && (
+          <div className="drawer-section">
+            <div className="drawer-section-title">Bình luận</div>
+            {info.comments.map((c) => (
+              <div className="drawer-comment" key={c.id}>
+                <span className={`avatar ${c.kind === "agent" ? "avatar-agent" : "avatar-human"}`} style={{ width: 20, height: 20, fontSize: 8.5 }}>
+                  {initials(c.author)}
+                </span>
+                <div>
+                  <div className="drawer-comment-head">
+                    <span>{c.author}</span>
+                    <span className="drawer-log-when">{c.when}</span>
+                  </div>
+                  <div className="drawer-comment-body">{c.body}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {info && info.sessionLog.length > 0 && (
           <div className="drawer-section">
             <div className="drawer-section-title">Log phiên chạy</div>

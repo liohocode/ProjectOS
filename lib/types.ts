@@ -170,6 +170,8 @@ export interface TaskDrawerInfo {
   contextDocs: string[];
   /** `runningSince` (ISO): bước "Đang chạy" — `when` tự tăng phía client (F17.5) */
   sessionLog: { text: string; when: string; runningSince?: string }[];
+  /** Bình luận trên task (F16.4), cũ trước */
+  comments: { id: string; author: string; kind: MemberKind; body: string; when: string }[];
 }
 
 export interface McpServer {

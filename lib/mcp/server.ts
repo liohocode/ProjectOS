@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { AgentPrincipal } from "@/lib/auth/agentToken";
 import { revalidatePath } from "next/cache";
-import { claimTask, listTasksForMember } from "@/lib/domain/tasks";
+import { AGENT_STAGES, AGENT_STATUSES, claimTask, commentOnTask, listTasksForMember, updateTaskByAgent } from "@/lib/domain/tasks";
 import { prisma } from "@/lib/prisma";
 import { recordToolCall, type ToolCallRecord } from "./audit";
 
@@ -92,6 +92,55 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
           value: result.ok
             ? json({ claimed: true, alreadyRunning: result.alreadyRunning, task: result.task })
             : { ...json({ claimed: false, reason: result.reason }), isError: true },
+          log: { target: taskId, result: result.ok ? "OK" : "BiChan", projectId: result.projectId, taskId: result.ok ? taskId : null },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "tasks_update_status",
+    {
+      title: "Cập nhật task",
+      description:
+        "Cập nhật stage và/hoặc trạng thái task đang giao cho agent. Không tự đánh dấu Done (chuyển sang stage Review để người duyệt). Đổi trạng thái sẽ rời 'Đang chạy' (nhả task khỏi giới hạn task đồng thời).",
+      inputSchema: {
+        taskId: z.string().trim().min(1).describe("Mã task, vd T-405"),
+        stage: z.enum(AGENT_STAGES).optional().describe("Stage mới"),
+        status: z.enum(AGENT_STATUSES).optional().describe("Trạng thái mới"),
+      },
+    },
+    async ({ taskId, stage, status }) =>
+      logged(agent, "tasks_update_status", async () => {
+        const result = await updateTaskByAgent(agent.memberId, taskId, { stage, status });
+        if (result.ok) revalidatePath("/[project]", "layout");
+        return {
+          value: result.ok ? json({ updated: true, task: result.task }) : { ...json({ updated: false, reason: result.reason }), isError: true },
+          log: {
+            target: [taskId, stage, status].filter(Boolean).join(" → "),
+            result: result.ok ? (stage === "Review" || status === "Chờ review" ? "ChoReview" : "OK") : "BiChan",
+            projectId: result.projectId,
+            taskId: result.ok ? taskId : null,
+          },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "tasks_comment",
+    {
+      title: "Bình luận task",
+      description: "Ghi bình luận (tiến độ, câu hỏi, ghi chú bàn giao) lên một task trong dự án của agent — hiện ở mục Bình luận của task.",
+      inputSchema: {
+        taskId: z.string().trim().min(1).describe("Mã task, vd T-405"),
+        body: z.string().trim().min(1).max(4000).describe("Nội dung bình luận (văn bản thường)"),
+      },
+    },
+    async ({ taskId, body }) =>
+      logged(agent, "tasks_comment", async () => {
+        const result = await commentOnTask(agent.memberId, taskId, body);
+        if (result.ok) revalidatePath("/[project]/work", "page");
+        return {
+          value: result.ok ? json({ commented: true, commentId: result.commentId }) : { ...json({ commented: false, reason: result.reason }), isError: true },
           log: { target: taskId, result: result.ok ? "OK" : "BiChan", projectId: result.projectId, taskId: result.ok ? taskId : null },
         };
       }),
