@@ -91,6 +91,15 @@ describe("POST /api/mcp (F16.1)", () => {
     expect(await prisma.mcpSession.count({ where: { agentId: "agent-vega", projectId: "crm", startedAt: { gte: startedAt } } })).toBe(0);
   });
 
+  it("tasks_claim bị chặn → isError + nhật ký 'tasks.claim' kết quả Bị chặn (F16.3)", async () => {
+    const done = await prisma.task.findFirstOrThrow({ where: { feature: { projectId: "rv-web" }, stage: "Done" } });
+    const { body } = await rpc("tools/call", { name: "tasks_claim", arguments: { taskId: done.id } });
+    expect(body.result.isError).toBe(true);
+    expect(JSON.parse(body.result.content[0].text)).toEqual({ claimed: false, reason: `${done.id} đã Done` });
+    const entry = await prisma.mcpLogEntry.findFirstOrThrow({ where: { agentId: "agent-vega", tool: "tasks.claim" }, orderBy: { at: "desc" } });
+    expect(entry).toMatchObject({ target: done.id, result: "BiChan" });
+  });
+
   it("GET / DELETE → 405 (không stream SSE ở chế độ stateless)", async () => {
     expect(GET().status).toBe(405);
     expect(DELETE().status).toBe(405);
