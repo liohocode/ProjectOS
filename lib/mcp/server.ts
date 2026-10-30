@@ -1,7 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { AgentPrincipal } from "@/lib/auth/agentToken";
-import { listTasksForMember } from "@/lib/domain/tasks";
+import { revalidatePath } from "next/cache";
+import { claimTask, listTasksForMember } from "@/lib/domain/tasks";
 import { prisma } from "@/lib/prisma";
 import { recordToolCall, type ToolCallRecord } from "./audit";
 
@@ -44,7 +45,7 @@ async function sessionProject(agentId: string, projectId: string | undefined): P
 
 export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
   const server = new McpServer(SERVER_INFO, {
-    instructions: `Meridian — quản lý dự án cho team người + AI agent. Bạn đang kết nối với vai trò agent "${agent.name}". Dùng tasks_list để xem task trong các dự án bạn thuộc về.`,
+    instructions: `Meridian — quản lý dự án cho team người + AI agent. Bạn đang kết nối với vai trò agent "${agent.name}". Dùng tasks_list để xem task trong các dự án bạn thuộc về, tasks_claim để nhận task trước khi làm.`,
   });
 
   server.registerTool(
@@ -70,6 +71,28 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
         return {
           value: json({ count: tasks.length, tasks }),
           log: { target: [projectId ?? "mọi dự án", stage].filter(Boolean).join(" · "), result: "OK", projectId: await sessionProject(agent.memberId, projectId) },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "tasks_claim",
+    {
+      title: "Nhận task",
+      description:
+        "Nhận một task để làm: task được giao cho agent và chuyển sang 'Đang chạy'. Bị chặn nếu task đã Done, đang bị block, đang được người khác chạy, hoặc agent đã chạy đủ số task đồng thời cho phép (mặc định 2). Claim lại task mình đang chạy không đổi gì.",
+      inputSchema: { taskId: z.string().trim().min(1).describe("Mã task, vd T-405") },
+    },
+    async ({ taskId }) =>
+      logged(agent, "tasks_claim", async () => {
+        const result = await claimTask(agent.memberId, taskId);
+        // Màn work / team / badge của dự án thấy task đang chạy ngay ở lần tải sau.
+        if (result.ok && !result.alreadyRunning) revalidatePath("/[project]", "layout");
+        return {
+          value: result.ok
+            ? json({ claimed: true, alreadyRunning: result.alreadyRunning, task: result.task })
+            : { ...json({ claimed: false, reason: result.reason }), isError: true },
+          log: { target: taskId, result: result.ok ? "OK" : "BiChan", projectId: result.projectId, taskId: result.ok ? taskId : null },
         };
       }),
   );

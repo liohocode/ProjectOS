@@ -28,7 +28,7 @@
 |---|---|---|---|---|
 | F16.1 | Spike + khung endpoint MCP, xác thực token, tool `tasks_list` | M | — (F15.5 nếu có) | Xong — 2026-10-30 |
 | F16.2 | Lớp bọc tool call: ghi `McpLogEntry`, vòng đời `McpSession` | M | F16.1, F09.4 | Xong — 2026-10-30 |
-| F16.3 | `tasks_claim` với giới hạn task đồng thời | M | F16.2, F09.2 | Chưa làm |
+| F16.3 | `tasks_claim` với giới hạn task đồng thời | M | F16.2, F09.2 | Xong — 2026-10-30 |
 | F16.4 | `tasks_update_status`, `tasks_comment` (+ model `TaskComment`, hiện trong drawer) | M | F16.3 | Chưa làm |
 | F16.5 | `docs_read`, `docs_search` (từ khoá), `docs_append` → revision chờ duyệt | M | F16.2, F12.1 | Chưa làm |
 | F16.6 | `features_propose` (chỉ BA agent) + UI duyệt feature đề xuất | M | F16.2 | Chưa làm |
@@ -50,7 +50,7 @@
 ### F16.3 — `tasks_claim`
 **Làm gì**: agent claim task → task gán cho agent, `runningSince = now`, trạng thái "Đang chạy". Từ chối (`Bị chặn`) nếu agent đã có ≥ `maxConcurrentTasks` task đang chạy (mặc định 2 — FR-AG-05), nếu task đang bị block, hoặc task đã Done.
 **Hoàn thành khi**:
-- [ ] Test: claim task thứ 3 khi đang chạy 2 → bị chặn và có log `Bị chặn`
+- [x] Test: claim task thứ 3 khi đang chạy 2 → bị chặn và có log `Bị chặn` (`lib/domain/tasks.integration.test.ts`, `app/api/mcp/route.integration.test.ts`)
 
 ### F16.4 — `tasks_update_status`, `tasks_comment`
 **Làm gì**: cập nhật trạng thái/stage (agent không được tự chuyển sang `Done` — chỉ tới `Review`, người duyệt mới Done). Model `TaskComment(id, taskId, authorId, body, createdAt)`; hiển thị bình luận trong task drawer (mục mới "Bình luận").
@@ -83,5 +83,6 @@
 - [ ] Người mới làm theo hướng dẫn kết nối được trong < 5 phút
 
 ## Quyết định / ghi chú
+- **F16.3 (2026-10-30)**: `claimTask` (`lib/domain/tasks.ts`) trong transaction, khoá dòng `members` của agent (`SELECT … FOR UPDATE`) để hai lệnh claim đồng thời không cùng vượt giới hạn. Giới hạn = `AgentConfig.maxConcurrentTasks` (mặc định 2); "đang chạy" = task giao cho agent có `runningSince`. Thêm chặn ngoài spec: task đang được người/agent khác chạy; task không thuộc dự án của agent (báo như không tồn tại). Claim lại task mình đang chạy → OK, không đổi. Claim thành công ghi `Member.current` + hoạt động "Claim T-xxx qua MCP" và revalidate layout. Bị chặn → kết quả tool `isError: true` kèm `reason`, nhật ký "Bị chặn". Chưa có "nhả task" — `tasks_update_status` (F16.4) sẽ xoá `runningSince` khi chuyển khỏi "Đang chạy".
 - **F16.2 (2026-10-30)**: endpoint stateless (ADR-022) nên **không có MCP session id** → "phiên" = (agent, dự án), còn mở khi lệnh cuối cách đây < 30 phút (`SESSION_IDLE_MS`); phiên quá hạn đóng **lười** ở lệnh kế tiếp của agent (`endedAt` = lệnh cuối, "Đang chạy" → "Xong") — không cần job nền. Migration chỉ thêm `McpSession.lastCallAt` (null = dữ liệu mẫu, không bị đóng tự động). `lib/mcp/audit.ts` `recordToolCall` (một transaction: dòng `McpLogEntry` tên dạng `tasks.list`, `meridian-core.lastCommandAt`, phiên). `logged()` trong `lib/mcp/server.ts` bọc mọi handler; lỗi bất ngờ ghi "Bị chặn". Dự án của phiên: tham số `projectId` nếu agent thuộc dự án đó, không truyền mà agent chỉ thuộc một dự án → dự án đó, ngược lại chỉ ghi nhật ký. `tokensUsed` để 0 (client chưa gửi). Thời lượng phiên mở vẫn tính tới hiện tại cho tới khi được đóng lười — chấp nhận.
 - **F16.1 (2026-10-30)** — ADR-022. `app/api/mcp/route.ts` (POST; GET/DELETE → 405), `lib/mcp/server.ts` (`createMeridianMcpServer(agent)`), `lib/domain/tasks.ts` (`listTasksForMember`). Không cần `MCP_DEV_TOKENS` vì F15.5 đã xong: token tạo ở panel agent (màn team, tech lead). `tasks_list(projectId?, stage?, assigneeId?)` — chỉ task trong dự án agent thuộc về, tối đa 200; `assigneeId: "me"` = chính agent. Kết quả trả JSON trong content text.
