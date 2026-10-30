@@ -1,4 +1,5 @@
 import type { ScreenId } from "@/lib/types";
+import type { PermissionAction } from "@/lib/auth/permissions";
 
 export interface ScreenMeta {
   kicker: string;
@@ -7,6 +8,8 @@ export interface ScreenMeta {
   primaryAction: string;
   /** true khi page.tsx của màn đã render dialog cho `?new=1` (ADR-018); false → nút chưa hoạt động. */
   primaryDialog: boolean;
+  /** Quyền cần để dùng nút chính (F15.6) */
+  primaryPermission: PermissionAction;
 }
 
 export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
@@ -16,6 +19,7 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     searchPlaceholder: "Tìm feature, task, docs…",
     primaryAction: "Dự án mới",
     primaryDialog: true,
+    primaryPermission: "project.create",
   },
   docs: {
     kicker: "Module 1",
@@ -23,6 +27,7 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     searchPlaceholder: "Tìm feature, task, docs…",
     primaryAction: "Tài liệu mới",
     primaryDialog: true,
+    primaryPermission: "doc.create",
   },
   work: {
     kicker: "Module 2",
@@ -30,6 +35,7 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     searchPlaceholder: "Tìm feature, task, docs…",
     primaryAction: "Task mới",
     primaryDialog: true,
+    primaryPermission: "task.write",
   },
   team: {
     kicker: "Module 3",
@@ -37,6 +43,7 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     searchPlaceholder: "Tìm feature, task, docs…",
     primaryAction: "Thêm thành viên",
     primaryDialog: true,
+    primaryPermission: "member.manage",
   },
   mcp: {
     kicker: "Module 4",
@@ -44,6 +51,7 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     searchPlaceholder: "Tìm feature, task, docs…",
     primaryAction: "Kết nối server",
     primaryDialog: true,
+    primaryPermission: "mcpServer.manage",
   },
 };
 

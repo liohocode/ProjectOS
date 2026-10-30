@@ -5,6 +5,8 @@ import { getDocCountByProject, getPendingRevisionCount } from "@/lib/data/docs";
 import { getAgentOptions, getMemberCountByProject, getMemberOptionsByProject, getPipelineAgents } from "@/lib/data/team";
 import { getCurrentUser, getCurrentUserId } from "@/lib/auth/currentUser";
 import { getMcpServers } from "@/lib/data/mcp";
+import { getPermissions } from "@/lib/data/permissions";
+import { PermissionsProvider } from "@/components/auth/PermissionsProvider";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import type { ScreenId } from "@/lib/types";
@@ -13,18 +15,14 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   const { project: projectId } = await props.params;
 
   const userId = await getCurrentUserId();
-  const [project, projects, myProjects] = await Promise.all([
-    getProjectById(projectId),
-    getProjects(),
-    getProjectsByMember(userId),
-  ]);
+  const [project, projects, myProjects] = await Promise.all([getProjectById(projectId), getProjects(), getProjectsByMember(userId)]);
   // Dự án không tồn tại hoặc người dùng không thuộc dự án → 404 (không lộ dự án có tồn tại hay không).
   if (!project || !myProjects.some((p) => p.id === projectId)) notFound();
   // Dự án lưu trữ (F13.7) vẫn mở được từ portfolio nhưng không hiện trong switcher / bộ lọc — trừ dự án đang mở.
   const activeProjects = myProjects.filter((p) => !p.archived || p.id === projectId);
 
   // Badge chỉ cần số → hàm đếm, không tải danh sách task/thành viên (page cần thì tự tải).
-  const [taskCounts, docCount, pendingRevisions, memberCount, pipeline, mcpServers, currentUser, memberOptions, agentOptions] =
+  const [taskCounts, docCount, pendingRevisions, memberCount, pipeline, mcpServers, currentUser, memberOptions, agentOptions, permissions] =
     await Promise.all([
       getTaskCountsByProject(projectId),
       getDocCountByProject(projectId),
@@ -36,6 +34,8 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
       // Lựa chọn cho nút "Lọc" ở header (F14.3) — chỉ id + tên.
       getMemberOptionsByProject(projectId),
       getAgentOptions(),
+      // Ẩn/khoá nút theo quyền (F15.6).
+      getPermissions(userId, projectId),
     ]);
 
   const navCounts: Record<ScreenId, number> = {
@@ -54,24 +54,26 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   };
 
   return (
-    <div className="app-shell">
-      <Sidebar
-        project={project}
-        projects={activeProjects}
-        navCounts={navCounts}
-        navAlerts={navAlerts}
-        pipeline={pipeline}
-        mcpOnline={mcpServers.filter((s) => s.status === "online").length}
-        mcpTotal={mcpServers.length}
-        currentUser={currentUser}
-      />
-      <div className="main-area">
-        <Header
+    <PermissionsProvider value={permissions}>
+      <div className="app-shell">
+        <Sidebar
           project={project}
-          filterOptions={{ members: memberOptions, agents: agentOptions, projects: activeProjects.map(({ id, name }) => ({ id, name })) }}
+          projects={activeProjects}
+          navCounts={navCounts}
+          navAlerts={navAlerts}
+          pipeline={pipeline}
+          mcpOnline={mcpServers.filter((s) => s.status === "online").length}
+          mcpTotal={mcpServers.length}
+          currentUser={currentUser}
         />
-        <div className="content-area">{props.children}</div>
+        <div className="main-area">
+          <Header
+            project={project}
+            filterOptions={{ members: memberOptions, agents: agentOptions, projects: activeProjects.map(({ id, name }) => ({ id, name })) }}
+          />
+          <div className="content-area">{props.children}</div>
+        </div>
       </div>
-    </div>
+    </PermissionsProvider>
   );
 }

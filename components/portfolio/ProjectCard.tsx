@@ -3,7 +3,7 @@ import type { ProjectSummary } from "@/lib/data/portfolio";
 import { initials } from "@/components/work/taskStyle";
 import { ArchiveProjectButton } from "./ArchiveProjectButton";
 
-export function ProjectCard({ project, isOpen }: { project: ProjectSummary; isOpen: boolean }) {
+export function ProjectCard({ project, isOpen, canArchive }: { project: ProjectSummary; isOpen: boolean; canArchive: boolean }) {
   // Nút lưu trữ nằm ngoài <Link> (không lồng phần tử tương tác) — định vị tuyệt đối trên thẻ.
   return (
     <div className={`project-card-wrap${project.archived ? " is-archived" : ""}`}>
@@ -54,7 +54,7 @@ export function ProjectCard({ project, isOpen }: { project: ProjectSummary; isOp
 
         <div className="project-card-sprint">{project.sprint}</div>
       </Link>
-      <ArchiveProjectButton project={project} />
+      {canArchive && <ArchiveProjectButton project={project} />}
     </div>
   );
 }

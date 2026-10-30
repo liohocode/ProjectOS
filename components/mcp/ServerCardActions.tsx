@@ -5,17 +5,20 @@ import { Dialog } from "@/components/ui/Dialog";
 import { deleteMcpServer } from "@/lib/actions/mcpServers";
 import type { McpServer } from "@/lib/types";
 import { McpServerDialog } from "./McpServerDialog";
+import { useCan } from "@/components/auth/PermissionsProvider";
 
 /** Sửa / xoá server ngoài trên thẻ (F13.6). Server nội bộ không có nút. */
 export function ServerCardActions({ server }: { server: McpServer }) {
   const [mode, setMode] = useState<"edit" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const allowed = useCan("mcpServer.manage");
   const close = () => {
     setMode(null);
     setError(null);
   };
 
+  if (!allowed) return null;
   return (
     <>
       <div className="mcp-server-actions">
