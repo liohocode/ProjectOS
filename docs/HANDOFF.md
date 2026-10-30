@@ -24,7 +24,7 @@ Trả lời tiếng Việt, ngắn gọn. Bắt đầu với: <task hoặc "vi�
 | F15.4 Ma trận quyền + `can()` | **Chờ Lio xác nhận ma trận** | Đề xuất trong `docs/features/F15-auth-permissions.md`; mọi server action còn `TODO(F15.4)` |
 | F19.7 thử rollback; F19.8 backup Neon; F19.9 tên miền (tuỳ chọn) | Agent (+ Lio nếu tốn tiền) | Rollback: `docs/guides/deploy-cloud-run.md` mục 4 |
 | F16 MCP server thật, F17 realtime | Agent | Sau F15.4/F15.5 (token cho agent) |
-| Dọn quyền tạm (xem mục 5) | **Lio** | Nên làm sớm |
+| Bỏ override org policy chặn tạo key (mục 5) | **Lio** | Service account tạm đã xoá |
 
 ## 4. Giới hạn của môi trường agent (đã gặp — đừng thử lại vô ích)
 - Container cloud **không kết nối được** `*.neon.tech` (5432 và HTTPS), `*.pkg.dev` (Docker registry), `*.run.app`. → Không chạy Prisma/psql vào Neon, không `docker push`, không curl production từ container.
@@ -35,13 +35,13 @@ Trả lời tiếng Việt, ngắn gọn. Bắt đầu với: <task hoặc "vi�
 - Classifier của Claude Code chặn: cấp quyền IAM, ghi Secret Manager, chạy Cloud Build bằng SA quyền cao. Quy tắc cho phép nằm ở `.claude/settings.json` (người dùng sửa; agent không tự sửa được file này). Có thể phải mở phiên mới để quy tắc mới có hiệu lực.
 - Playwright: nếu báo thiếu Chromium bản khác, symlink bản có sẵn trong `/opt/pw-browsers` (không `playwright install`). Postgres local: `service postgresql start` nếu test báo ECONNREFUSED.
 
-## 5. Dọn dẹp quyền tạm (Lio làm trên Cloud Console / Cloud Shell)
-Trong lúc thiết lập F19.3 đã tạo service account `meridian-agent` (Owner trên project) + key, và tắt 2 org policy chặn tạo key **riêng cho project `pdos-513017`**. Deploy giờ dùng WIF nên không cần nữa:
-```bash
-gcloud iam service-accounts delete meridian-agent@pdos-513017.iam.gserviceaccount.com --project=pdos-513017
-gcloud resource-manager org-policies delete iam.disableServiceAccountKeyCreation --project=pdos-513017
-gcloud org-policies delete projects/pdos-513017/policies/iam.managed.disableServiceAccountKeyCreation
-```
+## 5. Dọn dẹp quyền tạm
+- ✅ 2026-10-30: đã xoá service account `meridian-agent` (Owner, dùng lúc thiết lập F19.3) và mọi bản sao key trong container. Agent không còn quyền Google Cloud trực tiếp — việc trên GCP đi qua workflow Deploy (`meridian-deploy`, WIF).
+- ⬜ **Lio**: bỏ override 2 org policy chặn tạo key trên project `pdos-513017` (cần quyền admin tổ chức — service account không gỡ được): Console → IAM & Admin → **Organization Policies** (chọn project `pdos-513017`) → *Disable service account key creation* và bản *(managed)* → **Manage policy → Inherit parent's policy → Set policy**. Hoặc Cloud Shell:
+  ```bash
+  gcloud resource-manager org-policies delete iam.disableServiceAccountKeyCreation --project=pdos-513017
+  gcloud org-policies delete iam.managed.disableServiceAccountKeyCreation --project=pdos-513017
+  ```
 
 ## 6. Chuẩn bị tài khoản Claude mới (Lio)
 1. claude.ai/code trên tài khoản mới → kết nối GitHub (cài Claude GitHub App cho repo `liohocode/ProjectOS`).
