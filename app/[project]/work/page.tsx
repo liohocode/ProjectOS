@@ -1,4 +1,4 @@
-import { getFeaturesByProject } from "@/lib/data/features";
+import { getFeaturesByProject, getProposedFeatures } from "@/lib/data/features";
 import { getTimelineByProject } from "@/lib/data/timeline";
 import { getActivityFeed } from "@/lib/data/activity";
 import { getTaskDrawerInfo } from "@/lib/data/taskDrawer";
@@ -13,11 +13,12 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
   const { new: newParam } = searchParams;
   const filter = parseWorkFilter(searchParams);
 
-  const [features, timeline, activity, projectTeam] = await Promise.all([
+  const [features, timeline, activity, projectTeam, proposals] = await Promise.all([
     getFeaturesByProject(projectId),
     getTimelineByProject(projectId),
     getActivityFeed(projectId),
     getTeamByProject(projectId),
+    getProposedFeatures(projectId),
   ]);
   const projectAgents = projectTeam.filter((m) => m.kind === "agent");
 
@@ -38,6 +39,7 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
         activity={activity}
         taskDrawerInfo={taskDrawerInfo}
         projectAgents={projectAgents}
+        proposals={proposals}
       />
       {/* "Task mới" ở header đặt ?new=1 (ADR-018) */}
       {newParam === "1" && (

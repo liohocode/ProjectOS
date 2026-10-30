@@ -1,13 +1,15 @@
 import { cache } from "react";
-import type { Feature, Task } from "@/lib/types";
+import type { Feature, ProposedFeature, Task } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning, toIsoDate } from "@/lib/taskFormat";
+import { formatRelativeVi } from "@/lib/relativeTime";
 
 export const UNASSIGNED_OWNER = "Chưa giao";
 
 export const getFeaturesByProject = cache(async (projectId: string): Promise<Feature[]> => {
   const rows = await prisma.feature.findMany({
-    where: { projectId },
+    // Feature agent đề xuất chờ duyệt / bị từ chối không vào list chính (F16.6).
+    where: { projectId, status: "active" },
     include: {
       owner: true,
       tasks: { include: { assignee: true }, orderBy: { id: "asc" } },
@@ -59,4 +61,20 @@ export const getTaskCountsByProject = cache(async (projectId: string): Promise<{
     prisma.task.count({ where: { feature: { projectId }, blocked: { not: null } } }),
   ]);
   return { total, blocked };
+});
+
+/** Feature agent đề xuất đang chờ lead duyệt (F16.6), cũ trước. */
+export const getProposedFeatures = cache(async (projectId: string): Promise<ProposedFeature[]> => {
+  const rows = await prisma.feature.findMany({
+    where: { projectId, status: "proposed" },
+    orderBy: [{ proposedAt: "asc" }, { id: "asc" }],
+    select: { id: true, name: true, proposal: true, proposedAt: true, proposedBy: { select: { name: true } } },
+  });
+  return rows.map((f) => ({
+    id: f.id,
+    name: f.name,
+    proposal: f.proposal ?? "",
+    proposedBy: f.proposedBy?.name ?? "Agent",
+    when: f.proposedAt ? formatRelativeVi(f.proposedAt) : "",
+  }));
 });

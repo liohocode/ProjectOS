@@ -109,7 +109,7 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
   if (!parsed.success) return fail(parsed.error.issues[0].message);
   const data = parsed.data;
 
-  const feature = await prisma.feature.findUnique({ where: { id: data.featureId }, select: { projectId: true } });
+  const feature = await prisma.feature.findUnique({ where: { id: data.featureId, status: "active" }, select: { projectId: true } });
   const denied = await authorize("task.write", data.projectId);
   if (denied) return fail(denied);
   if (!feature || feature.projectId !== data.projectId) return fail("Feature không thuộc dự án này");

@@ -3,6 +3,7 @@
 // | Hành động                                                        | Ai được làm                          |
 // |------------------------------------------------------------------|--------------------------------------|
 // | Duyệt / từ chối revision, sửa trực tiếp tài liệu                 | Tech lead, người tạo dự án           |
+// | Duyệt / từ chối feature agent đề xuất (F16.6)                    | Tech lead, người tạo dự án           |
 // | Tạo dự án, quản lý MCP server, sửa cấu hình agent (toàn tổ chức) | Tech lead                            |
 // | Thêm / gỡ thành viên, lưu trữ dự án                              | Tech lead                            |
 // | Tạo / sửa / giao / chuyển stage task, tạo tài liệu               | Thành viên dự án                     |
@@ -16,6 +17,7 @@ export type PermissionAction =
   | "member.manage"
   | "doc.review"
   | "doc.edit"
+  | "feature.review"
   | "doc.create"
   | "task.write";
 
@@ -43,6 +45,7 @@ export function can(actor: Actor, action: PermissionAction, project?: ProjectRef
   switch (action) {
     case "doc.review":
     case "doc.edit":
+    case "feature.review":
       return actor.isTechLead || project.createdById === actor.id;
     case "project.archive":
     case "member.manage":
@@ -60,6 +63,7 @@ const DENIED: Record<PermissionAction, string> = {
   "member.manage": "Chỉ tech lead được thêm / gỡ thành viên",
   "doc.review": "Chỉ tech lead hoặc người tạo dự án được duyệt / từ chối revision",
   "doc.edit": "Chỉ tech lead hoặc người tạo dự án được sửa trực tiếp tài liệu",
+  "feature.review": "Chỉ tech lead hoặc người tạo dự án được duyệt feature đề xuất",
   "doc.create": "Chỉ thành viên dự án được tạo tài liệu",
   "task.write": "Chỉ thành viên dự án được thao tác task",
 };

@@ -62,6 +62,13 @@ describe("governance MCP (F16.7)", () => {
     expect(await call("agent-scout", "docs_read", { docId: "flows" })).toMatchObject({ isError: false, data: { id: "flows" } });
   });
 
+  it("features_propose: agent không có canProposeFeatures → bị chặn (F16.6)", async () => {
+    // Scout không có quyền đề xuất (và cũng thiếu meridian-core) → chặn trước khi tạo gì.
+    const before = await prisma.feature.count();
+    expect(await call("agent-scout", "features_propose", { projectId: "rv-web", name: "IT x", description: "x" })).toMatchObject({ isError: true });
+    expect(await prisma.feature.count()).toBe(before);
+  });
+
   it(`lệnh thứ ${RATE_LIMIT_PER_MINUTE + 1} trong một phút → bị chặn`, async () => {
     const now = Date.now();
     // Đã có 60 lệnh của token Bảo trong 60 giây qua (đổ thẳng vào nhật ký thay vì gọi 60 lần).

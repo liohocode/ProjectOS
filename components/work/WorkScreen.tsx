@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ProposedFeatures } from "./ProposedFeatures";
+import type { ProposedFeature } from "@/lib/types";
 import type { ActivityItem, Feature, Member, TaskDrawerInfo, TimelineRow } from "@/lib/types";
 import { FeatureSection } from "./FeatureSection";
 import { TimelineView } from "./TimelineView";
@@ -16,6 +18,7 @@ export function WorkScreen({
   activity,
   taskDrawerInfo,
   projectAgents,
+  proposals = [],
 }: {
   features: Feature[];
   /** Đang áp bộ lọc "Lọc" (F14.3) — features đã lọc ở server. */
@@ -24,6 +27,8 @@ export function WorkScreen({
   activity: ActivityItem[];
   taskDrawerInfo: Record<string, TaskDrawerInfo>;
   projectAgents: Member[];
+  /** Feature agent đề xuất chờ duyệt (F16.6) */
+  proposals?: ProposedFeature[];
 }) {
   const [closed, setClosed] = useState<Record<string, boolean>>({});
   const [railOpen, setRailOpen] = useState(true);
@@ -75,6 +80,8 @@ export function WorkScreen({
             </button>
           </div>
         )}
+
+        {view === "list" && <ProposedFeatures proposals={proposals} />}
 
         {features.length === 0 && filtered && view === "list" ? (
           <EmptyState
