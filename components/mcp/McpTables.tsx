@@ -5,6 +5,7 @@ import type { McpLogEntry, McpSession, Page } from "@/lib/types";
 import type { ActionResult } from "@/lib/actions/result";
 import { loadMoreMcpLog, loadMoreMcpSessions } from "@/lib/actions/mcp";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useProjectEvents } from "@/components/realtime/ProjectEvents";
 
 // Bảng phiên chạy + nhật ký lệnh MCP (F14.4): server render trang đầu, "Xem thêm" tải trang sau
 // qua server action (cùng bộ lọc F14.3) và nối vào cuối bảng.
@@ -33,7 +34,7 @@ function usePaged<T>(first: Page<T>, load: (cursor: string, filter: Filter) => P
       setCursor(result.page.nextCursor);
       setError(null);
     });
-  return { items, hasMore: cursor !== null, more, isPending, error };
+  return { items, setItems, hasMore: cursor !== null, more, isPending, error };
 }
 
 function MoreButton({ hasMore, more, isPending, error, shown }: { hasMore: boolean; more: () => void; isPending: boolean; error: string | null; shown: number }) {
@@ -61,7 +62,7 @@ export function McpSessionTable({
   filtered: boolean;
   projectNames: Record<string, string>;
 }) {
-  const { items, ...paging } = usePaged(first, loadMoreMcpSessions, filter);
+  const { items, hasMore, more, isPending, error } = usePaged(first, loadMoreMcpSessions, filter);
   if (items.length === 0) {
     return (
       <EmptyState
@@ -104,13 +105,22 @@ export function McpSessionTable({
           ))}
         </tbody>
       </table>
-      <MoreButton {...paging} shown={items.length} />
+      <MoreButton hasMore={hasMore} more={more} isPending={isPending} error={error} shown={items.length} />
     </>
   );
 }
 
 export function McpLogTable({ first, filter, filtered }: { first: Page<McpLogEntry>; filter: Filter; filtered: boolean }) {
-  const { items, ...paging } = usePaged(first, loadMoreMcpLog, filter);
+  const { items, setItems, hasMore, more, isPending, error } = usePaged(first, loadMoreMcpLog, filter);
+  // F17.3: dòng nhật ký mới từ polling chèn lên đầu (theo bộ lọc agent nếu có).
+  useProjectEvents(({ mcpLog }) => {
+    const fresh = filter.agent ? mcpLog.filter((e) => e.agentId === filter.agent) : mcpLog;
+    if (!fresh.length) return;
+    setItems((prev) => {
+      const known = new Set(prev.map((e) => e.id));
+      return [...fresh.filter((e) => !known.has(e.id)), ...prev];
+    });
+  });
   if (items.length === 0) {
     return (
       <EmptyState
@@ -149,7 +159,7 @@ export function McpLogTable({ first, filter, filtered }: { first: Page<McpLogEnt
           ))}
         </tbody>
       </table>
-      <MoreButton {...paging} shown={items.length} />
+      <MoreButton hasMore={hasMore} more={more} isPending={isPending} error={error} shown={items.length} />
     </>
   );
 }
