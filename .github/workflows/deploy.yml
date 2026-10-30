@@ -67,12 +67,15 @@ jobs:
 
       - name: Migrate Neon (direct URL)
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+          # Tuỳ chọn: GitHub secret ghi đè; mặc định đọc từ Secret Manager (meridian-deploy chỉ được đọc secret này).
+          DATABASE_URL_OVERRIDE: ${{ secrets.DATABASE_URL_DIRECT }}
         run: |
-          if [ -z "$DATABASE_URL" ]; then echo "::error::Thiếu GitHub secret DATABASE_URL_DIRECT"; exit 1; fi
-          npm ci
+          DATABASE_URL="${DATABASE_URL_OVERRIDE:-$(gcloud secrets versions access latest --secret=DATABASE_URL_DIRECT --project "$GCP_PROJECT_ID")}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::Không đọc được DATABASE_URL_DIRECT (Secret Manager hoặc GitHub secret)"; exit 1; fi
+          echo "::add-mask::$DATABASE_URL"
           # Neon thêm channel_binding=require vào connection string; schema engine của Prisma không cần tham số này.
           export DATABASE_URL="${DATABASE_URL//&channel_binding=require/}"
+          npm ci
           npx prisma migrate deploy
 
       - name: Deploy Cloud Run

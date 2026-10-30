@@ -26,7 +26,7 @@ Hoặc không qua compose: `docker build -t meridian .` rồi `docker run -p 808
 | Biến | Ở đâu | Dùng cho |
 |---|---|---|
 | `DATABASE_URL` | Secret Manager (pooled URL) | Cloud Run |
-| `DATABASE_URL_DIRECT` | Secret Manager + **GitHub secret** cùng tên (direct URL) | `prisma migrate deploy` trong workflow |
+| `DATABASE_URL_DIRECT` | Secret Manager (direct URL; `meridian-deploy` được đọc riêng secret này) | `prisma migrate deploy` trong workflow |
 | `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Secret Manager | Cloud Run |
 | `BETTER_AUTH_URL`, `DATABASE_POOL_MAX` | biến thường trong workflow | Cloud Run |
 
@@ -36,7 +36,9 @@ Server kiểm tra lúc khởi động (`lib/env.ts`): thiếu biến bắt buộ
 Workflow `.github/workflows/deploy.yml` chạy khi CI xanh trên `main`, hoặc chạy tay: GitHub → **Actions → Deploy → Run workflow**.
 
 Một lần trước khi chạy:
-1. GitHub → repo → **Settings → Secrets and variables → Actions → New repository secret**: `DATABASE_URL_DIRECT` = direct URL của Neon (không có `-pooler`).
+1. Cho `meridian-deploy` đọc **riêng** secret `DATABASE_URL_DIRECT` (workflow lấy direct URL từ Secret Manager để chạy migration):
+   `gcloud secrets add-iam-policy-binding DATABASE_URL_DIRECT --project pdos-513017 --member serviceAccount:meridian-deploy@pdos-513017.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor`
+   (hoặc Console → Secret Manager → `DATABASE_URL_DIRECT` → Permissions → Grant access). Tuỳ chọn: GitHub secret cùng tên ghi đè giá trị này.
 2. OAuth client (Google Auth Platform → Clients → `Meridian web`): thêm
    - Authorized JavaScript origins: `https://meridian-669737756643.asia-southeast1.run.app`
    - Authorized redirect URIs: `https://meridian-669737756643.asia-southeast1.run.app/api/auth/callback/google`

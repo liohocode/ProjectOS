@@ -45,7 +45,7 @@ Cập nhật lần cuối: 2026-10-28 · Tổng: **75/104 task xong** (Phase 0 h
 ## Phase 5 — Vận hành
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F19](features/F19-deployment.md) | Deploy **Google Cloud Run + Neon Postgres** (gói Free), CD từ GitHub, budget alert, backup | F08.6, F15 | Đang làm — F19.6/F19.7 workflow deploy sẵn sàng, chờ GitHub secret | 6/10 |
+| [F19](features/F19-deployment.md) | Deploy **Google Cloud Run + Neon Postgres** (gói Free), CD từ GitHub, budget alert, backup | F08.6, F15 | Đang làm — F19.6 chờ quyền đọc secret `DATABASE_URL_DIRECT` | 6/10 |
 
 ## Việc nên nhận tiếp theo
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
@@ -53,7 +53,7 @@ Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhi�
 |---|---|
 | [F13.7](features/F13-entity-management.md) Gỡ thành viên, lưu trữ dự án | Task cuối của F13 (F13.1–F13.6 xong) |
 | [F15.4](features/F15-auth-permissions.md) Ma trận quyền + `can()` | Mọi server action còn `TODO(F15.4)`; **chờ người dùng xác nhận ma trận quyền** |
-| [F19.6](features/F19-deployment.md) Deploy lần đầu (workflow) | **Người dùng**: GitHub secret `DATABASE_URL_DIRECT` + redirect URI `run.app` trong OAuth client, rồi chạy Actions → Deploy |
+| [F19.6](features/F19-deployment.md) Deploy lần đầu (workflow) | Build + push image chạy được; cần `meridian-deploy` đọc secret `DATABASE_URL_DIRECT`, rồi Actions → Deploy |
 | [F15.2](features/F15-auth-permissions.md) Đăng nhập Google | Code + OAuth client xong (2026-10-30); thử thật sau F19.6 (thêm redirect URI `run.app`) |
 
 Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 ✓ → F13 (F14 ✓) → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.
