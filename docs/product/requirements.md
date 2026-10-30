@@ -73,8 +73,8 @@ Tổng hợp từ spec UI (`docs/design/design-reference.md`), nội dung tài l
 Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | Mã | Yêu cầu | TT | Feature |
 |---|---|---|---|
-| FR-AG-01 | Meridian cung cấp MCP server thật cho agent kết nối | ⬜ | F16 |
-| FR-AG-02 | Nhóm tool task: `tasks.list`, `tasks.claim`, `tasks.update_status`, `tasks.comment` | ⬜ | F16 |
+| FR-AG-01 | Meridian cung cấp MCP server thật cho agent kết nối | ✅ `/api/mcp` Streamable HTTP + token agent (F16.1) | F16 |
+| FR-AG-02 | Nhóm tool task: `tasks.list`, `tasks.claim`, `tasks.update_status`, `tasks.comment` | 🟡 `tasks_list` (F16.1) | F16 |
 | FR-AG-03 | Nhóm tool docs: `docs.read`, `docs.search`, `docs.append` (chỉ append được ghi, luôn thành revision chờ duyệt) | ⬜ | F16 |
 | FR-AG-04 | `features.propose` chỉ cho BA agent | ⬜ | F16 |
 | FR-AG-05 | `tasks.claim` giới hạn 2 task đồng thời mỗi agent | ⬜ | F16 |

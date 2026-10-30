@@ -138,3 +138,12 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 - `lib/auth/permissions.ts`: `can(actor, action, project?)` thuần (không DB) — dùng lại được cho UI theo quyền (F15.6). `lib/auth/authorize.ts`: `authorize(action, projectId?)` nạp actor từ session + dự án, trả `null` hoặc thông báo lỗi; gọi ở đầu mọi action ghi trong `lib/actions/*` (sau khi xác định dự án của tài nguyên).
 - Hành động gắn dự án luôn yêu cầu thuộc dự án (kể cả tech lead); không thuộc / không tồn tại → "Không tìm thấy dự án" (không lộ dự án, như layout F15.3). Lưu trữ dự án (F13.7, ngoài ma trận gốc) xếp chung nhóm tech lead.
 **Hệ quả**: mỗi action ghi thêm 1–2 query nhỏ. Agent gọi qua MCP (F16) sẽ cần nhánh actor riêng (token F15.5 + `AgentConfig`), không dùng `isTechLead`. Chưa có UI gán/bỏ tech lead — sửa qua DB (ghi vào F15.6 nếu cần).
+
+### ADR-022 — MCP server: `@modelcontextprotocol/sdk`, Streamable HTTP stateless trong Route Handler (2026-10-30)
+**Bối cảnh**: F16.1 — Meridian tự chạy MCP server cho agent, trên Cloud Run (ADR-016: không giữ request mở lâu, nhiều instance, scale về 0). Cần chạy trong Next 16 Route Handler cả `npm run dev` lẫn image standalone (F19.2).
+**Quyết định**:
+- SDK chính thức **`@modelcontextprotocol/sdk`** (pin `1.32.1`): `McpServer` + `WebStandardStreamableHTTPServerTransport` (Web `Request`/`Response` — khớp Route Handler, không cần adapter Express/Node). Không dùng adapter bên thứ ba (vd `mcp-handler`): thêm phụ thuộc chỉ để bọc đúng 10 dòng code.
+- **Stateless + JSON**: `sessionIdGenerator: undefined`, `enableJsonResponse: true`; mỗi POST dựng server mới gắn agent đã xác thực, đóng ngay sau khi trả lời. GET (stream SSE) và DELETE → 405. Phiên/nhật ký (F16.2) và rate limit (F16.7) lưu Postgres, không trong RAM.
+- Xác thực `Authorization: Bearer <token agent>` → `verifyAgentToken` (F15.5) **trước** khi dựng server; sai/thiếu/thu hồi → 401 + `WWW-Authenticate`. Chưa làm OAuth cho MCP (client như Claude Code nhận header tĩnh).
+- Tool là lớp vỏ mỏng (`lib/mcp/server.ts`), nghiệp vụ ở `lib/domain/*` (dùng chung với server action). Tên tool dạng `tasks_list` (không dấu chấm).
+**Hệ quả**: không có thông báo server → client (notifications, sampling) — chấp nhận được cho tool request/response. Đổi sang stateful sau này cần sticky session hoặc lưu phiên DB — ghi ADR mới khi đó.
