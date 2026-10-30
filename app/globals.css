@@ -946,6 +946,19 @@ img { display: block; max-width: 100%; }
 .panel-section-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-500); margin-bottom: var(--space-2); }
 .config-row { display: flex; justify-content: space-between; gap: var(--space-2); font-size: 12.5px; padding: 3px 0; }
 .config-row-label { color: var(--color-neutral-500); }
+/* F15.5: token MCP của agent */
+.token-empty { font-size: 12px; }
+.token-row { display: grid; grid-template-columns: 1fr auto; gap: 0 var(--space-2); align-items: center; padding: 4px 0; font-size: 12.5px; }
+.token-row-main { display: flex; gap: var(--space-2); min-width: 0; }
+.token-row-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.token-row-meta { grid-column: 1; font-size: 11px; color: var(--color-neutral-500); }
+.token-row-revoke { grid-column: 2; grid-row: 1 / span 2; height: 24px; font-size: 11px; padding: 0 var(--space-2); }
+.token-row.is-revoked { opacity: 0.5; }
+.token-reveal { display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-start; }
+.token-reveal-value {
+  display: block; width: 100%; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
+  background: var(--color-neutral-900); font-size: 12px; word-break: break-all; user-select: all;
+}
 .skill-row { margin-bottom: 6px; }
 .skill-row-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 .skill-bar-track { height: 4px; border-radius: 2px; background: var(--color-neutral-900); overflow: hidden; }

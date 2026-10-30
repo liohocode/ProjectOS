@@ -23,7 +23,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 | F15.2 | Better Auth + Google: tài khoản, đăng nhập/đăng xuất, trang login | M | F15.1 | Đang làm — đăng nhập Google thật trên production chạy được (2026-10-30); còn thử đăng xuất + email lạ |
 | F15.3 | Bảo vệ route bằng `proxy.ts`; `getCurrentUser()` đọc từ session | S | F15.2, F11.1 | Xong — 2026-10-28 |
 | F15.4 | Ma trận quyền + `can()`; áp vào mọi server action | M | F15.3 | Xong — 2026-10-30 |
-| F15.5 | Token cho agent (tạo / thu hồi) | M | F15.4 | Chưa làm |
+| F15.5 | Token cho agent (tạo / thu hồi) | M | F15.4 | Xong — 2026-10-30 |
 | F15.6 | UI theo quyền: ẩn/khoá nút, footer người dùng thật, đăng xuất | S | F15.4 | Xong — 2026-10-30 |
 
 ### F15.1 — Quyết định phương án
@@ -65,7 +65,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 ### F15.5 — Token cho agent
 **Làm gì**: model `AgentToken(id, memberId, name, tokenHash, createdAt, lastUsedAt, revokedAt)`; chỉ lưu hash (vd SHA-256). Trong panel agent (màn team): "Tạo token" (hiện token **một lần duy nhất**), danh sách token + "Thu hồi". Hàm `verifyAgentToken(raw)` → `Member` agent (F16.1 dùng).
 **Hoàn thành khi**:
-- [ ] Token thu hồi không còn dùng được; DB không chứa token gốc
+- [x] Token thu hồi không còn dùng được; DB không chứa token gốc (`lib/actions/agentTokens.integration.test.ts`, e2e `agent-tokens.spec.ts`)
 
 ### F15.6 — UI theo quyền
 **Làm gì**: nút không đủ quyền ẩn hoặc disable kèm tooltip; footer sidebar hiện người đang đăng nhập + menu đăng xuất.
@@ -73,6 +73,7 @@ Thay "người dùng hiện tại = Trung Hiếu" bằng **đăng nhập Google*
 - [x] Đăng nhập bằng tài khoản không phải tech lead → không thấy nút "Duyệt" (e2e `permissions-ui.spec.ts`, đăng nhập Nguyễn Nam)
 
 ## Quyết định / ghi chú
+- **F15.5 (2026-10-30)**: migration chỉ thêm `agent_tokens`. Token `mrd_` + 32 byte ngẫu nhiên (base64url) — entropy 256 bit nên băm **SHA-256 thẳng** (không cần bcrypt/salt như mật khẩu), tra theo `tokenHash` unique; định dạng ở `lib/auth/tokenFormat.ts` (thuần, có unit test). Thêm `lastFour` (ngoài mô tả gốc) để người dùng phân biệt token trong danh sách. `verifyAgentToken(raw)` → `{ memberId, name, tokenId }` hoặc null (sai định dạng / không có / đã thu hồi / không phải agent), ghi `lastUsedAt`. Quyền tạo / xem / thu hồi = `agent.configure` (tech lead, F15.4). Tối đa 5 token còn hiệu lực mỗi agent. UI: mục "Token MCP" trong panel agent (chỉ tech lead thấy) — tải danh sách bằng action chỉ đọc khi mở panel; dialog tạo hiện token **một lần** + nút sao chép; thu hồi có xác nhận, dòng đã thu hồi giữ lại mờ.
 - **F15.6 (2026-10-30)**: layout `[project]` tính `getPermissions(user, project)` (`lib/data/permissions.ts`, dùng `can()` của F15.4) → `PermissionsProvider` + hook `useCan(action)`. Nút chính ở header không đủ quyền → **khoá** kèm tooltip lý do (người dùng biết tính năng tồn tại); nút trong nội dung → **ẩn**: Duyệt / Từ chối revision (vẫn "Xem thay đổi"), "Sửa" tài liệu, "Gỡ khỏi dự án", "Sửa" cấu hình agent, sửa/xoá MCP server, nút lưu trữ trên thẻ portfolio (tính theo từng dự án). Footer sidebar → `UserMenu`: người đang đăng nhập + menu "Đăng xuất" (Better Auth `signOut` → `/login`). E2E thêm phiên thứ hai cho Nguyễn Nam (`e2e/.auth/nam.json`); `e2e/create-session.ts` nhận member id; helper `e2e/session.ts` (`signInAs`) — test đăng xuất dùng session riêng để không thu hồi phiên chung.
 - **F15.4 (2026-10-30)** — ADR-021. Migration `permissions_tech_lead_project_creator` (chỉ thêm cột + chuyển dữ liệu `role = 'Tech lead'` → `isTechLead`): `Member.isTechLead`, `Project.createdById` (`createProject` ghi người tạo; dự án mẫu = null → chỉ tech lead duyệt). `authorize()` ở đầu mọi action ghi: task (6) + `createTask` → `task.write`; `approveRevision`/`rejectRevision` → `doc.review`; `editDoc` → `doc.edit`; `createDoc` → `doc.create`; `createProject` → `project.create`; `setProjectArchived` → `project.archive` (thêm ngoài ma trận: tech lead); `addProjectMember`/`removeProjectMember`/`createMember` → `member.manage`; `updateAgentConfig` → `agent.configure`; MCP server (3) → `mcpServer.manage`. Action chỉ đọc (`loadMore*`, `loadMemberActivity`, `searchProject`) giữ như cũ. UI chưa ẩn nút — người không đủ quyền bấm sẽ thấy thông báo lỗi trong dialog (ẩn/khoá nút là F15.6). Chưa có UI gán tech lead.
 - **F15.3 (2026-10-28)**:
