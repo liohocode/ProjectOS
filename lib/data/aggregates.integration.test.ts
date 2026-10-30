@@ -27,13 +27,17 @@ describe("activity feed (sự kiện seed — F17.1)", () => {
 });
 
 describe("task drawer", () => {
-  it("task của agent có context docs của feature + log phiên chạy", async () => {
+  it("log phiên chạy từ dữ liệu thật (F17.4): sự kiện block + lệnh MCP nhắm vào task, cũ trước", async () => {
     const info = await getTaskDrawerInfo("rv-web", "T-418");
-    expect(info?.contextDocs.length).toBeGreaterThan(0);
-    expect(info?.sessionLog.some((s) => s.text.startsWith("Bị block"))).toBe(true);
+    const texts = info!.sessionLog.map((s) => s.text);
+    expect(texts.some((t) => t.includes("T-418 bị block"))).toBe(true);
+    const comment = texts.indexOf("Atlas gọi tasks.comment — T-418 (chờ ADR-11) (Chờ review)");
+    expect(comment).toBeGreaterThanOrEqual(0);
+    expect(texts.indexOf("Vega gọi tasks.assign — T-418 → Atlas")).toBeGreaterThan(comment);
   });
 
-  it("task của người không có context docs; task lạ trả null", async () => {
+  it("task đang chạy có dòng cuối 'Đang chạy' tự tăng; task chưa có gì → log rỗng; task lạ trả null", async () => {
+    expect((await getTaskDrawerInfo("rv-web", "T-405"))?.sessionLog.at(-1)).toMatchObject({ text: "Đang chạy", runningSince: expect.any(String) });
     expect((await getTaskDrawerInfo("rv-web", "T-401"))?.contextDocs).toEqual([]);
     expect(await getTaskDrawerInfo("rv-web", "T-khong-co")).toBeNull();
   });

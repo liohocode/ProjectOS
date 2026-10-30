@@ -59,7 +59,6 @@ Ghi dữ liệu (hiện chỉ có duyệt revision):
 ### Các module "suy ra" (tạm thời)
 | File | Hiện tại | Đích |
 |---|---|---|
-| `lib/data/taskDrawer.ts` | Log phiên chạy sinh theo mẫu từ trạng thái task | Lấy từ `McpSession`/`McpLogEntry` thật — F17 |
 | `lib/data/portfolio.ts` | Tổng hợp từ projects + features + team | Giữ nguyên (đúng thiết kế) |
 
 ## Môi trường dev

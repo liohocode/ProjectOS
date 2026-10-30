@@ -1,7 +1,7 @@
 import { cache } from "react";
-import type { Task, TaskDrawerInfo } from "@/lib/types";
-import { getFeaturesByProject } from "./features";
-import { getDocGroupsByProject } from "./docs";
+import type { TaskDrawerInfo } from "@/lib/types";
+import { getTasksByProject } from "./features";
+import { COMMAND_RESULT_LABEL } from "./mcpLabels";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
 
@@ -21,56 +21,87 @@ const getTaskCommentsByProject = cache(async (projectId: string): Promise<Map<st
   return byTask;
 });
 
-const STAGE_ASSIGNER: Record<string, string> = {
-  BA: "Bảo (BA agent)",
-  TA: "Vega (TA agent)",
-  Dev: "Vega (TA agent)",
-  Review: "Vega (TA agent)",
-  Done: "Vega (TA agent)",
-};
+const TASK_TARGET = /^(T-\d+)(?:\s|$)/;
+const LOG_SCAN_LIMIT = 500;
+
+type Step = TaskDrawerInfo["sessionLog"][number] & { at: Date };
 
 /**
- * Context docs + log phiên chạy cho task drawer — suy ra từ feature/task thật
- * bằng một mẫu chung, thay vì viết tay cho từng task. Thay bằng log thật ở docs/features/F17-realtime-activity.md (F17.4).
+ * Log phiên chạy thật của mọi task trong dự án (F17.4), một lần cho cả màn work:
+ * - thao tác trên web (ActivityEvent không có tool) — chuyển stage, block, giao…;
+ * - lệnh MCP của agent nhắm vào task (McpLogEntry, target bắt đầu bằng mã task) — kể cả lệnh bị chặn.
+ * Sự kiện do lệnh MCP sinh ra (có tool) bỏ qua vì đã có dòng nhật ký tương ứng.
  */
-export const getTaskDrawerInfo = cache(async (projectId: string, taskId: string): Promise<TaskDrawerInfo | null> => {
-  const features = await getFeaturesByProject(projectId);
-  const feature = features.find((f) => f.tasks.some((t) => t.id === taskId));
-  const task = feature?.tasks.find((t) => t.id === taskId);
-  if (!feature || !task) return null;
+const getTaskStepsByProject = cache(async (projectId: string): Promise<Map<string, Step[]>> => {
+  const [events, logs, taskIds] = await Promise.all([
+    prisma.activityEvent.findMany({
+      where: { projectId, taskId: { not: null }, tool: null },
+      select: { taskId: true, text: true, at: true, actor: { select: { name: true } } },
+    }),
+    prisma.mcpLogEntry.findMany({
+      where: { target: { startsWith: "T-" } },
+      orderBy: { at: "desc" },
+      take: LOG_SCAN_LIMIT,
+      select: { tool: true, target: true, result: true, at: true, agent: { select: { name: true } } },
+    }),
+    prisma.task.findMany({ where: { feature: { projectId } }, select: { id: true } }),
+  ]);
+  const inProject = new Set(taskIds.map((t) => t.id));
+  const byTask = new Map<string, Step[]>();
+  const push = (taskId: string, step: Step) => byTask.set(taskId, [...(byTask.get(taskId) ?? []), step]);
 
-  const [groups, comments] = await Promise.all([getDocGroupsByProject(projectId), getTaskCommentsByProject(projectId)]);
-  const featureGroup = groups.find((g) => g.name.startsWith(feature.id));
-  const contextDocs = task.kind === "agent" ? featureGroup?.items.slice(0, 3).map((i) => i.title) ?? [] : [];
-
-  return { contextDocs, sessionLog: buildSessionLog(task, contextDocs.length), comments: comments.get(taskId) ?? [] };
+  for (const e of events) push(e.taskId!, { text: `${e.actor.name}: ${e.text}`, when: formatRelativeVi(e.at), at: e.at });
+  for (const l of logs) {
+    const taskId = TASK_TARGET.exec(l.target)?.[1];
+    if (!taskId || !inProject.has(taskId)) continue;
+    const result = COMMAND_RESULT_LABEL[l.result];
+    push(taskId, { text: `${l.agent.name} gọi ${l.tool} — ${l.target}${result === "OK" ? "" : ` (${result})`}`, when: formatRelativeVi(l.at), at: l.at });
+  }
+  for (const steps of byTask.values()) steps.sort((a, b) => a.at.getTime() - b.at.getTime());
+  return byTask;
 });
 
-function buildSessionLog(task: Task, contextDocCount: number): TaskDrawerInfo["sessionLog"] {
-  const log: TaskDrawerInfo["sessionLog"] = [];
-
-  if (task.kind === "agent") {
-    log.push({ text: `${STAGE_ASSIGNER[task.stage]} chia task và giao cho ${task.who}`, when: "5 giờ trước" });
-    log.push({ text: `${task.who} claim task qua tasks.claim`, when: "4 giờ trước" });
-    if (contextDocCount > 0) {
-      log.push({ text: `Pull ${contextDocCount} tài liệu context qua docs.read`, when: "4 giờ trước" });
+/** Tài liệu agent đã đọc (`docs.read`) trong các phiên chạy của từng task (F17.4). */
+const getContextDocsByProject = cache(async (projectId: string): Promise<Map<string, string[]>> => {
+  const sessions = await prisma.mcpSession.findMany({
+    where: { projectId, taskId: { not: null } },
+    select: { taskId: true, agentId: true, startedAt: true, endedAt: true },
+  });
+  if (sessions.length === 0) return new Map();
+  const since = new Date(Math.min(...sessions.map((s) => s.startedAt.getTime())));
+  const [reads, docs] = await Promise.all([
+    prisma.mcpLogEntry.findMany({
+      where: { tool: "docs.read", result: "OK", agentId: { in: [...new Set(sessions.map((s) => s.agentId))] }, at: { gte: since } },
+      select: { agentId: true, target: true, at: true },
+    }),
+    prisma.doc.findMany({ where: { projectId }, select: { id: true, title: true } }),
+  ]);
+  const titles = new Map(docs.map((d) => [d.id, d.title]));
+  const byTask = new Map<string, string[]>();
+  for (const s of sessions) {
+    // Phiên đang mở: chưa có mốc kết thúc.
+    for (const r of reads) {
+      if (r.agentId !== s.agentId || r.at < s.startedAt || (s.endedAt && r.at > s.endedAt)) continue;
+      const title = titles.get(r.target);
+      const list = byTask.get(s.taskId!) ?? [];
+      if (title && !list.includes(title)) byTask.set(s.taskId!, [...list, title]);
     }
-  } else {
-    log.push({ text: `${task.who} nhận task`, when: "5 giờ trước" });
   }
+  return byTask;
+});
 
-  if (task.blocked) {
-    log.push({ text: `Bị block: ${task.blockedFull ?? task.blocked}`, when: "1 giờ trước" });
-  } else if (task.running) {
-    log.push({ text: "Đang chạy", when: task.running, runningSince: task.runningSince });
-  } else if (task.status === "Chờ review") {
-    log.push({ text: "Đẩy commit, mở PR chờ review", when: "1 giờ trước" });
-    log.push({ text: "Chờ review của Trung Hiếu", when: "30 phút trước" });
-  } else if (task.status === "Xong") {
-    log.push({ text: "Merge PR, đánh dấu task Xong", when: `Hoàn thành ${task.due}` });
-  } else {
-    log.push({ text: `Trạng thái hiện tại: ${task.status}`, when: `Hạn ${task.due}` });
-  }
+/** Context docs + log phiên chạy (dữ liệu thật — F17.4) + bình luận (F16.4) cho task drawer. */
+export const getTaskDrawerInfo = cache(async (projectId: string, taskId: string): Promise<TaskDrawerInfo | null> => {
+  const task = (await getTasksByProject(projectId)).find((t) => t.id === taskId);
+  if (!task) return null;
 
-  return log;
-}
+  const [steps, contextDocs, comments] = await Promise.all([
+    getTaskStepsByProject(projectId),
+    getContextDocsByProject(projectId),
+    getTaskCommentsByProject(projectId),
+  ]);
+  const sessionLog: TaskDrawerInfo["sessionLog"] = (steps.get(taskId) ?? []).map(({ text, when }) => ({ text, when }));
+  // Task đang chạy: dòng cuối "Đang chạy" với thời gian tự tăng (F17.5).
+  if (task.running) sessionLog.push({ text: "Đang chạy", when: task.running, runningSince: task.runningSince });
+  return { contextDocs: contextDocs.get(taskId) ?? [], sessionLog, comments: comments.get(taskId) ?? [] };
+});

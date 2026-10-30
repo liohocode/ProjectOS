@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Đang làm | 4 | F11, F16.2 | FR-WK-06, FR-WK-07, FR-MC-03 |
+| Xong | 4 | F11, F16.2 | FR-WK-06, FR-WK-07, FR-MC-03 |
 
 ## Mục tiêu
 Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer hiện là dữ liệu **suy ra** (ADR-008); nhật ký lệnh ở màn MCP là tĩnh. Feature này thay bằng bảng sự kiện thật và đẩy cập nhật lên trình duyệt ngay khi có thay đổi (spec: "nên là stream/websocket cho realtime feed và log").
@@ -21,7 +21,7 @@ Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer h
 | F17.1 | Model `ActivityEvent` + ghi từ server action và MCP tool | M | F11.7, F16.2 | Xong — 2026-10-30 |
 | F17.2 | Endpoint lấy sự kiện mới theo con trỏ (cho polling ngắn) | S | F17.1 | Xong — 2026-10-30 |
 | F17.3 | Client polling: activity rail, nhật ký lệnh, badge | M | F17.2 | Xong — 2026-10-30 |
-| F17.4 | Log phiên chạy trong drawer lấy từ dữ liệu thật | S | F16.2, F17.1 | Chưa làm |
+| F17.4 | Log phiên chạy trong drawer lấy từ dữ liệu thật | S | F16.2, F17.1 | Xong — 2026-10-30 |
 | F17.5 | "chạy N phút" tự tăng phía client | S | F09.2 | Xong — 2026-10-30 |
 
 ### F17.1 — Bảng sự kiện
@@ -42,7 +42,7 @@ Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer h
 ### F17.4 — Log phiên chạy thật
 **Làm gì**: `getTaskDrawerInfo` lấy log từ `ActivityEvent` + `McpLogEntry` của task (theo `taskId`/`target`), context docs từ các lệnh `docs.read` trong phiên của task. Xoá `buildSessionLog` (mẫu sinh sẵn).
 **Hoàn thành khi**:
-- [ ] Drawer của task vừa được agent claim qua MCP hiển thị đúng các bước đã diễn ra
+- [x] Drawer của task vừa được agent claim qua MCP hiển thị đúng các bước đã diễn ra (`lib/data/taskDrawer.integration.test.ts`)
 
 ### F17.5 — Thời gian chạy live
 **Làm gì**: task row / drawer / activity rail nhận `runningSince` (thêm field vào type nếu cần) và hiển thị "chạy N phút" tự cập nhật mỗi 30s phía client.
@@ -50,6 +50,7 @@ Activity rail ("Agent đang làm gì") và log phiên chạy trong task drawer h
 - [x] Để trang mở vài phút thấy số phút tăng (e2e `running-time.spec.ts`, đồng hồ giả của Playwright)
 
 ## Quyết định / ghi chú
+- **F17.4 (2026-10-30)**: `getTaskDrawerInfo` (giữ chữ ký) dựng log từ hai nguồn, tải **một lần cho cả dự án** (màn work tải drawer info cho mọi task): `ActivityEvent` **không có tool** (thao tác trên web — tránh trùng với lệnh MCP đã sinh sự kiện) + `McpLogEntry` có target bắt đầu bằng mã task (quét 500 dòng mới nhất `target LIKE 'T-%'` — nhật ký không có cột task; đủ cho quy mô hiện tại, thêm cột `taskId` vào nhật ký nếu cần sau). Cũ trước; task đang chạy thêm dòng cuối "Đang chạy" tự tăng. Context docs = `docs.read` thành công của agent trong cửa sổ thời gian các phiên gắn task đó (`McpSession.taskId`). Xoá `buildSessionLog` (mẫu sinh sẵn, tên agent cố định). **Hệ quả với dữ liệu mẫu**: drawer chỉ còn bước có thật (block, lệnh trong nhật ký mẫu); "Context agent đã pull" trống cho tới khi agent đọc tài liệu qua MCP.
 - **F17.3 (2026-10-30)**: `components/realtime/ProjectEvents.tsx` — `ProjectEventsProvider` trong layout dự án: **một** vòng poll cho cả trang, 12 giây, chỉ khi `document.visibilityState === "visible"`, gọi ngay khi tab hiện lại, bỏ qua lượt nếu lượt trước chưa xong. Thành phần đăng ký qua `useProjectEvents`: activity rail chèn sự kiện lên đầu, bảng nhật ký lệnh màn MCP chèn dòng mới (theo bộ lọc agent). Có sự kiện mới → `router.refresh()` giãn cách tối thiểu 15 giây (badge nav, banner block, số liệu) — đơn giản hơn phân loại "sự kiện làm đổi số liệu": mọi sự kiện thuộc dự án đều là thay đổi dữ liệu. Sau refresh, props từ server đã có sự kiện → bỏ trùng theo id (`lib/mergeById.ts`). Lỗi mạng / hết phiên → im lặng thử lại chu kỳ sau. Bảng phiên MCP chưa cập nhật live (cập nhật qua refresh).
 - **F17.2 (2026-10-30)**: `GET /api/projects/<id>/events?after=<ms>` → `{ cursor, events, mcpLog }` (mỗi loại tối đa 50, mới nhất trước, `Cache-Control: no-store`). Con trỏ = **mốc thời gian (ms)** của sự kiện / dòng nhật ký mới nhất đã trả (giữ nguyên nếu không có gì mới); gọi không có `after` chỉ nhận con trỏ = bây giờ. Một con trỏ cho cả hai nguồn vì cùng sắp theo thời gian. Quyền: session người dùng (401) + thành viên dự án (404, không lộ dự án) — đọc `getSessionMemberId` trực tiếp để trả JSON thay vì redirect. `mcpLog` là nhật ký toàn hệ thống (giống bảng ở màn MCP). `ActivityItem.id` thêm để client loại trùng.
 - **F17.1 (2026-10-30)**: migration `activity_events` chỉ thêm bảng + enum `ActivityType` (`task`/`doc`/`feature`/`mcp`) / `ActivityTone`; `taskId`/`docId`/`featureId` là chuỗi không FK (giữ lịch sử khi đối tượng bị xoá). **Chuyển dữ liệu** trong migration: dựng sự kiện ban đầu từ trạng thái hiện có (task đang chạy / bị block / chờ review, revision chờ duyệt) — đúng những gì rail từng suy ra — để rail production không trống; seed chạy cùng các câu SQL đó (`prisma/seed-data/activity.ts`). `recordActivity` **ghi cả hai**: `MemberActivity` (panel "Hoạt động gần đây" — giữ nguyên) + `ActivityEvent` khi truyền `event` (thao tác thuộc dự án: task, tài liệu, duyệt feature). Thao tác cấp tổ chức (thành viên, token, MCP server, dự án) không lên rail. MCP: `recordToolCall` nhận `event` — chỉ lệnh làm thay đổi (claim, cập nhật, bình luận, đề xuất tài liệu/feature), lệnh đọc không lên rail. Rail: 30 sự kiện mới nhất; dòng meta hiện tool MCP hoặc "web"; sự kiện claim của task vẫn đang chạy giữ "chạy N phút" tự tăng (F17.5). `getActivityFeed` giữ chữ ký, bỏ logic suy ra.

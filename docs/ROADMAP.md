@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **93/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **94/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -39,7 +39,7 @@ Cập nhật lần cuối: 2026-10-30 · Tổng: **93/104 task xong** (Phase 0 h
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
 | [F16](features/F16-mcp-server.md) | MCP server thật cho agent: tool task/docs, governance, ghi phiên + nhật ký | F09, F12.1, F13.5, F15.5 | Xong — MCP server thật: 8 tool, governance, phiên/nhật ký, số liệu server, hướng dẫn kết nối | 9/9 |
-| [F17](features/F17-realtime-activity.md) | Bảng sự kiện thật + polling ngắn | F11, F16.2 | Đang làm — sự kiện thật + polling ngắn khi tab hiển thị; còn F17.4 log phiên thật trong drawer | 4/5 |
+| [F17](features/F17-realtime-activity.md) | Bảng sự kiện thật + polling ngắn | F11, F16.2 | Xong — sự kiện thật, polling ngắn khi tab hiển thị, log phiên thật | 5/5 |
 | [F18](features/F18-knowledge-index.md) | pgvector, index tài liệu, tìm kiếm ngữ nghĩa | F12, F16.5 | Hoãn (người dùng chọn để sau) | 0/6 |
 
 ## Phase 5 — Vận hành
@@ -51,11 +51,10 @@ Cập nhật lần cuối: 2026-10-30 · Tổng: **93/104 task xong** (Phase 0 h
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
 | Task | Vì sao |
 |---|---|
-| [F17.4](features/F17-realtime-activity.md) Log phiên chạy thật trong drawer | Task cuối của F17 |
-| [F19.7](features/F19-deployment.md) Thử rollback | Đường deploy còn lại |
-| [F19.8](features/F19-deployment.md) Sao lưu Neon + hướng dẫn khôi phục | Production đã có dữ liệu |
+| [F19.7](features/F19-deployment.md) Thử rollback | Đường deploy còn lại — **chờ người dùng duyệt** (thao tác hạ tầng production) |
+| [F19.8](features/F19-deployment.md) Sao lưu Neon + hướng dẫn khôi phục | Production đã có dữ liệu — **chờ người dùng duyệt** (đụng DB production) |
 
-Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 ✓ → F13 ✓ (F14 ✓) → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.
+Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 ✓ → F13 ✓ (F14 ✓) → F15 (còn F15.2 thử thật) → F16 ✓ → F17 ✓ → F19 (phần còn lại). F18 đang hoãn.
 
 **Đường deploy (chốt 2026-10-28)**: F19.2 ✓ + F19.3 ✓ → F15.2 ✓ (code + OAuth client) → F15.3 ✓ → F19.4 ✓ → F19.5 → F19.6 → F19.7 — không chia sẻ URL production trước F15.3.
 
@@ -91,3 +90,4 @@ Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: 
 - 2026-10-28 — Rà repo + 2 sửa nhỏ (F12.7 approveRevision theo ADR-017, F19.10 dedupe query: màn work 131 → 33 SQL). Chốt hạ tầng: Cloud Run + Neon Free, F19.2 Dockerfile, F19.3 hướng dẫn Google Cloud. **F15.2–F15.3**: đăng nhập Google bằng Better Auth (ADR-020), chặn route, chỉ thành viên xem dự án. **F12 xong** (F12.3–F12.6): từ chối + diff revision, lịch sử người duyệt / lý do từ chối, tạo tài liệu mới, người sửa trực tiếp. **F19.3 xong**: hạ tầng Google Cloud (project `pdos-513017`) + budget alert. **F13.1–F13.6**: dự án mới, thêm thành viên, giao task / xem log từ panel, `AgentConfig` có cấu trúc + form, MCP server ngoài. **F19.4–F19.6**: Neon production (dữ liệu mẫu), kiểm tra env lúc khởi động, **production chạy** ở `meridian-669737756643.asia-southeast1.run.app`, deploy tự động từ `main`. Bàn giao phiên: `docs/HANDOFF.md`. **F14 xong**: deep link màn work, tìm kiếm không dấu (`unaccent`), nút Lọc theo màn, phân trang bảng MCP. Agent tự merge PR khi CI xanh (quy ước mới trong CLAUDE.md).
 - 2026-10-30 — **F13 xong** (F13.7): gỡ thành viên khỏi dự án (chặn còn task/feature chưa Done, chặn tự gỡ), lưu trữ / khôi phục dự án (`Project.archivedAt` — ẩn khỏi switcher, mờ ở portfolio).
 - 2026-10-30 — **F15 gần xong** (F15.4 ma trận quyền + `can()`, F15.5 token agent, F15.6 UI theo quyền + đăng xuất) và **F16 xong**: MCP server thật ở `/api/mcp` (Streamable HTTP stateless, ADR-022) với 8 tool (task, docs, đề xuất feature), governance (server/quyền theo cấu hình agent, 60 lệnh/phút/token), phiên + nhật ký thật, số liệu server thật, hướng dẫn `docs/guides/connect-agent.md`.
+- 2026-10-30 — **F17 xong**: bảng sự kiện `ActivityEvent` (activity rail thôi suy ra), endpoint sự kiện theo con trỏ + polling ngắn chỉ khi tab hiển thị (ADR-016), log phiên chạy + context docs trong drawer từ dữ liệu thật.
