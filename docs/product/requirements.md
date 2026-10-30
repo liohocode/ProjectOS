@@ -78,9 +78,9 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-AG-03 | Nhóm tool docs: `docs.read`, `docs.search`, `docs.append` (chỉ append được ghi, luôn thành revision chờ duyệt) | ✅ `docs_read`, `docs_search` (từ khoá), `docs_append` → revision (F16.5) | F16 |
 | FR-AG-04 | `features.propose` chỉ cho BA agent | ⬜ | F16 |
 | FR-AG-05 | `tasks.claim` giới hạn 2 task đồng thời mỗi agent | ✅ theo `AgentConfig.maxConcurrentTasks` (F16.3) | F16 |
-| FR-AG-06 | Quyền ghi docs theo cấu hình agent: Chỉ đọc / Append (chờ review) / Append + sửa spec | ⬜ | F16 |
-| FR-AG-07 | Giới hạn 60 lệnh/phút mỗi client | ⬜ | F16 |
-| FR-AG-08 | Mọi lệnh ghi vào nhật ký kèm token đã dùng và task liên quan; mỗi kết nối là một phiên chạy | ⬜ | F16 |
+| FR-AG-06 | Quyền ghi docs theo cấu hình agent: Chỉ đọc / Append (chờ review) / Append + sửa spec | 🟡 "Chỉ đọc" chặn `docs_append` (F16.7); hai mức append đều tạo revision chờ duyệt | F16 |
+| FR-AG-07 | Giới hạn 60 lệnh/phút mỗi client | ✅ theo token, đếm từ nhật ký trong DB (F16.7) | F16 |
+| FR-AG-08 | Mọi lệnh ghi vào nhật ký kèm token đã dùng và task liên quan; mỗi kết nối là một phiên chạy | ✅ nhật ký + `tokenId`, phiên (agent, dự án) gắn task (F16.2, F16.7) | F16 |
 | FR-AG-09 | `docs.search` tìm theo ngữ nghĩa trên kho tri thức đã index (embedding) | ⬜ | F18 |
 
 ## 2. Yêu cầu phi chức năng
