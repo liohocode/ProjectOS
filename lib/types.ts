@@ -154,6 +154,8 @@ export interface TimelineRow {
 export type ActivityTone = "run" | "ok" | "review" | "block";
 
 export interface ActivityItem {
+  /** id sự kiện (F17.1) — khoá React + loại trùng khi polling (F17.3) */
+  id?: string;
   who: string;
   kind: MemberKind;
   text: string;
