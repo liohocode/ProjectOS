@@ -112,6 +112,13 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-MB-01 | Inbox "Cần tôi xử lý" gom mọi việc chờ duyệt | ⬜ | F25 |
 | FR-MB-02 | Theo dõi trạng thái và duyệt trên màn hình điện thoại (390px) | ⬜ | F25 |
 | FR-MB-03 | Cài lên màn hình chính (PWA) | ⬜ | F25 |
+| FR-SK-01 | Tạo / sửa skill theo định dạng `SKILL.md`, có phiên bản + diff | ⬜ | F27 |
+| FR-SK-02 | Bộ skill dùng chung toàn tổ chức + bắt buộc theo dự án + thêm theo agent, ghim phiên bản | ⬜ | F27 |
+| FR-SK-03 | Agent nhận đúng bộ skill được gán qua MCP | ⬜ | F27 |
+| FR-SK-04 | Đồng bộ skill vào repo (`.claude/skills/` + lock có hash), CI phát hiện lệch | ⬜ | F27 |
+| FR-SK-05 | Agent đề xuất cải tiến skill → người duyệt | ⬜ | F27 |
+| FR-SK-06 | Thống kê dùng skill gắn với chất lượng / token của task | ⬜ | F27 |
+| FR-SK-07 | Bộ shared skills khởi điểm (quy trình làm việc với Meridian, chuẩn code / test / migration) | ⬜ | F27 |
 | FR-DF-01 | API đọc cho hệ thống khác (dự án, task, chỉ số, token) | ⬜ | F26 |
 | FR-DF-02 | Báo cáo tiến độ định kỳ + xuất CSV | ⬜ | F26 |
 | FR-DF-03 | Tích hợp GitHub: trạng thái PR / CI cập nhật task | ⬜ | F26 |

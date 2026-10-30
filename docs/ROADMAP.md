@@ -2,10 +2,10 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **94/140 task xong** · Giai đoạn 1 (MVP) gần xong 94/103 · Giai đoạn 2 vừa lập kế hoạch 0/37.
+Cập nhật lần cuối: 2026-10-30 · Tổng: **96/148 task xong** · Giai đoạn 1 (MVP) gần xong 94/103 · Giai đoạn 2: 2/45 (đã chốt F23.1, F25.1).
 
 ## Mục tiêu giai đoạn 2 (người dùng chốt 2026-10-30)
-Meridian là **data foundation cho các dự án của công ty**: quản lý tiến độ, công việc và coding agent; quy trình đảm bảo **chất lượng** và kiểm soát **effort / AI token**; người thật theo dõi trạng thái và review chi tiết; hỗ trợ coding agent làm việc qua MCP; tài liệu feature / task / kỹ thuật; người quản lý làm việc được trên **mobile**.
+Meridian là **data foundation cho các dự án của công ty**: quản lý tiến độ, công việc và coding agent; quy trình đảm bảo **chất lượng** và kiểm soát **effort / AI token**; người thật theo dõi trạng thái và review chi tiết; hỗ trợ coding agent làm việc qua MCP; tài liệu feature / task / kỹ thuật; người quản lý làm việc được trên **mobile**; Meridian **tạo, quản lý và cung cấp skills dùng chung đồng nhất** cho mọi coding agent.
 
 ## Đánh giá giai đoạn 1 (review 2026-10-30)
 **Đã có**: 5 màn chạy trên Postgres thật, ghi dữ liệu đầy đủ cho task / tài liệu / thành viên / MCP server; đăng nhập Google + ma trận quyền; MCP server thật (8 tool, governance, phiên + nhật ký); sự kiện thật + polling; production trên Cloud Run + Neon, deploy tự động, 3 tầng test + CI.
@@ -17,6 +17,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | Task không có cổng review của người, không có tiêu chí hoàn thành, không gắn PR, không có lịch sử chuyển trạng thái | Không đảm bảo / đo được chất lượng việc agent làm | F22 |
 | `tokensUsed` luôn 0 — không biết agent tốn bao nhiêu token | Không kiểm soát được effort / chi phí AI | F23 |
 | Agent phải gọi 4–5 lệnh mới đủ ngữ cảnh; không chia task / tạo tài liệu được; chưa có quy ước làm việc chuẩn cho repo | Agent làm kém hiệu quả, mỗi repo một kiểu | F24 |
+| Không có nơi quản lý skills cho agent — mỗi repo / agent tự giữ bản riêng, không đồng nhất, không có phiên bản / duyệt | Agent làm việc không nhất quán giữa dự án | F27 |
 | Giao diện chỉ cho desktop | Người quản lý không theo dõi / duyệt trên điện thoại | F25 |
 | Không có API / báo cáo cho hệ thống khác | Chưa là "data foundation" | F26 |
 | Production vẫn là dữ liệu demo, chưa có backup, tech lead chỉ sửa được qua DB | Chưa an toàn để dùng thật | F20 |
@@ -49,13 +50,14 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 8 — Agent & effort
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F23](features/F23-ai-effort-tokens.md) | Ghi nhận token AI theo task / agent / dự án, ngân sách, ước lượng vs thực tế | F16, F22.1 | Chưa bắt đầu | 0/5 |
+| [F23](features/F23-ai-effort-tokens.md) | Ghi nhận token AI theo task / agent / dự án, ngân sách, ước lượng vs thực tế | F16, F22.1 | Chưa bắt đầu — nguồn token đã chốt (F23.1) | 1/5 |
 | [F24](features/F24-coding-agent-support.md) | `context_get`, agent chia task / đề xuất tài liệu, template tài liệu, quy ước làm việc cho repo | F16, F21.6 | Chưa bắt đầu | 0/6 |
+| [F27](features/F27-agent-skills.md) | **Skills hub**: tạo / phiên bản / duyệt skill, gán theo tổ chức / dự án / agent, phân phối qua MCP + đồng bộ vào repo (hash), agent đề xuất cải tiến, thống kê | F16, F24.1 | Chưa bắt đầu | 0/8 |
 
 ### Phase 9 — Mobile cho người quản lý
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F25](features/F25-mobile-manager.md) | Inbox "Cần tôi xử lý", giao diện responsive, PWA | F22.2 | Chưa bắt đầu | 0/6 |
+| [F25](features/F25-mobile-manager.md) | Inbox "Cần tôi xử lý", giao diện responsive, PWA | F22.2 | Chưa bắt đầu — hướng mobile đã chốt (F25.1) | 1/6 |
 
 ### Phase 10 — Data foundation & tích hợp
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -65,7 +67,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Thứ tự làm
 1. **F20.1 backup** (đã duyệt) → F20.2, F20.4 → F20.3 (Lio onboarding dự án thật, lưu trữ dự án mẫu).
 2. **F21** (song song F22.1, F22.4) → **F22.2 cổng review** → F22.3, F22.5.
-3. **F24.1 `context_get`** + F24.5 quy ước agent sớm để dogfooding với Claude Code; **F23** sau khi chốt F23.1.
+3. **F24.1 `context_get`** + F24.5 quy ước agent sớm để dogfooding với Claude Code → **F27** (F27.1–F27.5 trước: model, màn Skills, gán, MCP, đồng bộ repo; F27.8 đưa quy ước F24.5 thành skill dùng chung đầu tiên) → **F23** (agent tự báo token).
 4. **F25.2 inbox** ngay sau F22.2 (giá trị cao cả desktop) → F25.3–F25.6 sau khi chốt F25.1.
 5. **F26** khi dữ liệu thật đã chảy (sau F22.5, F23.3).
 
@@ -81,12 +83,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Khuyến nghị |
 |---|---|---|
-| Nguồn số token AI | F23.1 | Agent tự báo qua MCP (`usage_report`) — không phụ thuộc nhà cung cấp, làm được ngay |
-| Hướng mobile | F25.1 | Web responsive + PWA (một codebase, không phát hành store) |
-| Tích hợp GitHub (GitHub App, quyền repo) | F26.3 | Làm sau khi F22 chạy thật; Lio tạo GitHub App |
 | Nhà cung cấp embedding | F18 | Vẫn hoãn — tìm kiếm từ khoá đủ cho giai đoạn đầu |
-| Thử rollback trên production | F19.7 | Đề xuất đã gửi; không chặn việc khác |
-| Xoá cột `Member.config` (mất dữ liệu) | F20.5 | Duyệt sau khi có backup |
 
 ## Backlog (chưa xếp lịch)
 - Thông báo ra ngoài (Slack / email / push) — người dùng chọn để sau (2026-10-30).
@@ -105,6 +102,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | Feature chưa giao vẫn hiện ở list view | 2026-10-14 | — (ghi trong F09.3) |
 | Thư viện đăng nhập: **Better Auth** thay Auth.js (Auth.js chỉ còn vá bảo mật, v5 vẫn beta); consent screen External | 2026-10-28 | ADR-020 |
 | Ma trận quyền F15.4 duyệt nguyên bản; tech lead là cờ `Member.isTechLead` | 2026-10-30 | ADR-021 |
+| Duyệt kế hoạch giai đoạn 2 + F27 skills hub; token AI: **agent tự báo qua MCP**; mobile: **web responsive + PWA**; duyệt thử rollback (F19.7), xoá `Member.config` sau backup (F20.5); tích hợp GitHub làm sau F22 (Lio tạo GitHub App) | 2026-10-30 | — |
 | Mục tiêu giai đoạn 2: data foundation cho dự án công ty; lưu trữ dự án mẫu khi dùng thật; duyệt backup Neon; thông báo ra ngoài để sau | 2026-10-30 | — |
 | Giữ Neon Free (không Cloud SQL); một môi trường deploy từ `main`; làm F15.2–F15.3 trước khi chia sẻ URL | 2026-10-28 | ADR-015 (xác nhận lại), F19 |
 
@@ -123,4 +121,4 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 - 2026-10-30 — **F13 xong** (F13.7): gỡ thành viên khỏi dự án (chặn còn task/feature chưa Done, chặn tự gỡ), lưu trữ / khôi phục dự án (`Project.archivedAt` — ẩn khỏi switcher, mờ ở portfolio).
 - 2026-10-30 — **F15 gần xong** (F15.4 ma trận quyền + `can()`, F15.5 token agent, F15.6 UI theo quyền + đăng xuất) và **F16 xong**: MCP server thật ở `/api/mcp` (Streamable HTTP stateless, ADR-022) với 8 tool (task, docs, đề xuất feature), governance (server/quyền theo cấu hình agent, 60 lệnh/phút/token), phiên + nhật ký thật, số liệu server thật, hướng dẫn `docs/guides/connect-agent.md`.
 - 2026-10-30 — **F17 xong**: bảng sự kiện `ActivityEvent` (activity rail thôi suy ra), endpoint sự kiện theo con trỏ + polling ngắn chỉ khi tab hiển thị (ADR-016), log phiên chạy + context docs trong drawer từ dữ liệu thật.
-- 2026-10-30 — **Review + lập lại kế hoạch**: giai đoạn 1 (MVP) 94/103; giai đoạn 2 "data foundation" gồm F20–F26 (37 task) — dùng thật, quản lý công việc, chất lượng, token AI, hỗ trợ coding agent, mobile, API.
+- 2026-10-30 — **Review + lập lại kế hoạch**: giai đoạn 1 (MVP) 94/103; giai đoạn 2 "data foundation" gồm F20–F27 (45 task, F27 skills hub do người dùng bổ sung) — dùng thật, quản lý công việc, chất lượng, token AI, hỗ trợ coding agent, mobile, API.

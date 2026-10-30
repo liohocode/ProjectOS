@@ -37,6 +37,6 @@ Chi tiết UI (layout, token, kích thước, hành vi): `docs/design/design-ref
 
 ## Phạm vi hiện tại vs. đích
 - **Giai đoạn 1 — MVP (gần xong)**: 5 màn trên Postgres thật, ghi dữ liệu đầy đủ, đăng nhập Google + phân quyền, **MCP server thật** cho agent (task, tài liệu, đề xuất feature, governance, nhật ký), sự kiện thật + polling, production trên Cloud Run + Neon.
-- **Giai đoạn 2 — đích (chốt 2026-10-30)**: Meridian là **data foundation cho các dự án của công ty** — quản lý tiến độ / công việc / coding agent, quy trình đảm bảo chất lượng và kiểm soát effort / AI token, người theo dõi + review chi tiết, hỗ trợ coding agent qua MCP, tài liệu feature / task / kỹ thuật, người quản lý dùng được trên mobile. Kế hoạch: `docs/ROADMAP.md` (F20–F26).
+- **Giai đoạn 2 — đích (chốt 2026-10-30)**: Meridian là **data foundation cho các dự án của công ty** — quản lý tiến độ / công việc / coding agent, quy trình đảm bảo chất lượng và kiểm soát effort / AI token, người theo dõi + review chi tiết, hỗ trợ coding agent qua MCP, tài liệu feature / task / kỹ thuật, người quản lý dùng được trên mobile, **skills dùng chung đồng nhất** cho mọi coding agent. Kế hoạch: `docs/ROADMAP.md` (F20–F27).
 
 Yêu cầu đầy đủ đánh số + trạng thái đáp ứng: `docs/product/requirements.md`.

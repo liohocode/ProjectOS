@@ -22,7 +22,7 @@ Chuyển production từ bản demo sang **dữ liệu thật của công ty** a
 | F20.2 | Quản trị thành viên: sửa hồ sơ, email đăng nhập, gán / bỏ tech lead | M | — | Chưa làm |
 | F20.3 | Hướng dẫn onboarding dự án thật + checklist go-live | S | F20.1, F20.2 | Chưa làm |
 | F20.4 | Production không chạy seed demo; seed tách "demo" / "tối thiểu" | S | — | Chưa làm |
-| F20.5 | Xoá cột cũ `Member.config` (migration mất dữ liệu — **cần người dùng duyệt**, sau F20.1) | S | F20.1 | Chưa làm |
+| F20.5 | Xoá cột cũ `Member.config` (migration mất dữ liệu — người dùng **đã duyệt** 2026-10-30, làm sau F20.1) | S | F20.1 | Chưa làm |
 
 ### F20.1 — Backup Neon
 **Làm gì**: workflow GitHub Actions `backup.yml` (cron hằng đêm + chạy tay): `pg_dump` qua `DATABASE_URL_DIRECT` (secret có sẵn) → artifact nén giữ 7 ngày. `docs/guides/backup-restore.md`: khôi phục vào branch Neon mới, kiểm tra, đổi kết nối. Thử khôi phục một lần vào DB local.
