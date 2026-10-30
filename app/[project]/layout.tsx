@@ -20,6 +20,8 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   ]);
   // Dự án không tồn tại hoặc người dùng không thuộc dự án → 404 (không lộ dự án có tồn tại hay không).
   if (!project || !myProjects.some((p) => p.id === projectId)) notFound();
+  // Dự án lưu trữ (F13.7) vẫn mở được từ portfolio nhưng không hiện trong switcher / bộ lọc — trừ dự án đang mở.
+  const activeProjects = myProjects.filter((p) => !p.archived || p.id === projectId);
 
   // Badge chỉ cần số → hàm đếm, không tải danh sách task/thành viên (page cần thì tự tải).
   const [taskCounts, docCount, pendingRevisions, memberCount, pipeline, mcpServers, currentUser, memberOptions, agentOptions] =
@@ -55,7 +57,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
     <div className="app-shell">
       <Sidebar
         project={project}
-        projects={myProjects}
+        projects={activeProjects}
         navCounts={navCounts}
         navAlerts={navAlerts}
         pipeline={pipeline}
@@ -66,7 +68,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
       <div className="main-area">
         <Header
           project={project}
-          filterOptions={{ members: memberOptions, agents: agentOptions, projects: myProjects.map(({ id, name }) => ({ id, name })) }}
+          filterOptions={{ members: memberOptions, agents: agentOptions, projects: activeProjects.map(({ id, name }) => ({ id, name })) }}
         />
         <div className="content-area">{props.children}</div>
       </div>

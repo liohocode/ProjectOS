@@ -8,6 +8,7 @@ import { initials } from "@/components/work/taskStyle";
 import { AssignTaskDialog, type AssignableFeature } from "./AssignTaskDialog";
 import { MemberLogDialog } from "./MemberLogDialog";
 import { AgentConfigDialog } from "./AgentConfigDialog";
+import { RemoveMemberDialog } from "./RemoveMemberDialog";
 
 export function MemberPanel({
   member,
@@ -15,6 +16,7 @@ export function MemberPanel({
   assignable,
   mcpServers,
   agents,
+  onRemoved,
 }: {
   member: Member;
   /** Chỉ thành viên của dự án đang mở mới giao task được (xem "Toàn tổ chức" thì có thể không) */
@@ -23,10 +25,13 @@ export function MemberPanel({
   /** Id MCP server đã đăng ký — form cấu hình agent (F13.5) */
   mcpServers: string[];
   agents: MemberOption[];
+  /** Gỡ khỏi dự án xong (F13.7) — màn team bỏ chọn thành viên */
+  onRemoved: () => void;
 }) {
   const [assigning, setAssigning] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [editingConfig, setEditingConfig] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const projectId = usePathname().split("/")[1];
   return (
     <aside className="team-aside">
@@ -95,6 +100,11 @@ export function MemberPanel({
       </div>
 
       <div className="panel-footer">
+        {inProject && (
+          <button type="button" className="btn btn-ghost" aria-label="Gỡ khỏi dự án" title="Gỡ khỏi dự án" onClick={() => setRemoving(true)}>
+            <i className="ph ph-user-minus" aria-hidden />
+          </button>
+        )}
         {/* F13.4 — agent: nhật ký lệnh MCP lọc theo agent (F14.3); người: dialog hoạt động */}
         {member.kind === "agent" ? (
           <Link className="btn btn-secondary" href={`/${projectId}/mcp?agent=${encodeURIComponent(member.id)}`}>
@@ -117,6 +127,17 @@ export function MemberPanel({
       </div>
       {editingConfig && member.agentConfig && (
         <AgentConfigDialog member={member} config={member.agentConfig} mcpServers={mcpServers} agents={agents} onClose={() => setEditingConfig(false)} />
+      )}
+      {removing && (
+        <RemoveMemberDialog
+          member={member}
+          projectId={projectId}
+          onClose={() => setRemoving(false)}
+          onRemoved={() => {
+            setRemoving(false);
+            onRemoved();
+          }}
+        />
       )}
       {showLog && <MemberLogDialog member={member} onClose={() => setShowLog(false)} />}
       {assigning && <AssignTaskDialog member={member} features={assignable} onClose={() => setAssigning(false)} />}

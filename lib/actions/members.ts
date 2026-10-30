@@ -41,6 +41,36 @@ export async function addProjectMember(projectId: string, memberId: string): Pro
   return ok();
 }
 
+/**
+ * Gỡ thành viên khỏi dự án (F13.7) — hồ sơ vẫn còn trong tổ chức. Chặn khi còn task chưa Done hoặc feature chưa Done
+ * được giao cho họ trong dự án (phải giao lại trước), và chặn tự gỡ chính mình (tránh tự khoá khỏi dự án).
+ */
+export async function removeProjectMember(projectId: string, memberId: string): Promise<ActionResult> {
+  // TODO(F15.4): kiểm tra quyền
+  const input = z.object({ projectId: projectIdSchema, memberId: memberIdSchema }).safeParse({ projectId, memberId });
+  if (!input.success) return fail(input.error.issues[0].message);
+  const { projectId: project, memberId: member } = input.data;
+
+  const [projectRow, memberRow, link, openTasks, openFeatures] = await Promise.all([
+    prisma.project.findUnique({ where: { id: project }, select: { name: true } }),
+    prisma.member.findUnique({ where: { id: member }, select: { name: true } }),
+    prisma.projectMember.findUnique({ where: { projectId_memberId: { projectId: project, memberId: member } } }),
+    prisma.task.count({ where: { assigneeId: member, stage: { not: "Done" }, feature: { projectId: project } } }),
+    prisma.feature.count({ where: { ownerId: member, stage: { not: "Done" }, projectId: project } }),
+  ]);
+  if (!projectRow) return fail("Không tìm thấy dự án");
+  if (!memberRow) return fail("Không tìm thấy thành viên");
+  if (!link) return fail(`${memberRow.name} không thuộc dự án này`);
+  if (member === (await getCurrentUserId())) return fail("Không tự gỡ mình khỏi dự án — nhờ thành viên khác gỡ");
+  if (openTasks > 0) return fail(`${memberRow.name} còn ${openTasks} task chưa Done trong dự án — giao lại cho người khác trước`);
+  if (openFeatures > 0) return fail(`${memberRow.name} còn phụ trách ${openFeatures} feature chưa Done — đổi người phụ trách trước`);
+
+  await prisma.projectMember.delete({ where: { projectId_memberId: { projectId: project, memberId: member } } });
+  await recordActivity("ph-user-minus", `Gỡ ${memberRow.name} khỏi ${projectRow.name}`);
+  revalidateMemberViews();
+  return ok();
+}
+
 const newMemberSchema = z
   .object({
     projectId: projectIdSchema,

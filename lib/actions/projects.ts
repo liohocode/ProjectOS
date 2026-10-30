@@ -5,7 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { PROJECT_CODE_PATTERN, PROJECT_ID_PATTERN, PROJECT_STATUSES, RESERVED_PROJECT_IDS } from "@/lib/projectRules";
-import { fail, type ActionResult } from "./result";
+import { fail, ok, type ActionResult } from "./result";
+import { recordActivity } from "./_activity";
 
 const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày không hợp lệ");
 
@@ -78,4 +79,26 @@ export async function createProject(input: NewProjectInput): Promise<ActionResul
   // Portfolio + project switcher của mọi dự án.
   revalidatePath("/[project]", "layout");
   return { ok: true, projectId: data.id };
+}
+
+/** Lưu trữ / khôi phục dự án (F13.7). Chỉ thành viên dự án; dữ liệu giữ nguyên, chỉ ẩn khỏi switcher. */
+export async function setProjectArchived(projectId: string, archived: boolean): Promise<ActionResult> {
+  // TODO(F15.4): kiểm tra quyền (vd chỉ tech lead)
+  const id = z.string().trim().min(1, "Thiếu dự án").safeParse(projectId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const userId = await getCurrentUserId();
+
+  const project = await prisma.project.findUnique({
+    where: { id: id.data },
+    select: { name: true, archivedAt: true, members: { where: { memberId: userId }, select: { memberId: true } } },
+  });
+  // Không thuộc dự án → trả như không tồn tại (giống layout, không lộ dự án).
+  if (!project || project.members.length === 0) return fail("Không tìm thấy dự án");
+  if (archived === (project.archivedAt !== null)) return fail(archived ? "Dự án đã được lưu trữ" : "Dự án chưa được lưu trữ");
+
+  await prisma.project.update({ where: { id: id.data }, data: { archivedAt: archived ? new Date() : null } });
+  await recordActivity(archived ? "ph-archive" : "ph-arrow-counter-clockwise", `${archived ? "Lưu trữ" : "Khôi phục"} dự án ${project.name}`);
+  // Portfolio + project switcher của mọi dự án.
+  revalidatePath("/[project]", "layout");
+  return ok();
 }

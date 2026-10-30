@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-28 · Tổng: **76/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **77/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -27,7 +27,7 @@ Cập nhật lần cuối: 2026-10-28 · Tổng: **76/104 task xong** (Phase 0 h
 |---|---|---|---|---|
 | [F11](features/F11-task-mutations.md) | Thao tác task ghi DB; khuôn mẫu dialog hành động chính | F07 (+F09.2) | Xong | 7/7 |
 | [F12](features/F12-doc-authoring.md) | Revision có nội dung, duyệt áp vào bản chính, từ chối, diff, tạo/sửa tài liệu | F11.4 | Xong | 7/7 |
-| [F13](features/F13-entity-management.md) | Dự án mới, thêm thành viên, cấu hình agent, MCP server ngoài | F11 | Đang làm | 6/7 |
+| [F13](features/F13-entity-management.md) | Dự án mới, thêm thành viên, cấu hình agent, MCP server ngoài | F11 | Xong | 7/7 |
 | [F14](features/F14-search-filter.md) | Tìm kiếm, lọc, deep link, phân trang | F07 | Xong | 4/4 |
 
 ## Phase 3 — Danh tính
@@ -51,13 +51,11 @@ Cập nhật lần cuối: 2026-10-28 · Tổng: **76/104 task xong** (Phase 0 h
 Các task không phụ thuộc gì và mở khoá nhiều việc khác — nhiều agent có thể nhận song song vì đụng file khác nhau:
 | Task | Vì sao |
 |---|---|
-| [F13.7](features/F13-entity-management.md) Gỡ thành viên, lưu trữ dự án | Task cuối của F13 (F13.1–F13.6 xong) |
 | [F15.4](features/F15-auth-permissions.md) Ma trận quyền + `can()` | Mọi server action còn `TODO(F15.4)`; **chờ người dùng xác nhận ma trận quyền** |
-| [F13.7](features/F13-entity-management.md) Gỡ thành viên, lưu trữ dự án | Task cuối của F13 |
+| [F19.7](features/F19-deployment.md) Thử rollback | Đường deploy còn lại |
 | [F19.8](features/F19-deployment.md) Sao lưu Neon + hướng dẫn khôi phục | Production đã có dữ liệu |
-| [F15.4](features/F15-auth-permissions.md) Ma trận quyền | **Chờ người dùng xác nhận** ma trận đề xuất |
 
-Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 ✓ → F13 (F14 ✓) → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.
+Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: F12 ✓ → F13 ✓ (F14 ✓) → F15 → F16 → F17 → F19 (phần còn lại). F18 đang hoãn.
 
 **Đường deploy (chốt 2026-10-28)**: F19.2 ✓ + F19.3 ✓ → F15.2 ✓ (code + OAuth client) → F15.3 ✓ → F19.4 ✓ → F19.5 → F19.6 → F19.7 — không chia sẻ URL production trước F15.3.
 
@@ -91,3 +89,4 @@ Phase 1 (F08, F09, F10) và F11 đã xong. Thứ tự khuyến nghị sau đó: 
 - 2026-10-14 — **F10 xong**: skeleton loading 5 màn, error boundary nhận diện mất kết nối DB, trang 404, empty state, thao tác bàn phím (drawer có focus trap). Phase 1 chỉ còn F08.6 chờ push để CI chạy.
 - 2026-10-15 — F08.6 đóng: CI GitHub Actions xanh (sửa build không cần DB, chuẩn bị DB test trước khi Playwright start server). **F11 xong**: `lib/auth/currentUser.ts`, server action task (zod + `ActionResult`, ADR-017), drawer ghi DB (chuyển stage, giao, block, sửa nhanh), dialog điều khiển bằng URL + "Task mới" (ADR-018), ghi hoạt động người thao tác.
 - 2026-10-28 — Rà repo + 2 sửa nhỏ (F12.7 approveRevision theo ADR-017, F19.10 dedupe query: màn work 131 → 33 SQL). Chốt hạ tầng: Cloud Run + Neon Free, F19.2 Dockerfile, F19.3 hướng dẫn Google Cloud. **F15.2–F15.3**: đăng nhập Google bằng Better Auth (ADR-020), chặn route, chỉ thành viên xem dự án. **F12 xong** (F12.3–F12.6): từ chối + diff revision, lịch sử người duyệt / lý do từ chối, tạo tài liệu mới, người sửa trực tiếp. **F19.3 xong**: hạ tầng Google Cloud (project `pdos-513017`) + budget alert. **F13.1–F13.6**: dự án mới, thêm thành viên, giao task / xem log từ panel, `AgentConfig` có cấu trúc + form, MCP server ngoài. **F19.4–F19.6**: Neon production (dữ liệu mẫu), kiểm tra env lúc khởi động, **production chạy** ở `meridian-669737756643.asia-southeast1.run.app`, deploy tự động từ `main`. Bàn giao phiên: `docs/HANDOFF.md`. **F14 xong**: deep link màn work, tìm kiếm không dấu (`unaccent`), nút Lọc theo màn, phân trang bảng MCP. Agent tự merge PR khi CI xanh (quy ước mới trong CLAUDE.md).
+- 2026-10-30 — **F13 xong** (F13.7): gỡ thành viên khỏi dự án (chặn còn task/feature chưa Done, chặn tự gỡ), lưu trữ / khôi phục dự án (`Project.archivedAt` — ẩn khỏi switcher, mờ ở portfolio).

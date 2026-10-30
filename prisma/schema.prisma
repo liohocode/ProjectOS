@@ -70,6 +70,8 @@ model Project {
   desc            String
   currentSprintId String? @unique
   currentSprint   Sprint? @relation("CurrentSprint", fields: [currentSprintId], references: [id], onDelete: SetNull)
+  /// Lưu trữ (F13.7): ẩn khỏi project switcher, hiện mờ ở portfolio. null = đang hoạt động
+  archivedAt      DateTime?
 
   members  ProjectMember[]
   features Feature[]

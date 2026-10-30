@@ -2,11 +2,16 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getTeam, getTeamByProject } from "@/lib/data/team";
-import { addProjectMember, createMember, loadMemberActivity, updateAgentConfig } from "./members";
+import { addProjectMember, createMember, loadMemberActivity, removeProjectMember, updateAgentConfig } from "./members";
 
 // crm seed: không có agent-vega → dùng để thử "Từ tổ chức".
 afterAll(async () => {
   await prisma.projectMember.deleteMany({ where: { projectId: "crm", memberId: "agent-vega" } });
+  await prisma.projectMember.upsert({
+    where: { projectId_memberId: { projectId: "crm", memberId: "agent-scout" } },
+    create: { projectId: "crm", memberId: "agent-scout" },
+    update: {},
+  });
   await prisma.member.deleteMany({ where: { name: { startsWith: "IT " } } });
 });
 
@@ -134,5 +139,38 @@ describe("AgentConfig (F13.5)", () => {
     const nova = (await getTeam()).find((m) => m.id === created.memberId)!;
     expect(nova.agentConfig).toMatchObject({ model: "", docsWritePermission: "read_only", maxConcurrentTasks: 2 });
     expect(nova.config?.[0]).toEqual(["Model", "Chưa đặt"]);
+  });
+});
+
+describe("removeProjectMember (F13.7)", () => {
+  it("gỡ agent không còn việc → mất khỏi danh sách dự án, hồ sơ tổ chức giữ nguyên", async () => {
+    expect(await removeProjectMember("crm", "agent-scout")).toEqual({ ok: true });
+    expect((await getTeamByProject("crm")).some((m) => m.id === "agent-scout")).toBe(false);
+    expect((await getTeam()).some((m) => m.id === "agent-scout")).toBe(true);
+    expect(await removeProjectMember("crm", "agent-scout")).toEqual({ ok: false, error: "Scout không thuộc dự án này" });
+  });
+
+  it("chặn còn task chưa Done, tự gỡ mình, thành viên/dự án không tồn tại", async () => {
+    expect(await removeProjectMember("crm", "agent-atlas")).toEqual({
+      ok: false,
+      error: "Atlas còn 2 task chưa Done trong dự án — giao lại cho người khác trước",
+    });
+    expect(await removeProjectMember("crm", "hieu")).toEqual({ ok: false, error: "Không tự gỡ mình khỏi dự án — nhờ thành viên khác gỡ" });
+    expect(await removeProjectMember("crm", "khong-co")).toEqual({ ok: false, error: "Không tìm thấy thành viên" });
+    expect(await removeProjectMember("khong-co", "agent-atlas")).toEqual({ ok: false, error: "Không tìm thấy dự án" });
+    expect((await getTeamByProject("crm")).some((m) => m.id === "agent-atlas")).toBe(true);
+  });
+
+  it("chặn còn phụ trách feature chưa Done (dù không còn task)", async () => {
+    const feature = await prisma.feature.findFirstOrThrow({ where: { projectId: "crm", stage: { not: "Done" } } });
+    await prisma.feature.update({ where: { id: feature.id }, data: { ownerId: "agent-bao" } });
+    try {
+      expect(await removeProjectMember("crm", "agent-bao")).toEqual({
+        ok: false,
+        error: "Bảo còn phụ trách 1 feature chưa Done — đổi người phụ trách trước",
+      });
+    } finally {
+      await prisma.feature.update({ where: { id: feature.id }, data: { ownerId: feature.ownerId } });
+    }
   });
 });

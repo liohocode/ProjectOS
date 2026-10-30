@@ -15,7 +15,8 @@ export interface ProjectSummary extends Project {
 }
 
 export const getPortfolioSummaries = cache(async (): Promise<ProjectSummary[]> => {
-  const projects = await getProjects();
+  // Dự án lưu trữ (F13.7) xếp cuối.
+  const projects = [...(await getProjects())].sort((a, b) => Number(a.archived) - Number(b.archived));
   return Promise.all(
     projects.map(async (project) => {
       const [features, team] = await Promise.all([getFeaturesByProject(project.id), getTeamByProject(project.id)]);
