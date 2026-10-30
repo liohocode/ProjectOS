@@ -14,6 +14,8 @@ export const displayToolName = (tool: string) => tool.replace("_", ".");
 
 export interface ToolCallRecord {
   agentId: string;
+  /** Token đã dùng (F16.7) — rate limit đếm theo token */
+  tokenId?: string | null;
   /** Tên tool thật, vd `tasks_list` */
   tool: string;
   /** Đối tượng thao tác hiển thị ở nhật ký, vd `T-405` hoặc `rv-web` */
@@ -28,7 +30,7 @@ export async function recordToolCall(call: ToolCallRecord, now: Date = new Date(
   const cutoff = new Date(now.getTime() - SESSION_IDLE_MS);
   await prisma.$transaction(async (tx) => {
     await tx.mcpLogEntry.create({
-      data: { agentId: call.agentId, tool: displayToolName(call.tool), target: call.target, result: call.result, at: now },
+      data: { agentId: call.agentId, tokenId: call.tokenId ?? null, tool: displayToolName(call.tool), target: call.target, result: call.result, at: now },
     });
     await tx.mcpServer.updateMany({ where: { id: CORE_SERVER_ID }, data: { lastCommandAt: now } });
     if (!call.projectId) return;
