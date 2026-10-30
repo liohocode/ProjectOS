@@ -11,6 +11,8 @@ lib/generated
 .windsurf
 docs
 e2e
+# import ./e2e/env — thư mục e2e không có trong context nên next build (typecheck) sẽ lỗi
+playwright.config.ts
 test-results
 playwright-report
 blob-report
