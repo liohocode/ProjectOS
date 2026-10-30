@@ -11,6 +11,7 @@ import { getDocGroupsByProject, getDocBody } from "./seed-data/docs";
 import { getMcpServers, getMcpSessions, getMcpLog } from "./seed-data/mcp";
 import { TIMELINE_BY_PROJECT } from "./seed-data/timeline";
 import { PROPOSED_SECTIONS } from "./seed-data/revisions";
+import { seedActivityEvents } from "./seed-data/activity";
 import type { SeedMember as Member } from "./seed-data/types";
 import { parseSprintLabel } from "../lib/sprint";
 import { parseDue, parseEstimate, parseRunning, parseTaskStatus } from "../lib/taskFormat";
@@ -304,6 +305,9 @@ async function main() {
       },
     });
   }
+
+  console.log("Seeding activity events (F17.1)...");
+  await seedActivityEvents(prisma);
 
   console.log("Seed xong.");
 }

@@ -26,7 +26,9 @@ export async function approveFeatureProposal(featureId: string): Promise<ActionR
 
   const result = await reviewFeatureProposal(id.data, { approve: true });
   if (!result.ok) return fail(result.error);
-  await recordActivity("ph-check-circle", `Duyệt feature ${id.data} ${result.name}`);
+  await recordActivity("ph-check-circle", `Duyệt feature ${id.data} ${result.name}`, {
+    event: { projectId, type: "feature", tone: "ok", featureId: id.data },
+  });
   revalidatePath("/[project]", "layout");
   return ok();
 }
@@ -41,7 +43,9 @@ export async function rejectFeatureProposal(featureId: string, reason: string): 
 
   const result = await reviewFeatureProposal(id.data, { approve: false, reason: String(reason ?? "") });
   if (!result.ok) return fail(result.error);
-  await recordActivity("ph-x-circle", `Từ chối feature ${id.data} ${result.name}`);
+  await recordActivity("ph-x-circle", `Từ chối feature ${id.data} ${result.name}`, {
+    event: { projectId, type: "feature", tone: "ok", featureId: id.data },
+  });
   revalidatePath("/[project]/work", "page");
   return ok();
 }

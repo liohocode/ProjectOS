@@ -112,7 +112,13 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
           value: result.ok
             ? json({ claimed: true, alreadyRunning: result.alreadyRunning, task: result.task })
             : { ...json({ claimed: false, reason: result.reason }), isError: true },
-          log: { target: taskId, result: result.ok ? "OK" : "BiChan", projectId: result.projectId, taskId: result.ok ? taskId : null },
+          log: {
+            target: taskId,
+            result: result.ok ? "OK" : "BiChan",
+            projectId: result.projectId,
+            taskId: result.ok ? taskId : null,
+            ...(result.ok && !result.alreadyRunning && { event: { type: "task", tone: "run", text: result.task.title, taskId } }),
+          },
         };
       }),
   );
@@ -140,6 +146,14 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
             result: result.ok ? (stage === "Review" || status === "Chờ review" ? "ChoReview" : "OK") : "BiChan",
             projectId: result.projectId,
             taskId: result.ok ? taskId : null,
+            ...(result.ok && {
+              event: {
+                type: "task",
+                tone: stage === "Review" || status === "Chờ review" ? "review" : "ok",
+                text: `${result.task.title} → ${[stage, status].filter(Boolean).join(" · ")}`,
+                taskId,
+              },
+            }),
           },
         };
       }),
@@ -161,7 +175,13 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
         if (result.ok) revalidatePath("/[project]/work", "page");
         return {
           value: result.ok ? json({ commented: true, commentId: result.commentId }) : { ...json({ commented: false, reason: result.reason }), isError: true },
-          log: { target: taskId, result: result.ok ? "OK" : "BiChan", projectId: result.projectId, taskId: result.ok ? taskId : null },
+          log: {
+            target: taskId,
+            result: result.ok ? "OK" : "BiChan",
+            projectId: result.projectId,
+            taskId: result.ok ? taskId : null,
+            ...(result.ok && { event: { type: "task", tone: "ok", text: `Bình luận ${taskId}: ${body.slice(0, 120)}`, taskId } }),
+          },
         };
       }),
   );
@@ -186,7 +206,12 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
           value: result.ok
             ? json({ proposed: true, featureId: result.featureId, status: "Chờ lead duyệt" })
             : { ...json({ proposed: false, reason: result.reason }), isError: true },
-          log: { target: result.ok ? `${result.featureId} ${name}` : name, result: result.ok ? "ChoReview" : "BiChan", projectId: result.projectId },
+          log: {
+            target: result.ok ? `${result.featureId} ${name}` : name,
+            result: result.ok ? "ChoReview" : "BiChan",
+            projectId: result.projectId,
+            ...(result.ok && { event: { type: "feature", tone: "review", text: `Đề xuất ${result.featureId} ${name}`, featureId: result.featureId } }),
+          },
         };
       }),
   );
@@ -252,7 +277,12 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
           value: result.ok
             ? json({ proposed: true, revisionId: result.revisionId, status: "Chờ review — người duyệt sẽ áp vào tài liệu" })
             : { ...json({ proposed: false, reason: result.reason }), isError: true },
-          log: { target: docId, result: result.ok ? "ChoReview" : "BiChan", projectId: result.projectId },
+          log: {
+            target: docId,
+            result: result.ok ? "ChoReview" : "BiChan",
+            projectId: result.projectId,
+            ...(result.ok && { event: { type: "doc", tone: "review", text: `${what} — ${docId}`, docId } }),
+          },
         };
       }),
   );

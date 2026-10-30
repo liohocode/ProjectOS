@@ -16,12 +16,13 @@ describe("portfolio", () => {
   });
 });
 
-describe("activity feed (suy ra)", () => {
-  it("có mục đang chạy, bị block và revision chờ duyệt", async () => {
+describe("activity feed (sự kiện seed — F17.1)", () => {
+  it("có mục đang chạy (kèm runningSince), bị block và revision chờ duyệt; mới nhất trước", async () => {
     const feed = await getActivityFeed("rv-web");
     const tones = new Set(feed.map((i) => i.tone));
-    expect(tones).toEqual(new Set(["run", "block", "review"]));
+    for (const tone of ["run", "block", "review"] as const) expect(tones).toContain(tone);
     expect(feed.some((i) => i.tool === "docs.append")).toBe(true);
+    expect(feed.find((i) => i.taskId === "T-405" && i.tone === "run")).toMatchObject({ who: "Atlas", tool: "tasks.claim", runningSince: expect.any(String) });
   });
 });
 

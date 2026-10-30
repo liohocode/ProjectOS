@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { CommandResult } from "@/lib/generated/prisma/enums";
+import type { ActivityTone, ActivityType, CommandResult } from "@/lib/generated/prisma/enums";
 import { displayToolName } from "./tools";
 
 // Ghi phiên + nhật ký cho mọi lệnh MCP (F16.2). Endpoint stateless (ADR-022) nên không có MCP session id:
@@ -21,6 +21,8 @@ export interface ToolCallRecord {
   /** Dự án của lệnh — không xác định được (vd liệt kê mọi dự án) thì chỉ ghi nhật ký, không gắn phiên */
   projectId?: string | null;
   taskId?: string | null;
+  /** Sự kiện ở activity rail (F17.1) — chỉ lệnh làm thay đổi gì đó; cần `projectId` */
+  event?: { type: ActivityType; tone: ActivityTone; text: string; taskId?: string; docId?: string; featureId?: string };
 }
 
 export async function recordToolCall(call: ToolCallRecord, now: Date = new Date()): Promise<void> {
@@ -30,6 +32,11 @@ export async function recordToolCall(call: ToolCallRecord, now: Date = new Date(
       data: { agentId: call.agentId, tokenId: call.tokenId ?? null, tool: displayToolName(call.tool), target: call.target, result: call.result, at: now },
     });
     if (!call.projectId) return;
+    if (call.event) {
+      await tx.activityEvent.create({
+        data: { ...call.event, projectId: call.projectId, actorId: call.agentId, tool: displayToolName(call.tool), at: now },
+      });
+    }
 
     // Đóng phiên quá hạn của agent: kết thúc tại lệnh cuối, còn "Đang chạy" thì thành "Xong".
     await tx.$executeRaw`

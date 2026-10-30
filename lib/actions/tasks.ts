@@ -36,7 +36,9 @@ export async function updateTaskStage(taskId: string, stage: string): Promise<Ac
   const denied = await authorize("task.write", projectId);
   if (denied) return fail(denied);
   await prisma.task.update({ where: { id: input.data.taskId }, data: { stage: input.data.stage } });
-  await recordActivity("ph-arrow-right", `Chuyển ${input.data.taskId} sang ${input.data.stage}`);
+  await recordActivity("ph-arrow-right", `Chuyển ${input.data.taskId} sang ${input.data.stage}`, {
+    event: { projectId, type: "task", tone: "ok", taskId: input.data.taskId },
+  });
   revalidateTaskViews();
   return ok();
 }
@@ -50,7 +52,9 @@ export async function updateTaskStatus(taskId: string, status: string): Promise<
   const denied = await authorize("task.write", projectId);
   if (denied) return fail(denied);
   await prisma.task.update({ where: { id: input.data.taskId }, data: { status: parseTaskStatus(input.data.status) } });
-  await recordActivity("ph-check-circle", `Đổi trạng thái ${input.data.taskId} → ${input.data.status}`);
+  await recordActivity("ph-check-circle", `Đổi trạng thái ${input.data.taskId} → ${input.data.status}`, {
+    event: { projectId, type: "task", tone: input.data.status === "Chờ review" ? "review" : "ok", taskId: input.data.taskId },
+  });
   revalidateTaskViews();
   return ok();
 }
@@ -73,7 +77,9 @@ export async function assignTask(taskId: string, memberId: string): Promise<Acti
   const task = await prisma.task.update({ where: { id: input.data.taskId }, data: { assigneeId: input.data.memberId }, select: { title: true } });
   // Cột "Đang làm" ở màn team (F13.3): việc vừa được giao.
   await prisma.member.update({ where: { id: input.data.memberId }, data: { current: `${input.data.taskId} ${task.title}` } });
-  await recordActivity("ph-share-network", `Giao ${input.data.taskId} cho ${membership.member.name}`);
+  await recordActivity("ph-share-network", `Giao ${input.data.taskId} cho ${membership.member.name}`, {
+    event: { projectId, type: "task", tone: "ok", taskId: input.data.taskId },
+  });
   revalidateTaskViews();
   return ok();
 }
@@ -138,7 +144,9 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
     return id;
   });
 
-  await recordActivity("ph-plus-circle", `Tạo ${taskId} — ${data.title}`);
+  await recordActivity("ph-plus-circle", `Tạo ${taskId} — ${data.title}`, {
+    event: { projectId: data.projectId, type: "task", tone: "ok", taskId, featureId: data.featureId },
+  });
   revalidateTaskViews();
   return { ok: true, taskId };
 }
@@ -167,6 +175,7 @@ export async function setTaskBlocked(taskId: string, block: { short: string; ful
   await recordActivity(
     value ? "ph-warning" : "ph-check",
     value ? `Đánh dấu ${input.data.taskId} bị block: ${value.short}` : `Gỡ block ${input.data.taskId}`,
+    { event: { projectId, type: "task", tone: value ? "block" : "ok", taskId: input.data.taskId } },
   );
   revalidateTaskViews();
   return ok();
@@ -197,7 +206,9 @@ export async function updateTask(taskId: string, patch: TaskPatch): Promise<Acti
     },
   });
   const changed = [title !== undefined && "tiêu đề", estimatePoints !== undefined && "ước lượng", dueDate !== undefined && "hạn"].filter(Boolean);
-  await recordActivity("ph-pencil-simple", `Sửa ${input.data.taskId} (${changed.join(", ")})`);
+  await recordActivity("ph-pencil-simple", `Sửa ${input.data.taskId} (${changed.join(", ")})`, {
+    event: { projectId, type: "task", tone: "ok", taskId: input.data.taskId },
+  });
   revalidateTaskViews();
   return ok();
 }

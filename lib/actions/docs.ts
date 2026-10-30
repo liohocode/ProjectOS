@@ -8,6 +8,7 @@ import { applyRevision, createDoc as createDocDomain, editDoc as editDocDomain, 
 import { markdownToSections } from "@/lib/markdownSections";
 import { authorize } from "@/lib/auth/authorize";
 import { fail, ok, type ActionResult } from "./result";
+import { recordActivity } from "./_activity";
 
 const approveSchema = z.object({
   revisionId: z.string().trim().min(1, "Thiếu mã revision"),
@@ -20,7 +21,7 @@ export async function approveRevision(revisionId: string, projectId: string): Pr
   if (!input.success) return fail(input.error.issues[0].message);
   const { revisionId: id, projectId: project } = input.data;
 
-  const revision = await prisma.docRevision.findUnique({ where: { id }, select: { doc: { select: { projectId: true } } } });
+  const revision = await prisma.docRevision.findUnique({ where: { id }, select: { what: true, doc: { select: { id: true, title: true, projectId: true } } } });
   if (!revision || revision.doc.projectId !== project) return fail("Không tìm thấy revision trong dự án này");
   const denied = await authorize("doc.review", project);
   if (denied) return fail(denied);
@@ -28,6 +29,9 @@ export async function approveRevision(revisionId: string, projectId: string): Pr
   // Áp nội dung đề xuất + tăng version trong transaction (F12.2, lib/domain/docs.ts).
   const result = await applyRevision(id, await getCurrentUserId());
   if (!result.ok) return result;
+  await recordActivity("ph-check-circle", `Duyệt "${revision.what}" — ${revision.doc.title}`, {
+    event: { projectId: project, type: "doc", tone: "ok", docId: revision.doc.id },
+  });
 
   // Badge "Docs" ở sidebar (layout) đếm revision chờ → revalidate cả layout của dự án.
   revalidatePath(`/${project}`, "layout");
@@ -40,13 +44,16 @@ export async function rejectRevision(revisionId: string, projectId: string, reas
   if (!input.success) return fail(input.error.issues[0].message);
   const { revisionId: id, projectId: project } = input.data;
 
-  const revision = await prisma.docRevision.findUnique({ where: { id }, select: { doc: { select: { projectId: true } } } });
+  const revision = await prisma.docRevision.findUnique({ where: { id }, select: { what: true, doc: { select: { id: true, title: true, projectId: true } } } });
   if (!revision || revision.doc.projectId !== project) return fail("Không tìm thấy revision trong dự án này");
   const denied = await authorize("doc.review", project);
   if (denied) return fail(denied);
 
   const result = await rejectRevisionDomain(id, reason);
   if (!result.ok) return result;
+  await recordActivity("ph-x-circle", `Từ chối "${revision.what}" — ${revision.doc.title}`, {
+    event: { projectId: project, type: "doc", tone: "ok", docId: revision.doc.id },
+  });
   // Badge "Docs" ở sidebar (layout) đếm revision chờ → revalidate cả layout của dự án.
   revalidatePath(`/${project}`, "layout");
   return ok();
@@ -73,8 +80,13 @@ export async function createDoc(input: NewDocFormInput): Promise<ActionResult<{ 
     summary: input.summary,
     sections: markdownToSections(String(input.content ?? "")),
   });
-  // Cây tài liệu + badge "Docs" (đếm số tài liệu) ở layout.
-  if (result.ok) revalidatePath(`/${input.projectId}`, "layout");
+  if (result.ok) {
+    await recordActivity("ph-file-plus", `Tạo tài liệu ${String(input.title ?? "").trim()}`, {
+      event: { projectId: input.projectId, type: "doc", tone: "ok", docId: result.docId },
+    });
+    // Cây tài liệu + badge "Docs" (đếm số tài liệu) ở layout.
+    revalidatePath(`/${input.projectId}`, "layout");
+  }
   return result;
 }
 
@@ -103,6 +115,11 @@ export async function editDoc(input: EditDocFormInput): Promise<ActionResult<{ v
     summary: input.summary,
     sections: markdownToSections(String(input.content ?? "")),
   });
-  if (result.ok) revalidatePath(`/${input.projectId}`, "layout");
+  if (result.ok) {
+    await recordActivity("ph-pencil-simple", `Sửa trực tiếp tài liệu ${input.docId} (${result.version})`, {
+      event: { projectId: input.projectId, type: "doc", tone: "ok", docId: input.docId },
+    });
+    revalidatePath(`/${input.projectId}`, "layout");
+  }
   return result;
 }

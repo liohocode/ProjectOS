@@ -13,7 +13,7 @@ test("task row, activity rail, drawer: số phút tăng khi để trang mở", a
   await page.waitForLoadState("networkidle");
 
   const row = page.locator(".trow", { hasText: "T-405" }).locator(".trow-flag");
-  const rail = page.locator(".rail-item-link", { hasText: "T-405" }).locator(".rail-item-when");
+  const rail = page.locator(`.rail-item-link[href*="task=T-405"]`).locator(".rail-item-when");
   const rowBefore = await minutes(row);
   const railBefore = await minutes(rail);
 
