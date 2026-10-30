@@ -79,7 +79,7 @@ export function TeamScreen({
         )}
       </div>
 
-      {selected && <MemberPanel key={selected.id} member={selected} inProject={projectTeam.some((m) => m.id === selected.id)} assignable={assignable} mcpServers={mcpServers} agents={agents} />}
+      {selected && <MemberPanel key={selected.id} member={selected} inProject={projectTeam.some((m) => m.id === selected.id)} assignable={assignable} mcpServers={mcpServers} agents={agents} onRemoved={() => setSelectedId(null)} />}
     </div>
   );
 }

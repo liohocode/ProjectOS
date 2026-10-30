@@ -9,11 +9,12 @@ export default async function PortfolioPage(props: PageProps<"/[project]/portfol
   const { new: newParam } = await props.searchParams;
   const [summaries, orgTeam] = await Promise.all([getPortfolioSummaries(), getTeam()]);
   const totalBlocked = summaries.reduce((sum, p) => sum + p.blockedCount, 0);
+  const archivedCount = summaries.filter((p) => p.archived).length;
 
   return (
     <div className="portfolio-main">
       <div className="portfolio-summary">
-        {summaries.length} dự án · {orgTeam.length} người và agent dùng chung · {totalBlocked} task đang bị block
+        {summaries.length} dự án{archivedCount > 0 && ` (${archivedCount} lưu trữ)`} · {orgTeam.length} người và agent dùng chung · {totalBlocked} task đang bị block
       </div>
       {summaries.length === 0 ? (
         <EmptyState icon="ph-squares-four" title="Chưa có dự án nào" description="Tạo dự án đầu tiên bằng nút “Dự án mới”." />

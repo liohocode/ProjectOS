@@ -13,6 +13,7 @@ function toProject(row: ProjectRow): Project {
     status: row.status,
     desc: row.desc,
     sprint: row.currentSprint ? formatSprintLabel(row.currentSprint) : "Chưa có sprint",
+    archived: row.archivedAt !== null,
   };
 }
 

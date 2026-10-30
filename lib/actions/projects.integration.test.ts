@@ -2,8 +2,8 @@ import { afterAll, describe, expect, it } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
-import { getProjects, getProjectsByMember } from "@/lib/data/projects";
-import { createProject } from "./projects";
+import { getProjectById, getProjects, getProjectsByMember } from "@/lib/data/projects";
+import { createProject, setProjectArchived } from "./projects";
 
 const base = {
   id: "it-partner",
@@ -50,5 +50,26 @@ describe("createProject (F13.1)", () => {
     });
     expect(await createProject({ ...base, id: "it-x", code: "ZZ", name: " " })).toEqual({ ok: false, error: "Nhập tên dự án" });
     expect(await prisma.project.count()).toBe(before);
+  });
+});
+
+describe("setProjectArchived (F13.7)", () => {
+  afterAll(async () => {
+    await prisma.project.update({ where: { id: "crm" }, data: { archivedAt: null } });
+  });
+
+  it("lưu trữ → archived, xếp cuối portfolio; khôi phục → hết archived", async () => {
+    expect(await setProjectArchived("crm", true)).toEqual({ ok: true });
+    expect((await getProjectById("crm"))?.archived).toBe(true);
+    expect(await setProjectArchived("crm", true)).toEqual({ ok: false, error: "Dự án đã được lưu trữ" });
+    expect(await setProjectArchived("crm", false)).toEqual({ ok: true });
+    expect((await getProjectById("crm"))?.archived).toBe(false);
+    expect(await setProjectArchived("crm", false)).toEqual({ ok: false, error: "Dự án chưa được lưu trữ" });
+  });
+
+  it("chặn dự án không tồn tại hoặc người dùng không thuộc dự án", async () => {
+    expect(await setProjectArchived("khong-co", true)).toEqual({ ok: false, error: "Không tìm thấy dự án" });
+    await prisma.project.create({ data: { id: "it-other-team", code: "IO", name: "Không thuộc", status: "Chuẩn bị", desc: "" } });
+    expect(await setProjectArchived("it-other-team", true)).toEqual({ ok: false, error: "Không tìm thấy dự án" });
   });
 });

@@ -10,6 +10,8 @@ export interface Project {
   status: string;
   desc: string;
   sprint: string;
+  /** Lưu trữ (F13.7) — ẩn khỏi project switcher, hiện mờ ở portfolio */
+  archived: boolean;
 }
 
 export type TaskStage = "BA" | "TA" | "Dev" | "Review" | "Done";

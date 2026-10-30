@@ -979,6 +979,12 @@ img { display: block; max-width: 100%; }
 .project-card-avatars { display: flex; align-items: center; gap: 4px; }
 .project-card-blocked { margin-left: auto; font-size: 11px; color: var(--color-warning); display: flex; align-items: center; gap: 4px; }
 .project-card-sprint { font-size: 11px; color: var(--color-neutral-600); }
+/* F13.7: nút lưu trữ / khôi phục (ngoài <Link>), dự án lưu trữ hiện mờ */
+.project-card-wrap { position: relative; display: flex; flex-direction: column; }
+.project-card-wrap > .project-card { flex: 1; }
+.project-card-action { position: absolute; right: var(--space-2); bottom: var(--space-2); }
+.project-card-wrap.is-archived > .project-card { opacity: 0.55; }
+.project-card-wrap.is-archived > .project-card:hover { opacity: 0.8; }
 
 .screen-placeholder {
   margin: var(--space-8);
