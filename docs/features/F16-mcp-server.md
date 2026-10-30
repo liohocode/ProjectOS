@@ -33,7 +33,7 @@
 | F16.5 | `docs_read`, `docs_search` (từ khoá), `docs_append` → revision chờ duyệt | M | F16.2, F12.1 | Xong — 2026-10-30 |
 | F16.6 | `features_propose` (chỉ BA agent) + UI duyệt feature đề xuất | M | F16.2 | Chưa làm |
 | F16.7 | Quyền theo cấu hình agent + rate limit 60 lệnh/phút | S | F16.2, F13.5 | Xong — 2026-10-30 |
-| F16.8 | Trạng thái server thật cho `meridian-core` / `meridian-docs` | S | F16.2 | Chưa làm |
+| F16.8 | Trạng thái server thật cho `meridian-core` / `meridian-docs` | S | F16.2 | Xong — 2026-10-30 |
 | F16.9 | Hướng dẫn kết nối agent + test tích hợp gọi tool | S | F16.3, F16.5 | Xong — 2026-10-30 |
 
 ### F16.1 — Spike + khung endpoint
@@ -75,7 +75,7 @@
 ### F16.8 — Trạng thái server thật
 **Làm gì**: `meridian-core` (tool task/feature) và `meridian-docs` (tool docs) là 2 "server" logic cùng endpoint (hoặc 2 path `/api/mcp/core`, `/api/mcp/docs` — chọn ở F16.1). `lastCommandAt`, `commandsPerDay`, `clients` tính từ `McpLogEntry`/`McpSession` thay vì cột tĩnh; `status` = `online` khi endpoint chạy.
 **Hoàn thành khi**:
-- [ ] Card server ở màn MCP phản ánh số liệu thật sau khi gọi tool
+- [x] Card server ở màn MCP phản ánh số liệu thật sau khi gọi tool (`lib/mcp/audit.integration.test.ts`)
 
 ### F16.9 — Hướng dẫn + test
 **Làm gì**: `docs/guides/connect-agent.md`: tạo token, lệnh `claude mcp add`, danh sách tool + tham số + luật governance. Integration test dùng MCP client của SDK gọi các tool chính trên DB test.
@@ -83,6 +83,7 @@
 - [x] Người mới làm theo hướng dẫn kết nối được trong < 5 phút — *hướng dẫn `docs/guides/connect-agent.md` (3 bước); test luồng đầy đủ bằng MCP client SDK `app/api/mcp/client.integration.test.ts`. Cần Lio thử thật bằng Claude Code trên production để xác nhận thời gian.*
 
 ## Quyết định / ghi chú
+- **F16.8 (2026-10-30)**: hai server logic cùng một endpoint `/api/mcp` (đã chọn ở F16.1). `getMcpServers` tính cho `meridian-core` / `meridian-docs` từ `McpLogEntry` (một query gom nhóm): lệnh 24h, **số agent khác nhau đã gọi trong 24h** (= "client"), lệnh cuối; `status` luôn `online` (endpoint chạy cùng app); danh sách tool lấy từ code (`lib/mcp/tools.ts` — `TOOL_SERVER` chuyển sang đây, dùng chung với governance). Bỏ ghi `mcp_servers.lastCommandAt` ở mỗi lệnh. Server ngoài giữ số liệu lưu. **Hệ quả với dữ liệu mẫu**: thẻ server nội bộ không còn số giả (1284 lệnh/ngày…) mà là số thật từ nhật ký.
 - **F16.9 (2026-10-30)**: `docs/guides/connect-agent.md` (tạo token → `claude mcp add` → bảng tool → luật governance → gỡ lỗi). Integration test dùng `Client` + `StreamableHTTPClientTransport` của SDK, `fetch` nối thẳng vào route handler (không cần server chạy): liệt kê 7 tool + luồng list → claim → comment → Review → search → read → append, kiểm tra nhật ký đúng thứ tự.
 - **F16.7 (2026-10-30)**: `lib/mcp/governance.ts`, kiểm tra trong `logged()` trước mọi handler (rate limit trước, rồi cấu hình agent — đọc `AgentConfig` tối đa một lần mỗi request). Tool → server: `tasks_*`, `features_propose` → `meridian-core`; `docs_*` → `meridian-docs` — agent phải có server đó trong `AgentConfig.mcpServers` (dữ liệu mẫu: Vega không có `meridian-docs`, Scout không có `meridian-core` → bị chặn tương ứng; sửa ở panel agent). `docs_append` chặn khi "Chỉ đọc"; `features_propose` cần `canProposeFeatures` (F16.6 dùng). Rate limit 60 lệnh/phút/**token**: migration chỉ thêm `McpLogEntry.tokenId` (+ index `tokenId, at`), đếm cả lệnh bị chặn trong 60 giây gần nhất (spam liên tục vẫn bị chặn). Bị chặn → kết quả `isError` + `{ denied, reason }`, nhật ký "Bị chặn" target "rate limit" / "không đủ quyền". Tool vẫn hiện trong `tools/list` dù agent không được gọi (để lệnh bị chặn có nhật ký, đúng yêu cầu task). Phân biệt `append_review` / `append_edit_spec` chưa có tác dụng — cả hai đều chỉ tạo revision chờ duyệt.
 - **F16.5 (2026-10-30)**: `lib/domain/agentDocs.ts`. `docs_read` thêm tên agent vào `Doc.readBy` (bỏ "—" của dữ liệu mẫu; giữ "Tất cả agent"). `docs_search(query, projectId?)` — ILIKE + `unaccent` trên tiêu đề / tóm tắt / `sections::text`, chỉ dự án agent thuộc, tiêu đề khớp xếp trước, tối đa 10; `projectId` tuỳ chọn (spec ghi bắt buộc — agent thường chưa biết id). `docs_append(docId, what, summary?, content?)`: `content` là **markdown** (cùng định dạng form sửa tài liệu, `markdownToSections`) thay vì mảng `proposedSections` — dễ cho agent; luôn `createRevision` (F12.1), nhật ký "Chờ review". Quyền ghi docs theo `AgentConfig.docsWritePermission` là F16.7.
