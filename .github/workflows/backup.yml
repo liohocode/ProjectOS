@@ -28,6 +28,14 @@ jobs:
     name: pg_dump → artifact
     runs-on: ubuntu-latest
     environment: production
+    # DB tạm để khôi phục thử bản dump mỗi lần chạy (dữ liệu mất khi job kết thúc).
+    services:
+      restore:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: restore
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - id: auth
         uses: google-github-actions/auth@v2
@@ -53,6 +61,15 @@ jobs:
           docker run --rm -v "$PWD/backup:/backup" "$PG_IMAGE" pg_restore --list "/backup/meridian-$STAMP.dump" > backup/toc.txt
           grep -q "TABLE public tasks" backup/toc.txt || { echo "::error::Bản dump thiếu bảng tasks"; exit 1; }
           sha256sum "backup/meridian-$STAMP.dump" > "backup/meridian-$STAMP.dump.sha256"
+          # Khôi phục thử vào DB tạm và so số dòng vài bảng chính với production.
+          RESTORE=postgresql://postgres:restore@localhost:5432/postgres
+          docker run --rm --network host -v "$PWD/backup:/backup" "$PG_IMAGE" \
+            pg_restore --no-owner --no-privileges --exit-on-error -d "$RESTORE" "/backup/meridian-$STAMP.dump"
+          Q="select (select count(*) from tasks) || '/' || (select count(*) from docs) || '/' || (select count(*) from _prisma_migrations)"
+          SRC=$(docker run --rm "$PG_IMAGE" psql "$DATABASE_URL" -Atc "$Q")
+          DST=$(docker run --rm --network host "$PG_IMAGE" psql "$RESTORE" -Atc "$Q")
+          echo "tasks/docs/migrations — production: $SRC · bản khôi phục: $DST"
+          [ "$SRC" = "$DST" ] || { echo "::error::Khôi phục thử lệch số dòng ($SRC ≠ $DST)"; exit 1; }
           ls -lh backup
           echo "STAMP=$STAMP" >> "$GITHUB_ENV"
 

@@ -9,7 +9,7 @@ Hai lớp bảo vệ, dùng theo thứ tự:
 ## Chạy sao lưu ngay
 GitHub → **Actions → Backup Neon → Run workflow** (nhánh `main`). Xong sau ~1 phút; file ở mục **Artifacts** của lần chạy: `meridian-db-<UTC>.zip` gồm `meridian-<UTC>.dump` + `.sha256`.
 
-Workflow tự kiểm tra bản dump đọc được và có bảng `tasks`; lỗi → lần chạy đỏ (GitHub gửi email cho người bật workflow).
+Mỗi lần chạy, workflow **khôi phục thử** bản dump vào một Postgres 17 tạm trong job và so số dòng `tasks` / `docs` / `_prisma_migrations` với production; lệch hoặc lỗi → lần chạy đỏ (GitHub gửi email cho người bật workflow).
 
 ## Khôi phục từ bản sao lưu
 Không ghi đè thẳng DB đang chạy — khôi phục vào **branch Neon mới**, kiểm tra, rồi mới chuyển app sang.
@@ -26,4 +26,5 @@ Không ghi đè thẳng DB đang chạy — khôi phục vào **branch Neon mớ
 6. Đăng nhập kiểm tra; ổn thì có thể đặt branch mới làm **default** trên Neon và xoá branch cũ sau vài ngày.
 
 ## Đã thử (2026-10-30)
-Dump định dạng custom từ DB dev → khôi phục vào DB mới bằng đúng các lệnh trên → số dòng `tasks`, `activity_events`, `_prisma_migrations` khớp bản gốc (extension `unaccent` khôi phục cùng).
+- Dump định dạng custom từ DB dev → khôi phục vào DB mới bằng đúng các lệnh trên → số dòng `tasks`, `activity_events`, `_prisma_migrations` khớp bản gốc (extension `unaccent` khôi phục cùng).
+- Production: lần chạy tay đầu tiên thành công (artifact `meridian-db-20261030-234509`); từ đó mỗi lần chạy đều tự khôi phục thử.
