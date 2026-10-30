@@ -41,6 +41,7 @@ export const getFeaturesByProject = cache(async (projectId: string): Promise<Fea
         blocked: t.blocked ?? undefined,
         blockedFull: t.blockedFull ?? undefined,
         running: t.runningSince ? formatRunning(t.runningSince, now) : undefined,
+        runningSince: t.runningSince?.toISOString(),
       }),
     ),
   }));

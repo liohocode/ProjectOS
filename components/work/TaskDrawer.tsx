@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent
 import { trapTab, useDismiss } from "@/components/ui/a11y";
 import { assignTask, setTaskBlocked, updateTask, updateTaskStage } from "@/lib/actions/tasks";
 import { Field } from "@/components/ui/Field";
+import { RunningTime } from "@/components/ui/RunningTime";
 import type { ActionResult } from "@/lib/actions/result";
 import type { Feature, Member, Task, TaskDrawerInfo } from "@/lib/types";
 import { initials, nextStage, stageTagClass } from "./taskStyle";
@@ -156,7 +157,7 @@ export function TaskDrawer({
                 <span className="drawer-log-dot" />
                 <div>
                   <div>{step.text}</div>
-                  <div className="drawer-log-when">{step.when}</div>
+                  <div className="drawer-log-when">{step.runningSince ? <RunningTime since={step.runningSince} label={step.when} /> : step.when}</div>
                 </div>
               </div>
             ))}

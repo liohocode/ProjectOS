@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **77/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **78/104 task xong** (Phase 0 hoàn tất; đã chốt hạ tầng + đăng nhập).
 
 ## Phase 0 — UI v1 + backend (xong)
 | Feature | Mục tiêu | Trạng thái | Task xong |
@@ -39,7 +39,7 @@ Cập nhật lần cuối: 2026-10-30 · Tổng: **77/104 task xong** (Phase 0 h
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
 | [F16](features/F16-mcp-server.md) | MCP server thật cho agent: tool task/docs, governance, ghi phiên + nhật ký | F09, F12.1, F13.5, F15.5 | Chưa bắt đầu | 0/9 |
-| [F17](features/F17-realtime-activity.md) | Bảng sự kiện thật + SSE realtime | F11, F16.2 | Chưa bắt đầu | 0/5 |
+| [F17](features/F17-realtime-activity.md) | Bảng sự kiện thật + SSE realtime | F11, F16.2 | Đang làm — F17.5 xong (phần còn lại chờ F16.2) | 1/5 |
 | [F18](features/F18-knowledge-index.md) | pgvector, index tài liệu, tìm kiếm ngữ nghĩa | F12, F16.5 | Hoãn (người dùng chọn để sau) | 0/6 |
 
 ## Phase 5 — Vận hành

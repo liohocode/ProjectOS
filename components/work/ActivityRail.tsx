@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ActivityItem } from "@/lib/types";
 import { initials } from "./taskStyle";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { RunningTime } from "@/components/ui/RunningTime";
 
 export function ActivityRail({
   items,
@@ -36,7 +37,7 @@ export function ActivityRail({
             <div>
               <div className="rail-item-text">{item.text}</div>
               <div className="rail-item-meta">
-                {item.tool} · <span className="rail-item-when">{item.when}</span>
+                {item.tool} · <span className="rail-item-when">{item.runningSince ? <RunningTime since={item.runningSince} label={item.when} /> : item.when}</span>
               </div>
             </div>
           </>

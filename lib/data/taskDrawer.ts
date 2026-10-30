@@ -28,8 +28,8 @@ export const getTaskDrawerInfo = cache(async (projectId: string, taskId: string)
   return { contextDocs, sessionLog: buildSessionLog(task, contextDocs.length) };
 });
 
-function buildSessionLog(task: Task, contextDocCount: number): { text: string; when: string }[] {
-  const log: { text: string; when: string }[] = [];
+function buildSessionLog(task: Task, contextDocCount: number): TaskDrawerInfo["sessionLog"] {
+  const log: TaskDrawerInfo["sessionLog"] = [];
 
   if (task.kind === "agent") {
     log.push({ text: `${STAGE_ASSIGNER[task.stage]} chia task và giao cho ${task.who}`, when: "5 giờ trước" });
@@ -44,7 +44,7 @@ function buildSessionLog(task: Task, contextDocCount: number): { text: string; w
   if (task.blocked) {
     log.push({ text: `Bị block: ${task.blockedFull ?? task.blocked}`, when: "1 giờ trước" });
   } else if (task.running) {
-    log.push({ text: `Đang chạy — ${task.running}`, when: "vừa xong" });
+    log.push({ text: "Đang chạy", when: task.running, runningSince: task.runningSince });
   } else if (task.status === "Chờ review") {
     log.push({ text: "Đẩy commit, mở PR chờ review", when: "1 giờ trước" });
     log.push({ text: "Chờ review của Trung Hiếu", when: "30 phút trước" });

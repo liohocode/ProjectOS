@@ -22,6 +22,7 @@ export const getActivityFeed = cache(async (projectId: string): Promise<Activity
       when: t.running!,
       tone: "run",
       taskId: t.id,
+      runningSince: t.runningSince,
     }));
 
   const blocked: ActivityItem[] = tasks
