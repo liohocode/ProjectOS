@@ -43,7 +43,12 @@ Một lần trước khi chạy:
    - Authorized JavaScript origins: `https://meridian-669737756643.asia-southeast1.run.app`
    - Authorized redirect URIs: `https://meridian-669737756643.asia-southeast1.run.app/api/auth/callback/google`
 
-Rollback: `gcloud run services update-traffic meridian --region asia-southeast1 --to-revisions <revision>=100` (danh sách revision: `gcloud run revisions list --service meridian --region asia-southeast1`).
+**Rollback** (F19.7): GitHub → **Actions → Rollback → Run workflow**, `target`:
+- `previous` (mặc định) — chuyển 100% traffic về revision ngay trước bản đang chạy. Không build, không đụng DB: migration của dự án chỉ thêm (xoá / đổi kiểu cột phải theo quy trình riêng) nên bản cũ chạy được trên schema mới.
+- `latest` — trả traffic về revision mới nhất (sau khi sửa xong).
+- tên revision cụ thể (xem log bước "Chuyển traffic" hoặc `gcloud run revisions list --service meridian --region asia-southeast1`).
+
+Sau rollback, lần deploy tiếp theo tự trả traffic về bản mới nhất (bước `update-traffic --to-latest` trong workflow Deploy). Rollback **không** hoàn tác dữ liệu — cần khôi phục dữ liệu thì xem `docs/guides/backup-restore.md`.
 
 ---
 

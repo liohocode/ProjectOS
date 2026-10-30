@@ -1,0 +1,74 @@
+name: Rollback
+
+# F19.7: chuyển traffic Cloud Run về revision trước (không build, không đụng DB — migration chỉ thêm nên bản cũ chạy được
+# trên schema mới), hoặc trả về revision mới nhất. Chạy tay: Actions → Rollback → Run workflow.
+# Hướng dẫn: docs/guides/deploy-cloud-run.md mục 4.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "previous = revision ngay trước bản đang chạy · latest = revision mới nhất · hoặc tên revision cụ thể"
+        required: true
+        default: previous
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GCP_PROJECT_ID: pdos-513017
+  GCP_REGION: asia-southeast1
+  GCP_WIF_PROVIDER: projects/669737756643/locations/global/workloadIdentityPools/github/providers/github
+  GCP_DEPLOY_SA: meridian-deploy@pdos-513017.iam.gserviceaccount.com
+  SERVICE: meridian
+  APP_URL: https://meridian-669737756643.asia-southeast1.run.app
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Chuyển traffic
+        env:
+          TARGET: ${{ inputs.target }}
+        run: |
+          REVS=$(gcloud run revisions list --service "$SERVICE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" \
+            --sort-by=~metadata.creationTimestamp --format='value(metadata.name)')
+          echo "Revision (mới → cũ):"; echo "$REVS" | head -5
+          CURRENT=$(gcloud run services describe "$SERVICE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" \
+            --format='value(status.traffic[0].revisionName)')
+          echo "Đang nhận traffic: $CURRENT"
+          if [ "$TARGET" = "latest" ]; then
+            gcloud run services update-traffic "$SERVICE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" --to-latest --quiet
+          else
+            if [ "$TARGET" = "previous" ]; then
+              # Revision ngay sau (cũ hơn) bản đang nhận traffic trong danh sách mới → cũ.
+              REV=$(echo "$REVS" | grep -A1 -x "$CURRENT" | tail -n1)
+              [ -n "$REV" ] && [ "$REV" != "$CURRENT" ] || { echo "::error::Không có revision trước $CURRENT"; exit 1; }
+            else
+              REV="$TARGET"
+              echo "$REVS" | grep -qx "$REV" || { echo "::error::Không có revision $REV"; exit 1; }
+            fi
+            gcloud run services update-traffic "$SERVICE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" --to-revisions "$REV=100" --quiet
+          fi
+          gcloud run services describe "$SERVICE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" \
+            --format='table(status.traffic[].revisionName,status.traffic[].percent,status.traffic[].latestRevision)'
+
+      - name: Smoke check
+        run: |
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/login") && [ "$code" = "200" ] && { echo "OK $APP_URL"; exit 0; }
+            echo "lần $i: HTTP $code — chờ 10s"; sleep 10
+          done
+          exit 1

@@ -90,6 +90,8 @@ jobs:
             --set-env-vars "BETTER_AUTH_URL=$APP_URL,DATABASE_POOL_MAX=5" \
             --set-secrets "DATABASE_URL=DATABASE_URL:latest,BETTER_AUTH_SECRET=BETTER_AUTH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest" \
             --quiet
+          # Sau một lần rollback (traffic ghim vào revision cũ), bản deploy mới không tự nhận traffic → trả về revision mới nhất.
+          gcloud run services update-traffic "$SERVICE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" --to-latest --quiet
 
       - name: Smoke check
         run: |
