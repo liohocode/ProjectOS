@@ -140,3 +140,25 @@ const logPage = cache(async (limit: number, cursor: string | null, agent: string
 export async function getMcpLog(opts: Pick<McpPageOptions, "limit" | "cursor" | "agent"> = {}): Promise<Page<McpLogEntry>> {
   return logPage(opts.limit ?? MCP_PAGE_SIZE, opts.cursor ?? null, opts.agent ?? null);
 }
+
+/** Dòng nhật ký lệnh MCP mới hơn `after` (polling F17.2 — bảng ở màn MCP), mới nhất trước. */
+export async function getMcpLogAfter(after: Date, limit: number): Promise<{ items: McpLogEntry[]; latest: Date | null }> {
+  const rows = await prisma.mcpLogEntry.findMany({
+    where: { at: { gt: after } },
+    include: { agent: true },
+    orderBy: [{ at: "desc" }, { id: "desc" }],
+    take: limit,
+  });
+  return {
+    items: rows.map((row) => ({
+      id: row.id,
+      at: toHHMMSS(row.at),
+      agentId: row.agentId,
+      agent: row.agent.name,
+      tool: row.tool,
+      target: row.target,
+      result: COMMAND_RESULT_LABEL[row.result],
+    })),
+    latest: rows[0]?.at ?? null,
+  };
+}
