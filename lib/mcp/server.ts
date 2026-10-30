@@ -6,6 +6,7 @@ import { appendDocForAgent, readDocForAgent, searchDocsForAgent } from "@/lib/do
 import { AGENT_STAGES, AGENT_STATUSES, claimTask, commentOnTask, listTasksForMember, updateTaskByAgent } from "@/lib/domain/tasks";
 import { prisma } from "@/lib/prisma";
 import { recordToolCall, type ToolCallRecord } from "./audit";
+import { checkRateLimit, checkToolAllowed, loadAgentPolicy, type AgentPolicy } from "./governance";
 
 // MCP server của Meridian (F16, ADR-022). Mỗi request HTTP dựng một instance mới gắn với agent đã xác thực
 // (stateless — Cloud Run có thể nhiều instance / scale về 0, ADR-016). Tool chỉ là lớp vỏ: nghiệp vụ ở lib/domain.
@@ -19,19 +20,32 @@ function json(value: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] };
 }
 
-type Logged = Omit<ToolCallRecord, "agentId" | "tool">;
+type Logged = Omit<ToolCallRecord, "agentId" | "tool" | "tokenId">;
+type ToolResult = ReturnType<typeof json> & { isError?: boolean };
 
 /**
- * Bọc handler tool (F16.2): mọi lệnh ghi một dòng nhật ký + cập nhật phiên. Handler trả kèm `log`
- * (target, kết quả, dự án/task); lỗi bất ngờ ghi "Bị chặn" rồi ném tiếp cho SDK trả lỗi JSON-RPC.
+ * Bọc handler tool (F16.2 + F16.7): kiểm tra governance (rate limit theo token, server/quyền theo cấu hình agent) —
+ * bị chặn thì trả lỗi cho agent và ghi "Bị chặn"; được thì chạy handler rồi ghi một dòng nhật ký + cập nhật phiên.
+ * Handler trả kèm `log` (target, kết quả, dự án/task); lỗi bất ngờ ghi "Bị chặn" rồi ném tiếp cho SDK.
  */
-async function logged<T>(agent: AgentPrincipal, tool: string, run: () => Promise<{ value: T; log: Logged }>): Promise<T> {
+async function logged(
+  agent: AgentPrincipal,
+  policy: () => Promise<AgentPolicy>,
+  tool: string,
+  run: () => Promise<{ value: ToolResult; log: Logged }>,
+): Promise<ToolResult> {
+  const base = { agentId: agent.memberId, tokenId: agent.tokenId, tool };
+  const denied = (await checkRateLimit(agent.tokenId)) ?? checkToolAllowed(await policy(), tool);
+  if (denied) {
+    await recordToolCall({ ...base, target: denied.includes("lệnh/phút") ? "rate limit" : "không đủ quyền", result: "BiChan" });
+    return { ...json({ denied: true, reason: denied }), isError: true };
+  }
   try {
     const { value, log } = await run();
-    await recordToolCall({ agentId: agent.memberId, tool, ...log });
+    await recordToolCall({ ...base, ...log });
     return value;
   } catch (e) {
-    await recordToolCall({ agentId: agent.memberId, tool, target: "lỗi", result: "BiChan" }).catch(() => {});
+    await recordToolCall({ ...base, target: "lỗi", result: "BiChan" }).catch(() => {});
     throw e;
   }
 }
@@ -45,6 +59,10 @@ async function sessionProject(agentId: string, projectId: string | undefined): P
 }
 
 export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
+  // Cấu hình agent đọc tối đa một lần mỗi request (lệnh đầu tiên cần tới).
+  let policyPromise: Promise<AgentPolicy> | null = null;
+  const policy = () => (policyPromise ??= loadAgentPolicy(agent.memberId));
+
   const server = new McpServer(SERVER_INFO, {
     instructions: `Meridian — quản lý dự án cho team người + AI agent. Bạn đang kết nối với vai trò agent "${agent.name}". Dùng tasks_list để xem task trong các dự án bạn thuộc về, tasks_claim để nhận task trước khi làm.`,
   });
@@ -63,7 +81,7 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
       annotations: { readOnlyHint: true },
     },
     async ({ projectId, stage, assigneeId }) =>
-      logged(agent, "tasks_list", async () => {
+      logged(agent, policy, "tasks_list", async () => {
         const tasks = await listTasksForMember(agent.memberId, {
           projectId,
           stage,
@@ -85,7 +103,7 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
       inputSchema: { taskId: z.string().trim().min(1).describe("Mã task, vd T-405") },
     },
     async ({ taskId }) =>
-      logged(agent, "tasks_claim", async () => {
+      logged(agent, policy, "tasks_claim", async () => {
         const result = await claimTask(agent.memberId, taskId);
         // Màn work / team / badge của dự án thấy task đang chạy ngay ở lần tải sau.
         if (result.ok && !result.alreadyRunning) revalidatePath("/[project]", "layout");
@@ -111,7 +129,7 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
       },
     },
     async ({ taskId, stage, status }) =>
-      logged(agent, "tasks_update_status", async () => {
+      logged(agent, policy, "tasks_update_status", async () => {
         const result = await updateTaskByAgent(agent.memberId, taskId, { stage, status });
         if (result.ok) revalidatePath("/[project]", "layout");
         return {
@@ -137,7 +155,7 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
       },
     },
     async ({ taskId, body }) =>
-      logged(agent, "tasks_comment", async () => {
+      logged(agent, policy, "tasks_comment", async () => {
         const result = await commentOnTask(agent.memberId, taskId, body);
         if (result.ok) revalidatePath("/[project]/work", "page");
         return {
@@ -156,7 +174,7 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
       annotations: { readOnlyHint: true },
     },
     async ({ docId }) =>
-      logged(agent, "docs_read", async () => {
+      logged(agent, policy, "docs_read", async () => {
         const result = await readDocForAgent(agent, docId);
         return {
           value: result.ok ? json(result.doc) : { ...json({ reason: result.reason }), isError: true },
@@ -177,7 +195,7 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
       annotations: { readOnlyHint: true },
     },
     async ({ query, projectId }) =>
-      logged(agent, "docs_search", async () => {
+      logged(agent, policy, "docs_search", async () => {
         const hits = await searchDocsForAgent(agent.memberId, query, projectId);
         return {
           value: json({ count: hits.length, docs: hits }),
@@ -200,7 +218,7 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
       },
     },
     async ({ docId, what, summary, content }) =>
-      logged(agent, "docs_append", async () => {
+      logged(agent, policy, "docs_append", async () => {
         const result = await appendDocForAgent(agent.memberId, { docId, what, summary, content });
         // Badge "Docs" (revision chờ duyệt) + danh sách revision.
         if (result.ok) revalidatePath("/[project]", "layout");
