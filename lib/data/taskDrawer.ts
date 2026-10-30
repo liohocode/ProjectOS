@@ -2,6 +2,24 @@ import { cache } from "react";
 import type { Task, TaskDrawerInfo } from "@/lib/types";
 import { getFeaturesByProject } from "./features";
 import { getDocGroupsByProject } from "./docs";
+import { prisma } from "@/lib/prisma";
+import { formatRelativeVi } from "@/lib/relativeTime";
+
+/** Bình luận của mọi task trong dự án — một query cho cả màn work (page tải drawer info cho từng task). */
+const getTaskCommentsByProject = cache(async (projectId: string): Promise<Map<string, TaskDrawerInfo["comments"]>> => {
+  const rows = await prisma.taskComment.findMany({
+    where: { task: { feature: { projectId } } },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: { id: true, taskId: true, body: true, createdAt: true, author: { select: { name: true, kind: true } } },
+  });
+  const byTask = new Map<string, TaskDrawerInfo["comments"]>();
+  for (const c of rows) {
+    const list = byTask.get(c.taskId) ?? [];
+    list.push({ id: c.id, author: c.author.name, kind: c.author.kind, body: c.body, when: formatRelativeVi(c.createdAt) });
+    byTask.set(c.taskId, list);
+  }
+  return byTask;
+});
 
 const STAGE_ASSIGNER: Record<string, string> = {
   BA: "Bảo (BA agent)",
@@ -21,11 +39,11 @@ export const getTaskDrawerInfo = cache(async (projectId: string, taskId: string)
   const task = feature?.tasks.find((t) => t.id === taskId);
   if (!feature || !task) return null;
 
-  const groups = await getDocGroupsByProject(projectId);
+  const [groups, comments] = await Promise.all([getDocGroupsByProject(projectId), getTaskCommentsByProject(projectId)]);
   const featureGroup = groups.find((g) => g.name.startsWith(feature.id));
   const contextDocs = task.kind === "agent" ? featureGroup?.items.slice(0, 3).map((i) => i.title) ?? [] : [];
 
-  return { contextDocs, sessionLog: buildSessionLog(task, contextDocs.length) };
+  return { contextDocs, sessionLog: buildSessionLog(task, contextDocs.length), comments: comments.get(taskId) ?? [] };
 });
 
 function buildSessionLog(task: Task, contextDocCount: number): TaskDrawerInfo["sessionLog"] {

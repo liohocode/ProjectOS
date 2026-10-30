@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { generateAgentToken, hashAgentToken } from "@/lib/auth/tokenFormat";
+import { getTaskDrawerInfo } from "@/lib/data/taskDrawer";
 import { DELETE, GET, POST } from "./route";
 
 // F16.1 — endpoint MCP stateless: xác thực token agent, tool tasks_list.
@@ -23,6 +24,7 @@ afterAll(async () => {
   // F16.2: nhật ký + phiên do các lệnh trong file này tạo ra.
   await prisma.mcpLogEntry.deleteMany({ where: { agentId: "agent-vega", at: { gte: startedAt } } });
   await prisma.mcpSession.deleteMany({ where: { agentId: "agent-vega", startedAt: { gte: startedAt } } });
+  await prisma.taskComment.deleteMany({ where: { authorId: "agent-vega" } });
 });
 
 let nextId = 1;
@@ -98,6 +100,19 @@ describe("POST /api/mcp (F16.1)", () => {
     expect(JSON.parse(body.result.content[0].text)).toEqual({ claimed: false, reason: `${done.id} đã Done` });
     const entry = await prisma.mcpLogEntry.findFirstOrThrow({ where: { agentId: "agent-vega", tool: "tasks.claim" }, orderBy: { at: "desc" } });
     expect(entry).toMatchObject({ target: done.id, result: "BiChan" });
+  });
+
+  it("tasks_comment → hiện trong drawer info; tasks_update_status Done → bị chặn (F16.4)", async () => {
+    const own = await prisma.task.findFirstOrThrow({ where: { assigneeId: "agent-vega", feature: { projectId: "rv-web" }, stage: { not: "Done" } } });
+    const c = await rpc("tools/call", { name: "tasks_comment", arguments: { taskId: own.id, body: "IT: tiến độ 50%" } });
+    expect(JSON.parse(c.body.result.content[0].text)).toMatchObject({ commented: true });
+    const info = await getTaskDrawerInfo("rv-web", own.id);
+    expect(info?.comments.at(-1)).toMatchObject({ author: "Vega", kind: "agent", body: "IT: tiến độ 50%" });
+
+    const done = await rpc("tools/call", { name: "tasks_update_status", arguments: { taskId: own.id, stage: "Done" } });
+    // Stage "Done" không có trong enum của tool → SDK trả lỗi kiểm tra input, task không đổi.
+    expect(done.body.result?.isError ?? Boolean(done.body.error)).toBe(true);
+    expect((await prisma.task.findUniqueOrThrow({ where: { id: own.id } })).stage).toBe(own.stage);
   });
 
   it("GET / DELETE → 405 (không stream SSE ở chế độ stateless)", async () => {

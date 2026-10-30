@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { claimTask } from "./tasks";
+import { claimTask, commentOnTask, updateTaskByAgent } from "./tasks";
 
 // F16.3 — tasks_claim. Agent Scout (seed: không chạy task nào) trên rv-web; trả lại trạng thái seed sau khi chạy.
 const AGENT = "agent-scout";
@@ -31,6 +31,7 @@ afterAll(async () => {
   }
   await prisma.member.update({ where: { id: AGENT }, data: { current: memberCurrent } });
   await prisma.memberActivity.deleteMany({ where: { memberId: AGENT, text: { startsWith: "Claim " } } });
+  await prisma.taskComment.deleteMany({ where: { authorId: AGENT } });
 });
 
 describe("claimTask (F16.3)", () => {
@@ -61,5 +62,34 @@ describe("claimTask (F16.3)", () => {
     const crmTask = await prisma.task.findFirstOrThrow({ where: { feature: { projectId: "crm" } } });
     expect(await claimTask("agent-vega", crmTask.id)).toMatchObject({ ok: false, projectId: null });
     expect(await claimTask(AGENT, "T-khong-co")).toMatchObject({ ok: false, projectId: null });
+  });
+});
+
+describe("updateTaskByAgent / commentOnTask (F16.4)", () => {
+  it("agent đổi stage/trạng thái task của mình; rời 'Đang chạy' → nhả task (claim được task khác)", async () => {
+    expect(await updateTaskByAgent(AGENT, picks[0], { stage: "Review", status: "Chờ review" })).toMatchObject({
+      ok: true,
+      task: { id: picks[0], stage: "Review", status: "Chờ review", running: false },
+    });
+    // Còn 1 task chạy → claim được task thứ 3.
+    expect(await claimTask(AGENT, picks[2])).toMatchObject({ ok: true });
+  });
+
+  it("chặn: tự Done, đặt 'Đang chạy', task không giao cho mình, thiếu thay đổi", async () => {
+    const doneMsg = "Agent không tự đánh dấu Done — chuyển sang Review để người duyệt";
+    expect(await updateTaskByAgent(AGENT, picks[0], { stage: "Done" })).toMatchObject({ ok: false, reason: doneMsg });
+    expect(await updateTaskByAgent(AGENT, picks[0], { status: "Xong" })).toMatchObject({ ok: false, reason: doneMsg });
+    expect(await updateTaskByAgent(AGENT, picks[0], { status: "Đang chạy" })).toMatchObject({ ok: false, reason: "Dùng tasks_claim để chạy task" });
+    expect(await updateTaskByAgent("agent-atlas", picks[0], { stage: "Dev" })).toMatchObject({ ok: false, reason: expect.stringContaining("không giao cho bạn") });
+    expect(await updateTaskByAgent(AGENT, picks[0], {})).toMatchObject({ ok: false, reason: "Cần stage hoặc status" });
+    expect((await prisma.task.findUniqueOrThrow({ where: { id: picks[0] } })).stage).toBe("Review");
+  });
+
+  it("bình luận: lưu trên task; chặn trống / task ngoài dự án", async () => {
+    expect(await commentOnTask(AGENT, picks[1], "  Đã viết xong test, chờ CI.  ")).toMatchObject({ ok: true, projectId: "rv-web" });
+    expect((await prisma.taskComment.findFirstOrThrow({ where: { authorId: AGENT, taskId: picks[1] } })).body).toBe("Đã viết xong test, chờ CI.");
+    expect(await commentOnTask(AGENT, picks[1], "   ")).toMatchObject({ ok: false, reason: "Bình luận trống" });
+    const crmTask = await prisma.task.findFirstOrThrow({ where: { feature: { projectId: "crm" } } });
+    expect(await commentOnTask("agent-vega", crmTask.id, "x")).toMatchObject({ ok: false, projectId: null });
   });
 });

@@ -131,6 +131,7 @@ model Member {
   agentConfig       AgentConfig?
   createdProjects   Project[]        @relation("ProjectCreator")
   agentTokens       AgentToken[]
+  taskComments      TaskComment[]    @relation("TaskCommentAuthor")
 
   @@map("members")
 }
@@ -250,9 +251,24 @@ model Task {
   runningSince   DateTime?
 
   sessions McpSession[]
+  comments TaskComment[]
 
   @@index([featureId])
   @@map("tasks")
+}
+
+/// Bình luận trên task (F16.4) — agent ghi qua MCP `tasks_comment`, hiện ở mục "Bình luận" của task drawer.
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    Member   @relation("TaskCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
+  @@map("task_comments")
 }
 
 model Doc {
