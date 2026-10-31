@@ -94,7 +94,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-PM-03 | Quản lý sprint: tạo, đặt sprint hiện tại, gán / lọc task theo sprint | ✅ (F21.3) | F21 |
 | FR-PM-04 | Lưu trữ task | ⬜ | F21 |
 | FR-PM-05 | Người và agent cùng bình luận trên task | ✅ agent qua MCP (F16.4), người trong drawer (F21.5) | F21 |
-| FR-PM-06 | Acceptance criteria dạng checklist trên task | ⬜ | F21 |
+| FR-PM-06 | Acceptance criteria dạng checklist trên task | ✅ người trong drawer, agent qua MCP `criteria_check` (F21.6) | F21 |
 | FR-QA-01 | Lưu lịch sử chuyển stage / trạng thái của mọi task | ✅ `TaskTransition` từ web + MCP (F22.1) | F22 |
 | FR-QA-02 | Task do agent làm phải qua cổng review của người (duyệt / trả lại kèm lý do) | ✅ (F22.2) | F22 |
 | FR-QA-03 | Definition of Done theo dự án, áp khi chuyển Review / Done | ⬜ | F22 |

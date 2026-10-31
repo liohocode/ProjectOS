@@ -46,6 +46,7 @@ afterAll(async () => {
   await prisma.doc.update({ where: { id: "flows" }, data: { readBy: snapshot.flowsReadBy } });
   await prisma.memberActivity.deleteMany({ where: { memberId: "agent-bao", at: { gte: startedAt } } });
   await prisma.taskComment.deleteMany({ where: { authorId: "agent-bao" } });
+  await prisma.taskCriterion.deleteMany({ where: { text: "IT tiêu chí" } });
   await prisma.docRevision.deleteMany({ where: { authorId: "agent-bao", what: { startsWith: "IT " } } });
   await prisma.mcpLogEntry.deleteMany({ where: { agentId: "agent-bao", at: { gte: startedAt } } });
   await prisma.mcpSession.deleteMany({ where: { agentId: "agent-bao", startedAt: { gte: startedAt } } });
@@ -55,10 +56,11 @@ afterAll(async () => {
 const data = (r: Awaited<ReturnType<Client["callTool"]>>) => JSON.parse((r.content as { text: string }[])[0].text);
 
 describe("MCP client SDK → /api/mcp (F16.9)", () => {
-  it("liệt kê đủ 9 tool", async () => {
+  it("liệt kê đủ 10 tool", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "context_get",
+      "criteria_check",
       "docs_append",
       "docs_read",
       "docs_search",
@@ -78,6 +80,11 @@ describe("MCP client SDK → /api/mcp (F16.9)", () => {
     expect(data(await client.callTool({ name: "tasks_list", arguments: { projectId: "rv-web" } })).count).toBeGreaterThan(0);
     expect(data(await client.callTool({ name: "tasks_claim", arguments: { taskId: free } }))).toMatchObject({ claimed: true });
     expect(data(await client.callTool({ name: "tasks_comment", arguments: { taskId: free, body: "IT: bắt đầu" } }))).toMatchObject({ commented: true });
+    // F21.6: agent tick acceptance criterion của task mình (id lấy từ context_get).
+    const criterion = await prisma.taskCriterion.create({ data: { taskId: free, text: "IT tiêu chí", position: 99 } });
+    expect(data(await client.callTool({ name: "criteria_check", arguments: { taskId: free, criterionId: criterion.id, done: true } }))).toEqual({ checked: true, done: true });
+    expect(await prisma.taskCriterion.findUniqueOrThrow({ where: { id: criterion.id } })).toMatchObject({ doneById: "agent-bao", doneAt: expect.any(Date) });
+    expect(data(await client.callTool({ name: "criteria_check", arguments: { taskId: "T-khong-co", criterionId: criterion.id, done: true } }))).toMatchObject({ checked: false });
     // Bước 8 của quy ước agent (F24.5): một lệnh đẩy Review kèm PR + branch (F22.4).
     const prUrl = "https://github.com/acme/web/pull/7";
     expect(
@@ -94,7 +101,7 @@ describe("MCP client SDK → /api/mcp (F16.9)", () => {
     });
 
     const log = await prisma.mcpLogEntry.findMany({ where: { agentId: "agent-bao", at: { gte: startedAt } }, orderBy: { at: "asc" } });
-    expect(log.map((l) => l.tool)).toEqual(["tasks.list", "tasks.claim", "tasks.comment", "tasks.update_status", "docs.search", "docs.read", "docs.append"]);
+    expect(log.map((l) => l.tool)).toEqual(["tasks.list", "tasks.claim", "tasks.comment", "criteria.check", "criteria.check", "tasks.update_status", "docs.search", "docs.read", "docs.append"]);
     expect(log.at(-1)?.result).toBe("ChoReview");
   });
 
@@ -108,6 +115,7 @@ describe("MCP client SDK → /api/mcp (F16.9)", () => {
     const ctx = data(await client.callTool({ name: "context_get", arguments: { taskId: t.id } }));
     expect(ctx.task).toMatchObject({ id: t.id, assigneeId: "agent-bao" });
     expect(ctx.feature.id).toBe(t.featureId);
+    expect(ctx.criteria).toEqual(expect.any(Array)); // F21.6
     expect(ctx.docs.length).toBeGreaterThan(0);
     expect(ctx.docs[0].sections.length).toBeGreaterThan(0);
     expect(ctx.history.at(-1)).toMatchObject({ actor: "Bảo", via: "mcp", to: "DangChay" });

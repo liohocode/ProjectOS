@@ -20,6 +20,15 @@ export interface Project {
 export type TaskStage = "BA" | "TA" | "Dev" | "Review" | "Done";
 export type MemberKind = "human" | "agent";
 
+/** Một acceptance criterion của task (F21.6). */
+export interface TaskCriterionView {
+  id: string;
+  text: string;
+  done: boolean;
+  /** Người / agent đã tick */
+  doneBy: string | null;
+}
+
 export interface Task {
   id: string;
   stage: TaskStage;
@@ -44,6 +53,8 @@ export interface Task {
   links: TaskLinks;
   /** Sprint task thuộc về (F21.3); null = chưa xếp */
   sprintId: string | null;
+  /** Acceptance criteria (F21.6), theo thứ tự */
+  criteria: TaskCriterionView[];
 }
 
 export interface Feature {

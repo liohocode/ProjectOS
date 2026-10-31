@@ -13,7 +13,13 @@ export const getFeaturesByProject = cache(async (projectId: string): Promise<Fea
     where: { projectId, status: "active" },
     include: {
       owner: true,
-      tasks: { include: { assignee: true }, orderBy: { id: "asc" } },
+      tasks: {
+        include: {
+          assignee: true,
+          criteria: { orderBy: [{ position: "asc" }, { id: "asc" }], select: { id: true, text: true, doneAt: true, doneBy: { select: { name: true } } } },
+        },
+        orderBy: { id: "asc" },
+      },
       _count: { select: { docs: true } },
     },
     orderBy: { id: "asc" },
@@ -51,6 +57,7 @@ export const getFeaturesByProject = cache(async (projectId: string): Promise<Fea
         runningSince: t.runningSince?.toISOString(),
         links: { prUrl: t.prUrl, branch: t.branch, commitSha: t.commitSha },
         sprintId: t.sprintId,
+        criteria: t.criteria.map((c) => ({ id: c.id, text: c.text, done: c.doneAt !== null, doneBy: c.doneBy?.name ?? null })),
       }),
     ),
   }));

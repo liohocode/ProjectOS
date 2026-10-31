@@ -7,6 +7,7 @@ export const TOOL_SERVER = {
   tasks_claim: "meridian-core",
   tasks_update_status: "meridian-core",
   tasks_comment: "meridian-core",
+  criteria_check: "meridian-core",
   context_get: "meridian-core",
   features_propose: "meridian-core",
   docs_read: "meridian-docs",

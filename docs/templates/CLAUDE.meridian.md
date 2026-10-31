@@ -18,7 +18,7 @@ Dự án này quản lý task trên **Meridian** (dự án `<MÃ-DỰ-ÁN>`), k�
 4. **Làm** — trên branch riêng `<taskId>-<mô-tả-ngắn>` (vd `T-405-autosave`). Chỉ làm đúng phạm vi task; việc phát sinh → `tasks_comment` đề xuất, không làm lấn.
 5. **Báo tiến độ** — mốc đáng kể (xong thiết kế, mở PR, gặp vướng) → `tasks_comment` một dòng ngắn, viết cho người đọc sau.
 6. **Vướng** — thiếu thông tin / chờ người khác → `tasks_comment` nêu rõ cần ai làm gì, rồi `tasks_update_status(status: "Chờ")`. Không đoán thay người quyết định.
-7. **Kiểm tra** — chạy `<lệnh kiểm tra>` (lint, test, build) cho tới khi xanh. Không tắt / bỏ qua test để cho xanh.
+7. **Kiểm tra** — chạy `<lệnh kiểm tra>` (lint, test, build) cho tới khi xanh. Không tắt / bỏ qua test để cho xanh. Mỗi acceptance criterion (`context_get` → `criteria`) đã kiểm chứng → `criteria_check(taskId, criterionId, done: true)`; tiêu chí chưa đạt được thì nêu lý do bằng `tasks_comment`.
 8. **Mở PR + đẩy Review** — commit, push, mở PR (tiêu đề bắt đầu bằng mã task), rồi **một lệnh**:
    `tasks_update_status(taskId, stage: "Review", status: "Chờ review", prUrl, branch)`.
    Agent **không tự Done** — người duyệt trên Meridian.

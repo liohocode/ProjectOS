@@ -5,6 +5,7 @@ import { Field } from "@/components/ui/Field";
 import { RunningTime } from "@/components/ui/RunningTime";
 import { useCan } from "@/components/auth/PermissionsProvider";
 import { TaskReviewBox } from "./TaskReviewBox";
+import { TaskCriteria } from "./TaskCriteria";
 import type { ActionResult } from "@/lib/actions/result";
 import type { Feature, Member, SprintOption, Task, TaskDrawerInfo } from "@/lib/types";
 import { setTaskSprint } from "@/lib/actions/sprints";
@@ -198,6 +199,8 @@ export function TaskDrawer({
         </div>
 
         {task.stage === "Review" && canReview && <TaskReviewBox key={task.id} taskId={task.id} />}
+
+        <TaskCriteria key={`criteria-${task.id}`} taskId={task.id} criteria={task.criteria} canWrite={canWrite} />
 
         {info && info.contextDocs.length > 0 && (
           <div className="drawer-section">

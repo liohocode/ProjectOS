@@ -61,7 +61,7 @@ describe("số liệu server nội bộ từ nhật ký (F16.8)", () => {
       expect(docsAfter).toMatchObject({ status: "online", commandsPerDay: docs.commandsPerDay + 1, lastCommandAgo: expect.stringMatching(/giây trước$/) });
       expect(after.find((s) => s.id === "meridian-core")!.commandsPerDay).toBe(core.commandsPerDay);
       expect(docsAfter.tools).toEqual(["docs.read", "docs.search", "docs.append"]);
-      expect(core.tools).toEqual(["tasks.list", "tasks.claim", "tasks.update_status", "tasks.comment", "context.get", "features.propose"]);
+      expect(core.tools).toEqual(["tasks.list", "tasks.claim", "tasks.update_status", "tasks.comment", "criteria.check", "context.get", "features.propose"]);
     } finally {
       await prisma.mcpLogEntry.deleteMany({ where: { agentId: "agent-scout", at: now } });
     }
