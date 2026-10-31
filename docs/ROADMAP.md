@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-31 · Tổng: **120/168 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 25/65 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-31 · Tổng: **121/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 26/65 (đã chốt F23.1, F25.1).
 
 ## Điều chỉnh ưu tiên (Lio, 2026-10-31)
 1. **Hoàn thiện Feature & Task trước** (Phase 7): mô tả task, cỡ, phụ thuộc, trang chi tiết feature, markdown, DoD, lịch sử block, agent đề xuất task — đủ để chứa toàn bộ kế hoạch đang nằm trong `.md`.
@@ -39,7 +39,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | [F16](features/F16-mcp-server.md) | MCP server thật cho agent | Xong | 9/9 |
 | [F17](features/F17-realtime-activity.md) | Sự kiện thật + polling ngắn | Xong | 5/5 |
 | [F18](features/F18-knowledge-index.md) | pgvector, tìm kiếm ngữ nghĩa | Hoãn — cần chọn nhà cung cấp embedding | 0/6 |
-| [F19](features/F19-deployment.md) | Deploy Cloud Run + Neon, CD | Còn F19.9 tên miền (tuỳ chọn); F19.8 chuyển sang F20.1; rollback qua workflow `Rollback` | 8/9 |
+| [F19](features/F19-deployment.md) | Deploy Cloud Run + Neon, CD | Còn F19.9 tên miền (tuỳ chọn); F19.8 chuyển sang F20.1; rollback qua workflow `Rollback` | 8/10 |
 
 ## Giai đoạn 2 — Data foundation cho các dự án công ty
 ### Phase 6 — Dùng thật nội bộ
@@ -56,7 +56,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 7b — Kế hoạch Meridian trên web (ưu tiên 2)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F28](features/F28-plan-on-web.md) | Import kế hoạch + tài liệu kỹ thuật `.md` → DB (dự án `meridian`), màn Roadmap, làm việc qua MCP thay vì sửa `.md` | F21.7–F21.11 | Đang làm — phase + phụ thuộc feature (F28.1) | 1/6 |
+| [F28](features/F28-plan-on-web.md) | Import kế hoạch + tài liệu kỹ thuật `.md` → DB (dự án `meridian`), màn Roadmap, làm việc qua MCP thay vì sửa `.md` | F21.7–F21.11 | Đang làm — phase + phụ thuộc feature (F28.1), import `.md` (F28.2) | 2/6 |
 
 ### Phase 8b — Chạy agent từ web (ưu tiên 3)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -89,7 +89,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F28.2](features/F28-plan-on-web.md) Import kế hoạch `.md` → DB | Toàn bộ feature / task của Meridian lên web |
+| [F28.3](features/F28-plan-on-web.md) Tài liệu kỹ thuật → Doc | Yêu cầu, ADR, data model trên web |
 | [F28.4](features/F28-plan-on-web.md) Màn Roadmap | Xem tiến độ theo phase, việc nên nhận tiếp |
 
 ## Quyết định đang mở (cần người dùng chốt)
