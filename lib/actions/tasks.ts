@@ -11,6 +11,7 @@ import { reviewTask, type ReviewDecision } from "@/lib/domain/taskReview";
 import { commentOnTask } from "@/lib/domain/tasks";
 import { reviewGateBlocker } from "@/lib/domain/taskCriteria";
 import { addDependency, removeDependency } from "@/lib/domain/taskDependencies";
+import { applyBlock } from "@/lib/domain/taskBlocks";
 import { parseTaskLinks } from "@/lib/taskLinks";
 import { moveInList, type Direction } from "@/lib/reorder";
 import { fail, ok, type ActionResult } from "./result";
@@ -205,10 +206,8 @@ export async function setTaskBlocked(taskId: string, block: { short: string; ful
   const denied = await authorize("task.write", projectId);
   if (denied) return fail(denied);
   const value = input.data.block;
-  await prisma.task.update({
-    where: { id: input.data.taskId },
-    data: { blocked: value?.short ?? null, blockedFull: value ? value.full || null : null },
-  });
+  // F22.7: ghi lịch sử đặt / gỡ block cùng lúc với trạng thái.
+  await prisma.$transaction((tx) => applyBlock(tx, input.data.taskId, value));
   await recordActivity(
     value ? "ph-warning" : "ph-check",
     value ? `Đánh dấu ${input.data.taskId} bị block: ${value.short}` : `Gỡ block ${input.data.taskId}`,

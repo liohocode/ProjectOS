@@ -1150,9 +1150,12 @@ img { display: block; max-width: 100%; }
 .portfolio-summary { font-size: 12px; color: var(--color-neutral-400); margin-bottom: var(--space-4); }
 /* F22.5: chỉ số chất lượng của dự án đang mở */
 .quality-panel { container-type: inline-size; margin-top: var(--space-8); }
-.quality-title { display: flex; align-items: center; gap: var(--space-2); font-size: 15px; margin: 0 0 var(--space-3); }
-.quality-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4); }
-@container (max-width: 640px) { .quality-stats { grid-template-columns: 1fr; } }
+.quality-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-3); }
+.quality-title { display: flex; align-items: center; gap: var(--space-2); font-size: 15px; margin: 0; }
+.quality-sprint { width: auto; max-width: 260px; height: 30px; font-size: 12.5px; }
+.quality-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4); }
+@container (max-width: 820px) { .quality-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (max-width: 480px) { .quality-stats { grid-template-columns: 1fr; } }
 .quality-stat { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-sm); }
 .quality-stat-value { font-size: 22px; font-weight: 600; }
 .quality-stat-label { font-size: 12.5px; color: var(--color-neutral-300); }

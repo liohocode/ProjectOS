@@ -17,8 +17,8 @@ describe("chỉ số chất lượng (F22.5)", () => {
     expect(vega).toMatchObject({ kind: "agent", summary: { returnRate: 1, totalReturns: 1 } });
     expect(Math.round(vega.summary.medianCycleMs! / DAY)).toBe(5);
     expect(Math.round(q.byMember.find((r) => r.name === "Trần Mỹ Linh")!.summary.medianCycleMs! / DAY)).toBe(4);
-    // Người / agent chưa có task qua Review không có hàng.
-    expect(q.byMember.every((r) => r.summary.reviewed > 0 || r.summary.measured > 0)).toBe(true);
+    // Người / agent không có số liệu nào (chưa qua Review, chưa đo được, chưa từng bị block) không có hàng.
+    expect(q.byMember.every((r) => r.summary.reviewed > 0 || r.summary.measured > 0 || r.summary.blockedTasks > 0)).toBe(true);
   });
 
   it("crm: một task, không trả lại", async () => {

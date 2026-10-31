@@ -212,6 +212,8 @@ async function main() {
                   at: new Date(Date.now() - h.daysAgo * 86_400_000),
                 })),
               },
+              // F22.7: task đang block có một dòng lịch sử block mở (bắt đầu 1 ngày trước).
+              blocks: t.blocked ? { create: { reason: t.blocked, blockedAt: new Date(Date.now() - 86_400_000) } } : undefined,
               criteria: t.criteria && {
                 create: t.criteria.map((c, i) => ({
                   text: c.text,
