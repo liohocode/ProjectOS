@@ -207,3 +207,29 @@ export function comparePhaseCodes(a: string, b: string): number {
   const pb = /^(\d+)([a-z]?)$/.exec(b)!;
   return Number(pa[1]) - Number(pb[1]) || pa[2].localeCompare(pb[2]);
 }
+
+export interface PlanDoc {
+  /** Id tài liệu trong Meridian — `<dự án>-<đường dẫn>` (vd "meridian-architecture-decisions") */
+  slug: string;
+  title: string;
+  summary: string;
+  /** Markdown phần thân (bỏ dòng tiêu đề "# …") — tách mục bằng markdownToSections khi ghi */
+  body: string;
+}
+
+/** Tài liệu kỹ thuật `.md` → Doc (F28.3): tiêu đề = dòng "# " đầu, tóm tắt = đoạn văn đầu tiên trước mục "## " đầu. */
+export function parseDocMd(path: string, md: string, prefix: string): PlanDoc {
+  const text = md.replace(/\r\n?/g, "\n");
+  const title = /^# (.+)$/m.exec(text)?.[1].trim() ?? path;
+  let body = text.replace(/^# .+\n?/m, "").trim();
+  // Tài liệu chỉ có mục "### " (vd nhật ký ADR) → nâng thành "## " để mỗi mục là một section trên màn Docs.
+  if (!/^## /m.test(body) && /^### /m.test(body)) body = body.replace(/^### /gm, "## ");
+  const intro = body.split(/\n## /)[0];
+  const summary =
+    intro
+      .split(/\n\s*\n/)
+      .map((p) => p.trim())
+      .find((p) => p && !p.startsWith("|") && !p.startsWith("```") && !p.startsWith("#")) ?? title;
+  const slug = `${prefix}-${path.replace(/\.md$/, "").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`.replace(/-+$/, "");
+  return { slug, title, summary: summary.replace(/\s+/g, " ").slice(0, 500), body };
+}

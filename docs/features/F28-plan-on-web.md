@@ -20,10 +20,10 @@ Chuyển kế hoạch đang nằm trong `.md` (ROADMAP, file feature, yêu cầu
 |---|---|---|---|---|
 | F28.1 | Feature có phase + phụ thuộc giữa feature; dự án có danh sách phase (tên, mục tiêu, thứ tự) | S | F21.9 | Xong — 2026-10-31 |
 | F28.2 | Script `scripts/import-plan.ts`: đọc `docs/features/*.md` + ROADMAP → upsert dự án `meridian` (feature, task, mô tả, cỡ, phụ thuộc, tiêu chí "Hoàn thành khi", trạng thái, ghi chú quyết định); `--dry-run`, chạy lại không nhân đôi | M | F28.1, F21.8 | Xong — 2026-10-31 |
-| F28.3 | Import tài liệu kỹ thuật (requirements, ADR, data model, overview, guides) thành Doc markdown, gắn feature khi có | S | F21.11 | Chưa làm |
+| F28.3 | Import tài liệu kỹ thuật (requirements, ADR, data model, overview, guides) thành Doc markdown, gắn feature khi có | S | F21.11 | Xong — 2026-10-31 |
 | F28.4 | Màn **Roadmap** của dự án: tiến độ theo phase / feature, quyết định đang mở (task "Cần quyết định"), "việc nên nhận tiếp" (task chưa làm có phụ thuộc đã xong) | M | F28.1 | Xong — 2026-10-31 |
-| F28.5 | Import lên production (dự án `meridian`) + chuyển nguồn sự thật: WORKFLOW / CLAUDE.md / agent-workflow đổi sang nhận – đóng task qua MCP; `.md` kế hoạch thành bản export tự sinh (`npm run plan:export`) | M | F28.2–F28.4 | Chưa làm — Lio đã duyệt 2026-10-31 (dự án mới `meridian` trên production, không đụng dữ liệu mẫu) |
-| F28.6 | Agent phát triển Meridian (Claude Code) dùng token MCP production cho dự án `meridian` — dogfooding hằng ngày (gộp F24.7) | S | F28.5 | Chưa làm — Lio tạo token |
+| F28.5 | Import lên production (dự án `meridian`) qua workflow `Import plan` (chạy tay, mặc định dry-run); chạy lại sau mỗi đợt sửa `.md` tới khi F28.6 xong | S | F28.2–F28.4 | Đang làm — Ali, 2026-10-31 (Lio đã duyệt ghi production) |
+| F28.6 | Chuyển nguồn sự thật sang DB: agent phát triển Meridian (Claude Code) nhận / đóng task qua MCP production; WORKFLOW / CLAUDE.md đổi theo; `.md` kế hoạch thành bản export tự sinh (`npm run plan:export`) — gộp F24.7 | M | F28.5 | Chặn — cần Lio: cho phép domain production trong mạng của môi trường cloud + tạo token MCP agent |
 
 ### F28.1 — Phase + phụ thuộc feature
 **Hoàn thành khi**:
@@ -34,15 +34,24 @@ Chuyển kế hoạch đang nằm trong `.md` (ROADMAP, file feature, yêu cầu
 **Hoàn thành khi**:
 - [x] Import toàn bộ `docs/features` vào DB dev: số feature / task / task xong khớp ROADMAP; chạy lại lần 2 không đổi gì (unit `lib/planImport.test.ts` trên file thật, integration `lib/domain/planImport.integration.test.ts`)
 
+### F28.3 — Tài liệu kỹ thuật
+**Hoàn thành khi**:
+- [x] Yêu cầu, ADR, data model, overview, hướng dẫn hiện ở màn Docs của dự án (markdown, mỗi mục một section); chạy lại cập nhật (integration `lib/domain/planImport.integration.test.ts`)
+
 ### F28.4 — Màn Roadmap
 **Hoàn thành khi**:
 - [x] Xem tiến độ theo phase / feature, quyết định đang mở, việc nên nhận tiếp; mở feature / task từ đó (unit `lib/roadmap.test.ts`, e2e `roadmap.spec.ts`)
 
-### F28.5 — Chuyển nguồn sự thật
+### F28.5 — Import production
+**Hoàn thành khi**:
+- [ ] Dự án `meridian` trên production có đủ phase / feature / task khớp ROADMAP; chạy lại không nhân đôi
+
+### F28.6 — Chuyển nguồn sự thật
 **Hoàn thành khi**:
 - [ ] Một task mới làm từ đầu đến cuối chỉ qua Meridian (claim → context_get → PR → Review → duyệt trên web), không sửa `.md` kế hoạch bằng tay
 
 ## Quyết định / ghi chú
+- **F28.3 (2026-10-31)**: `parseDocMd` + `importDocs` — cùng script / workflow import. 11 tài liệu (`TECH_DOCS` trong `scripts/import-plan.ts`: product, architecture, WORKFLOW, guides); id `<dự án>-<đường dẫn>`, tiêu đề = dòng `# `, tóm tắt = đoạn đầu, nội dung tách mục theo `## ` (tài liệu chỉ có `### ` như nhật ký ADR được nâng lên `## ` → mỗi ADR một section). Chạy lại ghi đè nội dung (không qua revision — `.md` vẫn là nguồn tới F28.6). Chưa gắn feature (vào "Kho tri thức chung"); `design-reference.md` không import (rất dài, đã có trong repo).
 - **F28.4 (2026-10-31)**: route `/[project]/roadmap`, mục "Roadmap" ở sidebar (badge = số quyết định đang mở). Server component chỉ đọc, tính bằng hàm thuần `lib/roadmap.ts`: gom feature theo phase (chưa xếp phase ở cuối), tổng task xong; "việc nên nhận tiếp" = task chưa Done, không đang làm / chạy / block / chờ quyết định, mọi task phụ thuộc đã Done và feature không chờ feature chưa Done — theo thứ tự phase → feature → task (tối đa 8); "quyết định đang mở" = task `needsDecision` chưa Done. Sửa kèm import: feature trạng thái "Hoãn" (F18) → task chưa xong của nó bị chặn kèm lý do. Chưa sửa phase trên UI (tên / mục tiêu đến từ import).
 - **F28.2 (2026-10-31)**: parser thuần `lib/planImport.ts` (unit test chạy trên chính `docs/features/*.md` + so tổng với ROADMAP — bắt được ROADMAP ghi F19 8/9 trong khi file có 10 task, đã sửa) + ghi DB `lib/domain/planImport.ts` (một transaction; `--dry-run` chạy hết rồi rollback). Khớp: phase theo (dự án, code), feature id = mã kế hoạch (`F21`; từ chối nếu id đã thuộc dự án khác), task theo (dự án, `code`) — task mới lấy id `T-n` tiếp theo. Mỗi lần chạy ghi đè nội dung từ `.md` (tiêu đề, stage, mô tả, cỡ, tiêu chí, phụ thuộc, thứ tự). Trạng thái: Xong → Done; Đang làm → Dev; Chưa làm → TA / Chờ; Hoãn / Chặn / "cần Lio" → block kèm lý do (`needsDecision` khi cần Lio / quyết định); "Chuyển → / thay bằng / gộp vào" → task lưu trữ. "Tham chiếu" ghép vào phạm vi, "Đã chuyển sang feature khác" ghép vào ghi chú. Task mới giao cho `--assignee`. `npm run plan:import -- --assignee <id> [--project meridian] [--dry-run]`. Đã chạy trên DB dev: 13 phase, 29 feature, 169 task (120 xong), 128 tiêu chí, 50 phụ thuộc feature, 138 phụ thuộc task.
 - **F28.1 (2026-10-31)**: migration chỉ thêm bảng `project_phases` (`code` duy nhất trong dự án, vd "7", "7b" — khoá cho import F28.2; `position` thứ tự), `feature_dependencies` (cùng dự án, không vòng — dùng lại `wouldCreateCycle`), cột `Feature.phaseId?` (`SET NULL`). Trang chi tiết feature: chọn phase, mục "Phụ thuộc" (feature cần xong trước + feature đang chờ). Quyền `feature.manage`. Tạo / sửa phase chưa có UI — import F28.2 tạo, màn Roadmap F28.4 hiển thị. Seed: rv-web 2 phase, FEAT-120 phụ thuộc FEAT-118.

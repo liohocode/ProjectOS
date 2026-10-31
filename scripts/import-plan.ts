@@ -6,8 +6,23 @@ import "dotenv/config";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { parseFeatureMd, parsePhaseNames, type PlanFeature } from "../lib/planImport";
-import { importPlan } from "../lib/domain/planImport";
+import { parseDocMd, parseFeatureMd, parsePhaseNames, type PlanFeature } from "../lib/planImport";
+import { importDocs, importPlan } from "../lib/domain/planImport";
+
+// Tài liệu kỹ thuật đưa lên màn Docs (F28.3) — đường dẫn tương đối trong docs/.
+const TECH_DOCS = [
+  "product/overview.md",
+  "product/requirements.md",
+  "architecture/overview.md",
+  "architecture/data-model.md",
+  "architecture/decisions.md",
+  "WORKFLOW.md",
+  "guides/agent-workflow.md",
+  "guides/connect-agent.md",
+  "guides/deploy-cloud-run.md",
+  "guides/backup-restore.md",
+  "guides/google-oauth.md",
+];
 
 async function main() {
   const { values } = parseArgs({
@@ -38,8 +53,10 @@ async function main() {
     phaseNames,
     dryRun: values["dry-run"],
   });
+  const docs = TECH_DOCS.map((path) => parseDocMd(path, readFileSync(join(root, "docs", path), "utf8"), values.project!));
+  const docResult = await importDocs(values.project!, docs, values.assignee, values["dry-run"]);
   console.log(`${values["dry-run"] ? "[dry-run — không ghi] " : ""}Import vào dự án ${values.project}:`);
-  console.log(JSON.stringify(summary, null, 2));
+  console.log(JSON.stringify({ ...summary, docs: docResult }, null, 2));
   const { prisma } = await import("../lib/prisma");
   await prisma.$disconnect();
 }

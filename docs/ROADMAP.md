@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-31 · Tổng: **122/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 27/65 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-31 · Tổng: **123/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 28/65 (đã chốt F23.1, F25.1).
 
 ## Điều chỉnh ưu tiên (Lio, 2026-10-31)
 1. **Hoàn thiện Feature & Task trước** (Phase 7): mô tả task, cỡ, phụ thuộc, trang chi tiết feature, markdown, DoD, lịch sử block, agent đề xuất task — đủ để chứa toàn bộ kế hoạch đang nằm trong `.md`.
@@ -56,7 +56,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 7b — Kế hoạch Meridian trên web (ưu tiên 2)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F28](features/F28-plan-on-web.md) | Import kế hoạch + tài liệu kỹ thuật `.md` → DB (dự án `meridian`), màn Roadmap, làm việc qua MCP thay vì sửa `.md` | F21.7–F21.11 | Đang làm — phase + phụ thuộc feature (F28.1), import `.md` (F28.2), màn Roadmap (F28.4) | 3/6 |
+| [F28](features/F28-plan-on-web.md) | Import kế hoạch + tài liệu kỹ thuật `.md` → DB (dự án `meridian`), màn Roadmap, làm việc qua MCP thay vì sửa `.md` | F21.7–F21.11 | Đang làm — còn import production (F28.5), đổi quy trình sang MCP (F28.6) | 4/6 |
 
 ### Phase 8b — Chạy agent từ web (ưu tiên 3)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -81,7 +81,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | [F26](features/F26-data-foundation.md) | API đọc cho hệ thống khác, báo cáo định kỳ + CSV, tích hợp GitHub | F22, F23 | Chưa bắt đầu | 0/4 |
 
 ## Thứ tự làm
-1. **F28 ngay sau F21** (Lio duyệt 2026-10-31): F28.1 phase + phụ thuộc feature → F28.2 import `.md` → F28.3 tài liệu kỹ thuật → F28.4 màn Roadmap → F28.5 import production (dự án `meridian`) + đổi quy trình → F28.6. Từ đó kế hoạch theo dõi trên web.
+1. **F28 ngay sau F21** (Lio duyệt 2026-10-31): F28.1 phase + phụ thuộc feature → F28.2 import `.md` → F28.3 tài liệu kỹ thuật → F28.4 màn Roadmap → F28.5 import production (dự án `meridian`, workflow `Import plan`) → F28.6 đổi quy trình sang MCP (cần Lio mở mạng + token). Từ F28.5 kế hoạch xem được trên web; `.md` vẫn là nguồn tới F28.6.
 2. Phần còn lại của Feature & Task (làm và theo dõi trên web sau F28.5): F22.7 lịch sử block → F22.6 DoD → F24.2 agent đề xuất task → F24.6 gắn tài liệu ↔ task.
 3. **F29** (F29.1 đã chốt — ADR-024, ADR-025): F29.2 key → F29.3 lượt chạy → F29.4 runner GitHub Actions → F29.5 theo dõi → F29.6 giới hạn.
 4. Sau đó: F23 (gộp token từ F29), F25.3–F25.6, F27, F26, F20.4–F20.5, F24.3–F24.4.
@@ -89,8 +89,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F28.3](features/F28-plan-on-web.md) Tài liệu kỹ thuật → Doc | Yêu cầu, ADR, data model trên web |
-| [F28.5](features/F28-plan-on-web.md) Import lên production + đổi quy trình | Kế hoạch Meridian chạy trên web thật (Lio đã duyệt) |
+| [F28.5](features/F28-plan-on-web.md) Import lên production (workflow `Import plan`) | Kế hoạch Meridian xem được trên web thật (Lio đã duyệt) |
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Khuyến nghị |

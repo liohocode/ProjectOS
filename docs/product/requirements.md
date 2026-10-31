@@ -115,7 +115,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-PM-10 | Lưu trữ feature, sắp xếp ưu tiên feature / task | ✅ (F21.10) | F21 |
 | FR-PM-11 | Nội dung mô tả / tài liệu hiển thị markdown (bảng, danh sách, code) | ✅ tài liệu (F21.11); mô tả task / feature ở F21.7 / F21.9 | F21 |
 | FR-DF-01 | Kế hoạch dự án (phase, feature, task, tiêu chí, phụ thuộc) import được từ `.md` vào DB, chạy lại không nhân đôi | ✅ (F28.2) | F28 |
-| FR-DF-02 | Tài liệu kỹ thuật (yêu cầu, ADR, data model, hướng dẫn) lưu DB, xem / sửa trên web | ⬜ | F28 |
+| FR-DF-02 | Tài liệu kỹ thuật (yêu cầu, ADR, data model, hướng dẫn) lưu DB, xem / sửa trên web | ✅ import + xem / sửa qua màn Docs (F28.3) | F28 |
 | FR-DF-03 | Màn Roadmap: tiến độ theo phase, quyết định đang mở, việc nên nhận tiếp | ✅ (F28.4) | F28 |
 | FR-DF-04 | DB là nguồn sự thật của kế hoạch; agent nhận / đóng task qua MCP; `.md` chỉ là bản export | ⬜ | F28 |
 | FR-DF-05 | Meridian dùng chính Meridian để quản lý việc phát triển (dogfooding) | ⬜ | F28 |

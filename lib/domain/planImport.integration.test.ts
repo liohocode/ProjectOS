@@ -2,9 +2,10 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { parseFeatureMd, parsePhaseNames, type PlanFeature } from "@/lib/planImport";
+import { parseDocMd, parseFeatureMd, parsePhaseNames, type PlanFeature } from "@/lib/planImport";
+import { getDocBody } from "@/lib/data/docs";
 import { getFeaturesByProject, getPhasesByProject } from "@/lib/data/features";
-import { importPlan } from "./planImport";
+import { importDocs, importPlan } from "./planImport";
 
 // F28.2 — import kế hoạch thật (docs/features) vào một dự án riêng của test; xoá dự án sau khi chạy.
 const PROJECT = "it-plan";
@@ -58,6 +59,15 @@ describe("importPlan (F28.2)", () => {
     const moved = await prisma.task.findFirstOrThrow({ where: { feature: { projectId: PROJECT }, code: "F19.8" } });
     expect(moved.archivedAt).not.toBeNull();
     expect((await getFeaturesByProject(PROJECT)).flatMap((f) => f.tasks).some((t) => t.code === "F19.8")).toBe(false);
+  });
+
+  it("F28.3: tài liệu kỹ thuật → Doc (markdown tách mục), chạy lại thì cập nhật", async () => {
+    const docs = ["architecture/decisions.md", "product/requirements.md"].map((p) => parseDocMd(p, readFileSync(join(root, "docs", p), "utf8"), PROJECT));
+    expect(await importDocs(PROJECT, docs, "hieu")).toEqual({ created: 2, updated: 0 });
+    expect(await importDocs(PROJECT, docs, "hieu")).toEqual({ created: 0, updated: 2 });
+    const body = await getDocBody(`${PROJECT}-architecture-decisions`);
+    expect(body.sections.length).toBeGreaterThan(1);
+    expect(body.sections.some((s) => s.heading.startsWith("ADR-025"))).toBe(true);
   });
 
   it("feature đã thuộc dự án khác → từ chối", async () => {
