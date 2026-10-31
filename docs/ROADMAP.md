@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **106/148 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 11/45 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **107/149 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 12/46 (đã chốt F23.1, F25.1).
 
 ## Mục tiêu giai đoạn 2 (người dùng chốt 2026-10-30)
 Meridian là **data foundation cho các dự án của công ty**: quản lý tiến độ, công việc và coding agent; quy trình đảm bảo **chất lượng** và kiểm soát **effort / AI token**; người thật theo dõi trạng thái và review chi tiết; hỗ trợ coding agent làm việc qua MCP; tài liệu feature / task / kỹ thuật; người quản lý làm việc được trên **mobile**; Meridian **tạo, quản lý và cung cấp skills dùng chung đồng nhất** cho mọi coding agent.
@@ -51,7 +51,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
 | [F23](features/F23-ai-effort-tokens.md) | Ghi nhận token AI theo task / agent / dự án, ngân sách, ước lượng vs thực tế | F16, F22.1 | Chưa bắt đầu — nguồn token đã chốt (F23.1) | 1/5 |
-| [F24](features/F24-coding-agent-support.md) | `context_get`, agent chia task / đề xuất tài liệu, template tài liệu, quy ước làm việc cho repo | F16, F21.6 | Đang làm — `context_get` (F24.1) | 1/6 |
+| [F24](features/F24-coding-agent-support.md) | `context_get`, agent chia task / đề xuất tài liệu, template tài liệu, quy ước làm việc cho repo | F16, F21.6 | Đang làm — `context_get` (F24.1), quy ước agent + CLAUDE.md mẫu (F24.5) | 2/7 |
 | [F27](features/F27-agent-skills.md) | **Skills hub**: tạo / phiên bản / duyệt skill, gán theo tổ chức / dự án / agent, phân phối qua MCP + đồng bộ vào repo (hash), agent đề xuất cải tiến, thống kê | F16, F24.1 | Chưa bắt đầu | 0/8 |
 
 ### Phase 9 — Mobile cho người quản lý
@@ -74,10 +74,11 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F24.5](features/F24-coding-agent-support.md) Quy ước làm việc cho agent (CLAUDE.md mẫu) | Để dogfooding với Claude Code; thành skill dùng chung ở F27.8 |
+| [F24.7](features/F24-coding-agent-support.md) Thử CLAUDE.md mẫu trên repo thật | **Lio** chọn repo + tạo token agent; agent hỗ trợ chạy thử |
 | [F21.3](features/F21-work-management.md) Sprint | Lead quản lý sprint |
 | [F20.3](features/F20-go-live.md) Hướng dẫn onboarding dự án thật | Lio bắt đầu dùng thật |
 | [F25.3](features/F25-mobile-manager.md) App shell responsive | Mở đường cho inbox / duyệt trên điện thoại |
+| [F27.1](features/F27-agent-skills.md) Model Skill + ADR định dạng | Bắt đầu skills hub (F24.5 thành skill ở F27.8) — mô hình dữ liệu mới, đề xuất ADR cho Lio duyệt trước |
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Khuyến nghị |

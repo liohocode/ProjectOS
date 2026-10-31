@@ -39,7 +39,9 @@ docs/
     google-oauth.md         tạo OAuth client Google cho đăng nhập (F15.2)
     backup-restore.md       sao lưu hằng đêm + khôi phục DB production (F20.1)
     connect-agent.md        kết nối AI agent (Claude Code) với MCP server của Meridian (F16)
-                            (sẽ có thêm: kết nối agent F16.9, backup F19.8…)
+    agent-workflow.md       quy ước agent làm task qua Meridian: claim → context → PR → Review (F24.5)
+  templates/
+    CLAUDE.meridian.md      CLAUDE.md mẫu dán vào repo dự án dùng Meridian (F24.5)
 ```
 
 ## Quy tắc giữ tài liệu sống
