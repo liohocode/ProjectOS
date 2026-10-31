@@ -1,11 +1,46 @@
 import { cache } from "react";
 import type { Feature, ProposedFeature, Task } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning, toIsoDate } from "@/lib/taskFormat";
 import { formatRelativeVi } from "@/lib/relativeTime";
 import { featureProgress } from "@/lib/featureProgress";
 
 export const UNASSIGNED_OWNER = "Chưa giao";
+
+const TASK_INCLUDE = {
+  assignee: true,
+  criteria: {
+    orderBy: [{ position: "asc" }, { id: "asc" }],
+    select: { id: true, text: true, doneAt: true, doneBy: { select: { name: true } } },
+  },
+} satisfies Prisma.TaskInclude;
+
+type TaskRow = Prisma.TaskGetPayload<{ include: typeof TASK_INCLUDE }>;
+
+function toTask(t: TaskRow, now: Date): Task {
+  return {
+    id: t.id,
+    stage: t.stage,
+    title: t.title,
+    assigneeId: t.assigneeId,
+    who: t.assignee.name,
+    kind: t.assignee.kind,
+    status: TASK_STATUS_LABEL[t.status],
+    est: formatEstimate(t.estimatePoints),
+    due: formatDue(t.dueDate),
+    estimatePoints: t.estimatePoints,
+    dueIso: toIsoDate(t.dueDate),
+    blocked: t.blocked ?? undefined,
+    blockedFull: t.blockedFull ?? undefined,
+    running: t.runningSince ? formatRunning(t.runningSince, now) : undefined,
+    runningSince: t.runningSince?.toISOString(),
+    links: { prUrl: t.prUrl, branch: t.branch, commitSha: t.commitSha },
+    sprintId: t.sprintId,
+    criteria: t.criteria.map((c) => ({ id: c.id, text: c.text, done: c.doneAt !== null, doneBy: c.doneBy?.name ?? null })),
+    ...(t.archivedAt && { archived: true as const }),
+  };
+}
 
 export const getFeaturesByProject = cache(async (projectId: string): Promise<Feature[]> => {
   const rows = await prisma.feature.findMany({
@@ -14,10 +49,9 @@ export const getFeaturesByProject = cache(async (projectId: string): Promise<Fea
     include: {
       owner: true,
       tasks: {
-        include: {
-          assignee: true,
-          criteria: { orderBy: [{ position: "asc" }, { id: "asc" }], select: { id: true, text: true, doneAt: true, doneBy: { select: { name: true } } } },
-        },
+        // Task lưu trữ (F21.4) không vào list; mở bằng deep link qua getArchivedTask.
+        where: { archivedAt: null },
+        include: TASK_INCLUDE,
         orderBy: { id: "asc" },
       },
       _count: { select: { docs: true } },
@@ -38,28 +72,7 @@ export const getFeaturesByProject = cache(async (projectId: string): Promise<Fea
     // F21.2: tính từ task (cột `Feature.pct` cũ không còn đọc).
     pct: featureProgress(row.tasks),
     docs: row._count.docs,
-    tasks: row.tasks.map(
-      (t): Task => ({
-        id: t.id,
-        stage: t.stage,
-        title: t.title,
-        assigneeId: t.assigneeId,
-        who: t.assignee.name,
-        kind: t.assignee.kind,
-        status: TASK_STATUS_LABEL[t.status],
-        est: formatEstimate(t.estimatePoints),
-        due: formatDue(t.dueDate),
-        estimatePoints: t.estimatePoints,
-        dueIso: toIsoDate(t.dueDate),
-        blocked: t.blocked ?? undefined,
-        blockedFull: t.blockedFull ?? undefined,
-        running: t.runningSince ? formatRunning(t.runningSince, now) : undefined,
-        runningSince: t.runningSince?.toISOString(),
-        links: { prUrl: t.prUrl, branch: t.branch, commitSha: t.commitSha },
-        sprintId: t.sprintId,
-        criteria: t.criteria.map((c) => ({ id: c.id, text: c.text, done: c.doneAt !== null, doneBy: c.doneBy?.name ?? null })),
-      }),
-    ),
+    tasks: row.tasks.map((t) => toTask(t, now)),
   }));
 });
 
@@ -71,8 +84,8 @@ export const getTasksByProject = cache(async (projectId: string): Promise<Task[]
 /** Số task + số task bị block cho badge sidebar — đếm trong DB, không tải cả cây feature/task. */
 export const getTaskCountsByProject = cache(async (projectId: string): Promise<{ total: number; blocked: number }> => {
   const [total, blocked] = await Promise.all([
-    prisma.task.count({ where: { feature: { projectId } } }),
-    prisma.task.count({ where: { feature: { projectId }, blocked: { not: null } } }),
+    prisma.task.count({ where: { feature: { projectId }, archivedAt: null } }),
+    prisma.task.count({ where: { feature: { projectId }, archivedAt: null, blocked: { not: null } } }),
   ]);
   return { total, blocked };
 });
@@ -91,4 +104,13 @@ export const getProposedFeatures = cache(async (projectId: string): Promise<Prop
     proposedBy: f.proposedBy?.name ?? "Agent",
     when: f.proposedAt ? formatRelativeVi(f.proposedAt) : "",
   }));
+});
+
+/** Task đã lưu trữ (F21.4) — chỉ để mở bằng deep link `?task=`; null nếu không có / chưa lưu trữ / khác dự án. */
+export const getArchivedTask = cache(async (projectId: string, taskId: string): Promise<{ task: Task; featureId: string } | null> => {
+  const row = await prisma.task.findFirst({
+    where: { id: taskId, archivedAt: { not: null }, feature: { projectId, status: "active" } },
+    include: TASK_INCLUDE,
+  });
+  return row ? { task: toTask(row, new Date()), featureId: row.featureId } : null;
 });

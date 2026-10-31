@@ -131,7 +131,7 @@ test.describe("sửa nhanh task", () => {
     await drawer.getByLabel("Tiêu đề").fill("Chốt chỉ số p95 (đã sửa)");
     await drawer.getByLabel("Ước lượng (điểm)").fill("13");
     await drawer.getByLabel("Hạn").fill("2026-09-30");
-    await drawer.getByRole("button", { name: "Lưu" }).click();
+    await drawer.getByRole("button", { name: "Lưu", exact: true }).click();
 
     await expect(drawer.getByRole("form", { name: "Sửa task" })).toHaveCount(0);
     await expect(drawer.locator("h4")).toHaveText("Chốt chỉ số p95 (đã sửa)");

@@ -298,3 +298,26 @@ export async function addTaskComment(taskId: string, body: string): Promise<Acti
   revalidateTaskViews();
   return ok();
 }
+
+/** Lưu trữ / khôi phục task (F21.4) — ẩn khỏi list / timeline / inbox / MCP, giữ nguyên lịch sử. Thành viên dự án. */
+export async function setTaskArchived(taskId: string, archived: boolean): Promise<ActionResult> {
+  const id = taskIdSchema.safeParse(taskId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const task = await prisma.task.findUnique({
+    where: { id: id.data },
+    select: { archivedAt: true, runningSince: true, feature: { select: { projectId: true } } },
+  });
+  if (!task) return fail(`Không tìm thấy task ${id.data}`);
+  const projectId = task.feature.projectId;
+  const denied = await authorize("task.write", projectId);
+  if (denied) return fail(denied);
+  if (archived === (task.archivedAt !== null)) return fail(archived ? "Task đã được lưu trữ" : "Task chưa được lưu trữ");
+  if (archived && task.runningSince) return fail("Task đang chạy — dừng (đổi trạng thái) trước khi lưu trữ");
+
+  await prisma.task.update({ where: { id: id.data }, data: { archivedAt: archived ? new Date() : null } });
+  await recordActivity(archived ? "ph-archive" : "ph-arrow-counter-clockwise", `${archived ? "Lưu trữ" : "Khôi phục"} ${id.data}`, {
+    event: { projectId, type: "task", tone: "ok", taskId: id.data },
+  });
+  revalidateTaskViews();
+  return ok();
+}

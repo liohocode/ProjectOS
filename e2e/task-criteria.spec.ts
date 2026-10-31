@@ -29,7 +29,7 @@ test("lead thêm, tick, sửa và xoá tiêu chí", async ({ page }) => {
 
   await section.getByRole("button", { name: "Sửa tiêu chí: E2E có test p95" }).click();
   await section.getByLabel("Sửa tiêu chí").fill("E2E có test p95 + p99");
-  await section.getByRole("button", { name: "Lưu" }).click();
+  await section.getByRole("button", { name: "Lưu", exact: true }).click();
   await expect(section.getByRole("checkbox", { name: "E2E có test p95 + p99" })).toBeChecked();
 
   await section.getByRole("button", { name: "Xoá tiêu chí: E2E có test p95 + p99" }).click();

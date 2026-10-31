@@ -8,7 +8,7 @@ import { useCan } from "@/components/auth/PermissionsProvider";
 import { useUrlDialog } from "@/components/ui/urlDialog";
 import { NEW_FEATURE_PARAM, SPRINTS_PARAM } from "./featureDialogParam";
 import type { MemberOption, SprintOption } from "@/lib/types";
-import type { ActivityItem, Feature, Member, TaskDrawerInfo, TimelineRow } from "@/lib/types";
+import type { ActivityItem, Feature, Member, Task, TaskDrawerInfo, TimelineRow } from "@/lib/types";
 import { FeatureSection } from "./FeatureSection";
 import { TimelineView } from "./TimelineView";
 import { ActivityRail } from "./ActivityRail";
@@ -26,6 +26,7 @@ export function WorkScreen({
   proposals = [],
   projectMembers = [],
   sprints = [],
+  archivedTask,
 }: {
   features: Feature[];
   /** Đang áp bộ lọc "Lọc" (F14.3) — features đã lọc ở server. */
@@ -40,6 +41,8 @@ export function WorkScreen({
   projectMembers?: MemberOption[];
   /** Sprint của dự án (F21.3) — xếp task trong drawer */
   sprints?: SprintOption[];
+  /** Task đã lưu trữ mở bằng deep link (F21.4) — không có trong `features` */
+  archivedTask?: { task: Task; feature: Feature };
 }) {
   const canCreateFeature = useCan("feature.create");
   const { openHref: newFeatureHref } = useUrlDialog(NEW_FEATURE_PARAM);
@@ -61,7 +64,8 @@ export function WorkScreen({
   const reviewTasks = useMemo(() => allTasks.filter((t) => t.stage === "Review"), [allTasks]);
 
   const activeTask = openTaskId
-    ? features.flatMap((f) => f.tasks.map((t) => ({ task: t, feature: f }))).find((x) => x.task.id === openTaskId)
+    ? (features.flatMap((f) => f.tasks.map((t) => ({ task: t, feature: f }))).find((x) => x.task.id === openTaskId) ??
+      (archivedTask?.task.id === openTaskId ? archivedTask : undefined))
     : undefined;
 
   return (

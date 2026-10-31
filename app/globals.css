@@ -796,6 +796,8 @@ img { display: block; max-width: 100%; }
 }
 .drawer-meta-row { display: flex; justify-content: space-between; gap: var(--space-3); }
 .drawer-meta-label { color: var(--color-neutral-500); }
+.drawer-archived { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.drawer-archived .btn { margin-left: auto; }
 .drawer-select { height: 26px; padding: 0 var(--space-2); font-size: 12.5px; max-width: 60%; }
 .drawer-link { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; color: var(--color-accent-200); text-decoration: none; overflow-wrap: anywhere; }
 .drawer-link:hover { text-decoration: underline; }

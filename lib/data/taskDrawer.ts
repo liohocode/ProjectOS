@@ -1,6 +1,6 @@
 import { cache } from "react";
 import type { TaskDrawerInfo } from "@/lib/types";
-import { getTasksByProject } from "./features";
+import { getArchivedTask, getTasksByProject } from "./features";
 import { COMMAND_RESULT_LABEL } from "./mcpLabels";
 import { prisma } from "@/lib/prisma";
 import { formatRelativeVi } from "@/lib/relativeTime";
@@ -93,7 +93,7 @@ const getContextDocsByProject = cache(async (projectId: string): Promise<Map<str
 
 /** Context docs + log phiên chạy (dữ liệu thật — F17.4) + bình luận (F16.4) cho task drawer. */
 export const getTaskDrawerInfo = cache(async (projectId: string, taskId: string): Promise<TaskDrawerInfo | null> => {
-  const task = (await getTasksByProject(projectId)).find((t) => t.id === taskId);
+  const task = (await getTasksByProject(projectId)).find((t) => t.id === taskId) ?? (await getArchivedTask(projectId, taskId))?.task;
   if (!task) return null;
 
   const [steps, contextDocs, comments] = await Promise.all([

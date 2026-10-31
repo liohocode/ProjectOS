@@ -18,12 +18,12 @@ test("người nhập link PR / commit ở Sửa → hiện trong drawer; commit
   const drawer = page.getByRole("dialog");
   await drawer.getByRole("button", { name: "Sửa" }).click();
   await drawer.getByLabel("Commit").fill("không-phải-hash");
-  await drawer.getByRole("button", { name: "Lưu" }).click();
+  await drawer.getByRole("button", { name: "Lưu", exact: true }).click();
   await expect(drawer.getByRole("alert")).toContainText("Commit phải là mã hash");
 
   await drawer.getByLabel("Link PR").fill("https://github.com/rever/web/pull/500");
   await drawer.getByLabel("Commit").fill("9F3C2A1D");
-  await drawer.getByRole("button", { name: "Lưu" }).click();
+  await drawer.getByRole("button", { name: "Lưu", exact: true }).click();
   await expect(drawer.getByRole("form", { name: "Sửa task" })).toHaveCount(0);
   await expect(drawer.getByRole("link", { name: "rever/web#500" })).toBeVisible();
   await expect(drawer.locator(".drawer-meta-row", { hasText: "Commit" })).toContainText("9f3c2a1");

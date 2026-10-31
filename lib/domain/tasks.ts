@@ -56,6 +56,8 @@ function listTasksForMemberTx(tx: TaskDb, memberId: string, taskId: string): Pro
 async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter & { taskId?: string }): Promise<AgentTaskView[]> {
   const rows = await db.task.findMany({
     where: {
+      // F21.4: task lưu trữ ẩn khỏi tasks_list / context_get.
+      archivedAt: null,
       ...(filter.taskId && { id: filter.taskId }),
       feature: {
         project: { members: { some: { memberId } } },
@@ -127,11 +129,13 @@ export async function claimTask(agentId: string, taskId: string, now: Date = new
         blocked: true,
         assigneeId: true,
         runningSince: true,
+        archivedAt: true,
         assignee: { select: { name: true } },
         feature: { select: { projectId: true, project: { select: { members: { where: { memberId: agentId }, select: { memberId: true } } } } } },
       },
     });
     if (!task || task.feature.project.members.length === 0) return { ok: false, reason: `Không tìm thấy task ${taskId} trong dự án của bạn`, projectId: null };
+    if (task.archivedAt) return { ok: false, reason: `${taskId} đã được lưu trữ`, projectId: task.feature.projectId };
     const projectId = task.feature.projectId;
     if (task.stage === "Done") return { ok: false, reason: `${taskId} đã Done`, projectId };
     if (task.blocked) return { ok: false, reason: `${taskId} đang bị block: ${task.blocked}`, projectId };
@@ -172,6 +176,7 @@ async function findOwnTask(agentId: string, taskId: string) {
       assigneeId: true,
       stage: true,
       runningSince: true,
+      archivedAt: true,
       feature: { select: { projectId: true, project: { select: { members: { where: { memberId: agentId }, select: { memberId: true } } } } } },
     },
   });
@@ -191,6 +196,7 @@ export async function updateTaskByAgent(
   const task = await findOwnTask(agentId, taskId);
   if (!task) return { ok: false, reason: `Không tìm thấy task ${taskId} trong dự án của bạn`, projectId: null };
   const projectId = task.feature.projectId;
+  if (task.archivedAt) return { ok: false, reason: `${taskId} đã được lưu trữ`, projectId };
   if (task.assigneeId !== agentId) return { ok: false, reason: `${taskId} không giao cho bạn — dùng tasks_claim trước`, projectId };
   // F22.3: vào Review cần mọi acceptance criterion đạt (agent tick bằng criteria_check).
   if (change.stage === "Review" && task.stage !== "Review") {
