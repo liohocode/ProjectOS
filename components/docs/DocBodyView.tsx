@@ -1,4 +1,5 @@
 import type { DocBody } from "@/lib/types";
+import { Markdown } from "@/components/ui/Markdown";
 import { RevisionItem } from "./RevisionItem";
 import { EditDocButton } from "./EditDocDialog";
 
@@ -37,8 +38,9 @@ export function DocBodyView({ body, projectId, editable = false }: { body: DocBo
         {body.sections.map((section) => (
           <div className="doc-section" key={section.heading}>
             <h5>{section.heading}</h5>
+            {/* F21.11: mỗi đoạn là markdown (bảng, danh sách, code) — đoạn chữ thường hiển thị như cũ */}
             {section.paras.map((p, i) => (
-              <p key={i}>{p}</p>
+              <Markdown key={i}>{p}</Markdown>
             ))}
           </div>
         ))}
