@@ -1,10 +1,35 @@
 import { cache } from "react";
-import type { DocBody, DocGroup, DocSection } from "@/lib/types";
+import type { DocBody, DocGroup, DocRevision, DocSection } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import { formatRelativeVi } from "@/lib/relativeTime";
 import { diffSections } from "@/lib/diffSections";
 
 const GENERAL_GROUP_NAME = "Kho tri thức chung";
+
+type RevisionRow = Prisma.DocRevisionGetPayload<{ include: { author: true; approvedBy: true } }>;
+
+/** Revision → dạng hiển thị; `doc` là bản hiện tại để tính "Xem thay đổi" (F12.3). Dùng chung màn docs + inbox (F25.2). */
+export function toDocRevision(rev: RevisionRow, doc: { sections: unknown; summary: string }): DocRevision {
+  const sections = doc.sections as DocSection[];
+  return {
+    id: rev.id,
+    who: rev.author.name,
+    agent: rev.author.kind === "agent",
+    what: rev.what,
+    when: formatRelativeVi(rev.createdAt),
+    status: rev.status,
+    // F12.3 — "Xem thay đổi": so với bản hiện tại, chỉ cho revision đang chờ có nội dung đề xuất.
+    ...(rev.status === "pending" && rev.proposedSections !== null && { diff: diffSections(sections, rev.proposedSections as unknown as DocSection[]) }),
+    ...(rev.status === "pending" &&
+      rev.proposedSummary !== null &&
+      rev.proposedSummary !== doc.summary && { summaryChange: { from: doc.summary, to: rev.proposedSummary } }),
+    ...(rev.rejectedReason && { rejectedReason: rev.rejectedReason }),
+    // F12.4 — "Đã duyệt bởi … · …" (revision duyệt trước F12.2 / seed không có người duyệt).
+    ...(rev.approvedBy && { approvedBy: rev.approvedBy.name }),
+    ...(rev.approvedAt && { approvedWhen: formatRelativeVi(rev.approvedAt) }),
+  };
+}
 
 export const getDocGroupsByProject = cache(async (projectId: string): Promise<DocGroup[]> => {
   const features = await prisma.feature.findMany({
@@ -144,23 +169,6 @@ export const getDocBody = cache(async (id: string): Promise<DocBody> => {
     readBy: row.readBy.length > 0 ? row.readBy.join(", ") : "—",
     summary: row.summary,
     sections: row.sections as unknown as DocSection[],
-    history: row.revisions.map((rev) => ({
-      id: rev.id,
-      who: rev.author.name,
-      agent: rev.author.kind === "agent",
-      what: rev.what,
-      when: formatRelativeVi(rev.createdAt),
-      status: rev.status,
-      // F12.3 — "Xem thay đổi": so với bản hiện tại, chỉ cho revision đang chờ có nội dung đề xuất.
-      ...(rev.status === "pending" &&
-        rev.proposedSections !== null && { diff: diffSections(row.sections as unknown as DocSection[], rev.proposedSections as unknown as DocSection[]) }),
-      ...(rev.status === "pending" &&
-        rev.proposedSummary !== null &&
-        rev.proposedSummary !== row.summary && { summaryChange: { from: row.summary, to: rev.proposedSummary } }),
-      ...(rev.rejectedReason && { rejectedReason: rev.rejectedReason }),
-      // F12.4 — "Đã duyệt bởi … · …" (revision duyệt trước F12.2 / seed không có người duyệt).
-      ...(rev.approvedBy && { approvedBy: rev.approvedBy.name }),
-      ...(rev.approvedAt && { approvedWhen: formatRelativeVi(rev.approvedAt) }),
-    })),
+    history: row.revisions.map((rev) => toDocRevision(rev, row)),
   };
 });

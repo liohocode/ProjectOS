@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import { approveTaskReview, returnTaskReview } from "@/lib/actions/tasks";
 
-/** Cổng review trong drawer (F22.2): task ở Review → Duyệt (Done) hoặc Trả lại kèm lý do (về Dev). */
-export function TaskReviewBox({ taskId }: { taskId: string }) {
+/** Cổng review trong drawer (F22.2): task ở Review → Duyệt (Done) hoặc Trả lại kèm lý do (về Dev).
+ *  `compact`: chỉ nút + form, không tiêu đề / gợi ý — dùng trong inbox (F25.2). */
+export function TaskReviewBox({ taskId, compact = false }: { taskId: string; compact?: boolean }) {
   const [returning, setReturning] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,9 +19,13 @@ export function TaskReviewBox({ taskId }: { taskId: string }) {
     });
 
   return (
-    <div className="drawer-section review-box">
-      <div className="drawer-section-title">Review</div>
-      <p className="review-box-hint">Task đang chờ người duyệt. Duyệt để sang Done, hoặc trả lại kèm lý do để người / agent làm sửa tiếp.</p>
+    <div className={compact ? "review-box-compact" : "drawer-section review-box"}>
+      {!compact && (
+        <>
+          <div className="drawer-section-title">Review</div>
+          <p className="review-box-hint">Task đang chờ người duyệt. Duyệt để sang Done, hoặc trả lại kèm lý do để người / agent làm sửa tiếp.</p>
+        </>
+      )}
       {returning ? (
         <form
           className="revision-reject"

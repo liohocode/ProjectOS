@@ -46,7 +46,7 @@ export async function rejectFeatureProposal(featureId: string, reason: string): 
   await recordActivity("ph-x-circle", `Từ chối feature ${id.data} ${result.name}`, {
     event: { projectId, type: "feature", tone: "ok", featureId: id.data },
   });
-  revalidatePath("/[project]/work", "page");
+  revalidatePath("/[project]", "layout");
   return ok();
 }
 
