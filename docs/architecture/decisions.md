@@ -155,3 +155,14 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 **Bối cảnh**: F21.11 / F28 — mô tả task / feature và tài liệu kỹ thuật import từ `.md` có bảng, danh sách lồng nhau, code; trước đây đoạn tài liệu hiển thị chữ thường (`<p>`), bảng vỡ.
 **Quyết định**: component dùng chung `components/ui/Markdown.tsx` với **`react-markdown` 10.1.0 + `remark-gfm` 4.0.1** (pin cứng). Không bật `rehype-raw` → HTML thô trong nội dung (agent / người nhập) không được render. Link `http(s)` mở tab mới (`noopener noreferrer`). Lưu trữ giữ nguyên dạng sections `{ heading, paras[] }` (ADR không đổi mô hình dữ liệu): mỗi đoạn là một khối markdown; `markdownToSections` giữ xuống dòng + khối code.
 **Hệ quả**: chạy được cả server component (không cần JS phía client để hiển thị). Thêm ~40 KB phụ thuộc. Không hỗ trợ HTML nhúng / công thức — thêm plugin khi có nhu cầu (ADR mới).
+
+### ADR-024 — Chạy agent từ web: GitHub Actions + Claude Code trên repo của dự án (2026-10-31)
+**Bối cảnh**: F29 — từ feature / task trên Meridian bấm "Chạy với agent". Cloud Run không giữ request lâu, nhiều instance, scale về 0 (ADR-016) → không chạy agent trong request web. Lio chốt 2026-10-31 theo khuyến nghị.
+**Quyết định**: runtime là **workflow GitHub Actions trên repo của dự án** chạy Claude Code (headless) với CLAUDE.md quy ước F24.5. Meridian chỉ: tạo lượt chạy (`AgentRun`), gọi `workflow_dispatch` (input: id lượt chạy, task, token MCP tạm thời), rồi theo dõi bằng polling ngắn + kết quả agent báo qua MCP (claim → làm trên branch → PR → Review). API key truyền vào workflow lúc dispatch, không lưu trong GitHub.
+**Phương án loại**: Claude Managed Agents (không gắn sẵn repo / CI của dự án), Cloud Run Jobs (phải tự vận hành container + clone repo).
+**Hệ quả**: cần quyền dispatch workflow trên repo của dự án (GitHub App hoặc token — F26.3 / F29.4) và một workflow mẫu đặt trong repo dự án; thời gian chạy tính theo phút Actions của repo đó.
+
+### ADR-025 — API key của dự án / feature: mã hoá AES-256-GCM trong DB (2026-10-31)
+**Bối cảnh**: F29.2 — gắn API key (vd Anthropic) cho dự án hoặc feature để chạy agent từ web. Lio chốt 2026-10-31 theo khuyến nghị.
+**Quyết định**: bảng `ApiCredential` lưu key **mã hoá AES-256-GCM** (IV ngẫu nhiên mỗi bản ghi + auth tag), khoá chủ 32 byte trong **Secret Manager** (`MERIDIAN_ENCRYPTION_KEY`, nạp qua biến môi trường Cloud Run; dev / test dùng khoá riêng trong `.env`). Phạm vi: dự án (mặc định) + feature (ghi đè). Chỉ tech lead thêm / thu hồi; sau khi lưu **không bao giờ hiện lại** — chỉ 4 ký tự cuối. Chỉ giải mã ở server ngay lúc dispatch lượt chạy; không ghi log, không trả qua MCP.
+**Hệ quả**: đổi khoá chủ cần mã hoá lại (thêm cột `keyVersion` để xoay khoá sau này). Thiếu `MERIDIAN_ENCRYPTION_KEY` thì tính năng gắn key bị khoá (kiểm tra env lúc khởi động như F19.5, không chặn cả app).

@@ -22,7 +22,7 @@ Chuyển kế hoạch đang nằm trong `.md` (ROADMAP, file feature, yêu cầu
 | F28.2 | Script `scripts/import-plan.ts`: đọc `docs/features/*.md` + ROADMAP → upsert dự án `meridian` (feature, task, mô tả, cỡ, phụ thuộc, tiêu chí "Hoàn thành khi", trạng thái, ghi chú quyết định); `--dry-run`, chạy lại không nhân đôi | M | F28.1, F21.8 | Chưa làm |
 | F28.3 | Import tài liệu kỹ thuật (requirements, ADR, data model, overview, guides) thành Doc markdown, gắn feature khi có | S | F21.11 | Chưa làm |
 | F28.4 | Màn **Roadmap** của dự án: tiến độ theo phase / feature, quyết định đang mở (task "Cần quyết định"), "việc nên nhận tiếp" (task chưa làm có phụ thuộc đã xong) | M | F28.1 | Chưa làm |
-| F28.5 | Import lên production (dự án `meridian`) + chuyển nguồn sự thật: WORKFLOW / CLAUDE.md / agent-workflow đổi sang nhận – đóng task qua MCP; `.md` kế hoạch thành bản export tự sinh (`npm run plan:export`) | M | F28.2–F28.4 | Chưa làm — **cần Lio duyệt** ghi DB production |
+| F28.5 | Import lên production (dự án `meridian`) + chuyển nguồn sự thật: WORKFLOW / CLAUDE.md / agent-workflow đổi sang nhận – đóng task qua MCP; `.md` kế hoạch thành bản export tự sinh (`npm run plan:export`) | M | F28.2–F28.4 | Chưa làm — Lio đã duyệt 2026-10-31 (dự án mới `meridian` trên production, không đụng dữ liệu mẫu) |
 | F28.6 | Agent phát triển Meridian (Claude Code) dùng token MCP production cho dự án `meridian` — dogfooding hằng ngày (gộp F24.7) | S | F28.5 | Chưa làm — Lio tạo token |
 
 ### F28.2 — Import kế hoạch

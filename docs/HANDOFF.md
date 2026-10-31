@@ -12,7 +12,7 @@ Trả lời tiếng Việt, ngắn gọn. Bắt đầu với: <task hoặc "vi�
 ```
 
 ## 2. Trạng thái (cập nhật 2026-10-30)
-- **ROADMAP 118/168** — giai đoạn 1 (MVP) 94/103, **giai đoạn 2 lập + duyệt 2026-10-30** (F20–F27, F27 = skills hub, mục tiêu "data foundation", xem đầu `docs/ROADMAP.md`). Xong: F08–F14, F16, F17; F15 5/6 (F15.4 phân quyền, F15.5 token agent, F15.6 UI theo quyền — tech lead = `Member.isTechLead`; F15.2 đăng nhập Google chạy thật trên production, còn thử đăng xuất + email lạ); F19 8/9 (F19.8 chuyển sang F20.1; còn F19.9 tên miền tuỳ chọn).
+- **ROADMAP 119/168** — giai đoạn 1 (MVP) 94/103, **giai đoạn 2 lập + duyệt 2026-10-30** (F20–F27, F27 = skills hub, mục tiêu "data foundation", xem đầu `docs/ROADMAP.md`). Xong: F08–F14, F16, F17; F15 5/6 (F15.4 phân quyền, F15.5 token agent, F15.6 UI theo quyền — tech lead = `Member.isTechLead`; F15.2 đăng nhập Google chạy thật trên production, còn thử đăng xuất + email lạ); F19 8/9 (F19.8 chuyển sang F20.1; còn F19.9 tên miền tuỳ chọn).
 - **Production**: https://meridian-669737756643.asia-southeast1.run.app — Cloud Run (`pdos-513017`, `asia-southeast1`) + Neon Free (project `meridian`). Đăng nhập: `liohocompany@gmail.com` = Trung Hiếu (tech lead) trong **dữ liệu mẫu** (người dùng chọn giữ dữ liệu mẫu trên production).
 - **Deploy tự động**: merge vào `main` → CI xanh → workflow `Deploy` (`.github/workflows/deploy.yml`): build image → `prisma migrate deploy` lên Neon → `gcloud run deploy` → smoke `/login`. Chạy tay: GitHub → Actions → Deploy → Run workflow (agent chạy được bằng GitHub MCP `actions_run_trigger`).
 - Hạ tầng + giá trị cấu hình: `docs/guides/deploy-cloud-run.md` (mục 1–4). Secret Manager: `DATABASE_URL`, `DATABASE_URL_DIRECT`, `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
@@ -23,7 +23,7 @@ Trả lời tiếng Việt, ngắn gọn. Bắt đầu với: <task hoặc "vi�
 | F19.7 thử rollback; F19.8 backup Neon; F19.9 tên miền (tuỳ chọn) | Agent (+ Lio nếu tốn tiền) | Rollback: `docs/guides/deploy-cloud-run.md` mục 4 |
 | **Ưu tiên mới (Lio, 2026-10-31)**: F21.7–F21.11 + F22.6, F22.7, F24.2, F24.6 (feature & task đầy đủ) → F28 (kế hoạch + tài liệu kỹ thuật lên web) → F29 (API key + chạy agent từ web, chờ F29.1). Đã xong: (F22.5 chỉ số chất lượng; F21 xong; F22.3 cổng vào Review, F21.6 acceptance criteria, F21.5 bình luận, F21.3 sprint, F24.5 quy ước agent, F22.4 liên kết PR, F25.2 inbox, F20.1 backup, F20.2 quản trị thành viên, F22.2 cổng review, F24.1 context_get, F21.1 feature CRUD, F21.2 tiến độ, F22.1 lịch sử trạng thái xong — `docs/guides/backup-restore.md`) | Agent | Theo "Thứ tự làm" trong ROADMAP |
 | Bỏ override org policy chặn tạo key (mục 5) | **Lio** | Service account tạm đã xoá |
-| Chốt F29.1 (runtime chạy agent, cách lưu API key) + duyệt ghi kế hoạch vào DB production (F28.5) | **Lio** | Khuyến nghị trong ROADMAP "Quyết định đang mở"; F24.7 + F27.1 hoãn |
+| Thêm secret `MERIDIAN_ENCRYPTION_KEY` (Secret Manager) khi tới F29.2 trên production | **Lio** | F29.1 + F28.5 đã chốt 2026-10-31 (ADR-024, ADR-025); F24.7 + F27.1 hoãn |
 
 ## 4. Giới hạn của môi trường agent (đã gặp — đừng thử lại vô ích)
 - Container cloud **không kết nối được** `*.neon.tech` (5432 và HTTPS), `*.pkg.dev` (Docker registry), `*.run.app`. → Không chạy Prisma/psql vào Neon, không `docker push`, không curl production từ container.

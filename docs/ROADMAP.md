@@ -2,12 +2,12 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-31 · Tổng: **118/168 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 23/65 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-31 · Tổng: **119/168 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 24/65 (đã chốt F23.1, F25.1).
 
 ## Điều chỉnh ưu tiên (Lio, 2026-10-31)
 1. **Hoàn thiện Feature & Task trước** (Phase 7): mô tả task, cỡ, phụ thuộc, trang chi tiết feature, markdown, DoD, lịch sử block, agent đề xuất task — đủ để chứa toàn bộ kế hoạch đang nằm trong `.md`.
 2. **Đưa kế hoạch + tài liệu kỹ thuật của Meridian lên web** (F28, Phase 7b): import `.md` → DB, màn Roadmap, agent nhận / đóng task qua MCP; DB thành nguồn sự thật (`.md` chỉ còn bản export). Meridian là dự án thật đầu tiên (thay F20.3).
-3. **Gắn API key + chạy agent trực tiếp từ web** (F29, Phase 8b) — sau khi chốt runtime + cách lưu key (F29.1).
+3. **Gắn API key + chạy agent trực tiếp từ web** (F29, Phase 8b) — runtime GitHub Actions + Claude Code, key mã hoá trong DB (chốt 2026-10-31).
 4. Sau đó: token / chi phí (F23, gộp số liệu từ F29), mobile (F25.3+), skills hub (F27), data foundation (F26). F24.7 + F27.1 tạm hoãn (Lio).
 
 ## Mục tiêu giai đoạn 2 (người dùng chốt 2026-10-30)
@@ -61,7 +61,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 8b — Chạy agent từ web (ưu tiên 3)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F29](features/F29-run-agents-on-web.md) | Gắn API key cho dự án / feature, nút "Chạy với agent", theo dõi lượt chạy + chi phí trên web | F28, F22.4, F24.5 | Chờ quyết định F29.1 | 0/6 |
+| [F29](features/F29-run-agents-on-web.md) | Gắn API key cho dự án / feature, nút "Chạy với agent", theo dõi lượt chạy + chi phí trên web | F28, F22.4, F24.5 | Chưa bắt đầu — F29.1 đã chốt (ADR-024, ADR-025) | 1/6 |
 
 ### Phase 8 — Agent & effort
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -81,24 +81,21 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | [F26](features/F26-data-foundation.md) | API đọc cho hệ thống khác, báo cáo định kỳ + CSV, tích hợp GitHub | F22, F23 | Chưa bắt đầu | 0/4 |
 
 ## Thứ tự làm
-1. **Feature & Task đầy đủ**: F21.11 markdown → F21.7 mô tả / cỡ / mã task → F21.8 phụ thuộc → F21.9 chi tiết feature → F21.10 → F22.7 lịch sử block → F22.6 DoD → F24.2 agent đề xuất task → F24.6 gắn tài liệu ↔ task.
-2. **F28** kế hoạch trên web: F28.1 phase → F28.2 import → F28.3 tài liệu kỹ thuật → F28.4 màn Roadmap → F28.5 import production + đổi quy trình (Lio duyệt) → F28.6.
-3. **F29** sau khi chốt F29.1: F29.2 key → F29.3 lượt chạy → F29.4 runner → F29.5 theo dõi → F29.6 giới hạn.
+1. **F28 ngay sau F21** (Lio duyệt 2026-10-31): F28.1 phase + phụ thuộc feature → F28.2 import `.md` → F28.3 tài liệu kỹ thuật → F28.4 màn Roadmap → F28.5 import production (dự án `meridian`) + đổi quy trình → F28.6. Từ đó kế hoạch theo dõi trên web.
+2. Phần còn lại của Feature & Task (làm và theo dõi trên web sau F28.5): F22.7 lịch sử block → F22.6 DoD → F24.2 agent đề xuất task → F24.6 gắn tài liệu ↔ task.
+3. **F29** (F29.1 đã chốt — ADR-024, ADR-025): F29.2 key → F29.3 lượt chạy → F29.4 runner GitHub Actions → F29.5 theo dõi → F29.6 giới hạn.
 4. Sau đó: F23 (gộp token từ F29), F25.3–F25.6, F27, F26, F20.4–F20.5, F24.3–F24.4.
 
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F22.6](features/F22-process-quality.md) Definition of Done theo dự án | Hoàn tất quy trình chất lượng của task |
-| [F24.2](features/F24-coding-agent-support.md) Agent đề xuất task | Agent TA chia task, lead duyệt |
-| [F22.7](features/F22-process-quality.md) Lịch sử block + thời gian bị block | Hoàn tất chỉ số chất lượng |
+| [F28.1](features/F28-plan-on-web.md) Phase + phụ thuộc giữa feature | Cấu trúc ROADMAP (phase) trên web |
+| [F28.2](features/F28-plan-on-web.md) Import kế hoạch `.md` → DB | Toàn bộ feature / task của Meridian lên web |
+| [F28.4](features/F28-plan-on-web.md) Màn Roadmap | Xem tiến độ theo phase, việc nên nhận tiếp |
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Khuyến nghị |
 |---|---|---|
-| Runtime chạy agent từ web | F29.1 → F29.4 | **GitHub Actions + Claude Code** trên repo của dự án (làm trên branch, mở PR, không giữ request Cloud Run — ADR-016; cần GitHub App / token repo). Phương án khác: Claude Managed Agents (sandbox của Anthropic, không cần repo CI), Cloud Run Jobs (tự vận hành container) |
-| Lưu API key | F29.2 | **Mã hoá AES-256-GCM trong DB**, khoá chủ trong Secret Manager (`MERIDIAN_ENCRYPTION_KEY`); key gắn dự án (mặc định) + feature (ghi đè); chỉ tech lead thêm / thu hồi; không bao giờ hiện lại (chỉ 4 ký tự cuối) |
-| Ghi kế hoạch vào DB production + bỏ `.md` làm nguồn | F28.5 | Import vào dự án mới `meridian` trên production (không đụng dữ liệu mẫu); sau đó `.md` kế hoạch chỉ là bản export tự sinh |
 | Nhà cung cấp embedding | F18 | Vẫn hoãn — tìm kiếm từ khoá đủ cho giai đoạn đầu |
 
 ## Backlog (chưa xếp lịch)
@@ -110,6 +107,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Đã chốt
 | Quyết định | Ngày | ADR |
 |---|---|---|
+| Chạy agent từ web bằng **GitHub Actions + Claude Code** trên repo dự án; API key **mã hoá AES-256-GCM trong DB**, khoá chủ Secret Manager; import kế hoạch vào production thành dự án mới `meridian`, `.md` thành bản export | 2026-10-31 | ADR-024, ADR-025 |
 | Đăng nhập bằng Google (Auth.js), chỉ email của thành viên đã có | 2026-10-14 | ADR-013 |
 | ~~Deploy lên Cloudflare Workers~~ → thay bằng **Google Cloud Run** (GitHub Actions deploy, Cloudflare chỉ làm DNS tuỳ chọn) | 2026-10-14 | ADR-014 → ADR-016 |
 | Database production: Neon Postgres gói Free (không dùng D1, không dùng Google Sheets) | 2026-10-14 | ADR-015 |

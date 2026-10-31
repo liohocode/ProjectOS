@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu — chờ quyết định F29.1 | 8b | F28, F22.4, F24.5 | FR-RUN-01…05 |
+| Chưa bắt đầu — F29.1 đã chốt | 8b | F28, F22.4, F24.5 | FR-RUN-01…05 |
 
 ## Mục tiêu
 Từ một feature / task trên Meridian, bấm **"Chạy với agent"**: agent dùng API key đã gắn cho dự án / feature, làm task theo quy ước F24.5 (claim → làm → PR → Review), người theo dõi log, chi phí và duyệt kết quả ngay trên web.
@@ -14,7 +14,7 @@ Từ một feature / task trên Meridian, bấm **"Chạy với agent"**: agent 
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F29.1 | **Quyết định**: runtime chạy agent (khuyến nghị: GitHub Actions + Claude Code trên repo của dự án) và cách lưu API key (khuyến nghị: mã hoá AES-256-GCM trong DB, khoá chủ trong Secret Manager) | S | — | Chờ Lio |
+| F29.1 | **Quyết định**: runtime chạy agent và cách lưu API key | S | — | Xong — 2026-10-31 (Lio: GitHub Actions + Claude Code — ADR-024; AES-256-GCM trong DB, khoá chủ Secret Manager — ADR-025) |
 | F29.2 | Model `ApiCredential` (provider, key mã hoá, 4 ký tự cuối, phạm vi dự án / feature, người tạo, thu hồi) + UI thêm / thu hồi (tech lead) + ADR | M | F29.1 | Chưa làm |
 | F29.3 | Model `AgentRun` (task, agent, credential, trạng thái queued / running / succeeded / failed / cancelled, PR, token, chi phí, log) + nút "Chạy với agent" trên task / feature | M | F29.2 | Chưa làm |
 | F29.4 | Runner theo quyết định F29.1: khởi động lượt chạy, truyền key + token MCP tạm thời, nhận kết quả (PR, trạng thái) — agent báo tiến độ qua MCP | L → tách khi làm | F29.3 | Chưa làm |
@@ -22,5 +22,6 @@ Từ một feature / task trên Meridian, bấm **"Chạy với agent"**: agent 
 | F29.6 | Giới hạn: tối đa lượt chạy đồng thời / dự án, ngân sách chi phí / tháng, chặn khi vượt | S | F29.5 | Chưa làm |
 
 ## Quyết định / ghi chú
+- **F29.1 (2026-10-31)** — Lio chốt theo khuyến nghị: runtime GitHub Actions + Claude Code trên repo của dự án (ADR-024); key mã hoá AES-256-GCM trong DB, khoá chủ trong Secret Manager (ADR-025). Cần Lio thêm secret `MERIDIAN_ENCRYPTION_KEY` vào Secret Manager khi tới F29.2 trên production (agent sẽ đưa lệnh tạo khoá).
 - **2026-10-31** (Lio): feature có thể gắn thêm API key và chạy trực tiếp trên web. Lưu key và chọn runtime là quyết định kiến trúc + bảo mật → F29.1 chờ Lio chốt (đề xuất trong ROADMAP "Quyết định đang mở").
 - Token / chi phí từ lượt chạy trên web lấy trực tiếp từ API (chính xác hơn agent tự báo — F23.1 vẫn dùng cho agent chạy ngoài web).
