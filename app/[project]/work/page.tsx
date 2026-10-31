@@ -56,6 +56,7 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
         projectMembers={memberOptions}
         sprints={sprints}
         archivedTask={archived && archivedFeature ? { task: archived.task, feature: archivedFeature } : undefined}
+        doneDefinition={project?.doneDefinition ?? []}
       />
       {/* "Sprint" ở toolbar đặt ?sprints=1 (F21.3) */}
       {searchParams[SPRINTS_PARAM] === "1" && <SprintDialog projectId={projectId} sprints={sprints} />}

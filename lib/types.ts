@@ -13,6 +13,8 @@ export interface Project {
   sprint: string;
   /** Sprint hiện tại (F21.3) — null = dự án chưa có sprint */
   currentSprintId: string | null;
+  /** Definition of Done (F22.6) — rỗng = không yêu cầu */
+  doneDefinition: string[];
   /** Lưu trữ (F13.7) — ẩn khỏi project switcher, hiện mờ ở portfolio */
   archived: boolean;
 }

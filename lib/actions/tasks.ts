@@ -279,8 +279,8 @@ export async function updateTask(taskId: string, patch: TaskPatch): Promise<Acti
 }
 
 /** Duyệt task đang ở Review → Done (F22.2). */
-export async function approveTaskReview(taskId: string): Promise<ActionResult> {
-  return review(taskId, { approve: true });
+export async function approveTaskReview(taskId: string, checked: string[] = []): Promise<ActionResult> {
+  return review(taskId, { approve: true, checked: Array.isArray(checked) ? checked.map(String) : [] });
 }
 
 /** Trả lại task đang ở Review → Dev kèm lý do (F22.2) — lý do vào lịch sử + bình luận, agent đọc được qua MCP. */

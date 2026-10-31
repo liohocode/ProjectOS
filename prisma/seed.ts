@@ -228,6 +228,9 @@ async function main() {
     }
   }
 
+  // F22.6: Definition of Done mẫu cho crm (rv-web để trống — giữ luồng duyệt ngắn cho test cổng review).
+  await prisma.project.update({ where: { id: "crm" }, data: { doneDefinition: ["Có test cho thay đổi", "PR đã review", "Cập nhật tài liệu liên quan"] } });
+
   console.log("Seeding phases + feature dependencies (F28.1)...");
   for (const [projectId, phases] of Object.entries(PHASES_BY_PROJECT)) {
     for (const [i, ph] of phases.entries()) {

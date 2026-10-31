@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-31 · Tổng: **124/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 29/65 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-31 · Tổng: **125/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 30/65 (đã chốt F23.1, F25.1).
 
 ## Điều chỉnh ưu tiên (Lio, 2026-10-31)
 1. **Hoàn thiện Feature & Task trước** (Phase 7): mô tả task, cỡ, phụ thuộc, trang chi tiết feature, markdown, DoD, lịch sử block, agent đề xuất task — đủ để chứa toàn bộ kế hoạch đang nằm trong `.md`.
@@ -51,7 +51,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
 | [F21](features/F21-work-management.md) | Feature CRUD, tiến độ tính từ task, sprint, lưu trữ task, bình luận, acceptance criteria; **mở rộng**: mô tả / cỡ / phụ thuộc task, trang chi tiết feature, markdown | F11, F16.6 | Xong | 11/11 |
-| [F22](features/F22-process-quality.md) | Lịch sử trạng thái, cổng review của người, Definition of Done, liên kết PR, chỉ số chất lượng | F16.4, F21.6 | Đang làm — còn DoD theo dự án (F22.6) | 6/7 |
+| [F22](features/F22-process-quality.md) | Lịch sử trạng thái, cổng review của người, Definition of Done, liên kết PR, chỉ số chất lượng | F16.4, F21.6 | Xong | 7/7 |
 
 ### Phase 7b — Kế hoạch Meridian trên web (ưu tiên 2)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -82,7 +82,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 
 ## Thứ tự làm
 1. **F28 ngay sau F21** (Lio duyệt 2026-10-31): F28.1 phase + phụ thuộc feature → F28.2 import `.md` → F28.3 tài liệu kỹ thuật → F28.4 màn Roadmap → F28.5 import production (dự án `meridian`, workflow `Import plan`) → F28.6 đổi quy trình sang MCP (cần Lio mở mạng + token). Từ F28.5 kế hoạch xem được trên web; `.md` vẫn là nguồn tới F28.6.
-2. Phần còn lại của Feature & Task (làm và theo dõi trên web sau F28.5): F22.6 DoD → F24.2 agent đề xuất task → F24.6 gắn tài liệu ↔ task.
+2. Phần còn lại của Feature & Task (làm và theo dõi trên web sau F28.5): F24.2 agent đề xuất task → F24.6 gắn tài liệu ↔ task.
 3. **F29** (F29.1 đã chốt — ADR-024, ADR-025): F29.2 key → F29.3 lượt chạy → F29.4 runner GitHub Actions → F29.5 theo dõi → F29.6 giới hạn.
 4. Sau đó: F23 (gộp token từ F29), F25.3–F25.6, F27, F26, F20.4–F20.5, F24.3–F24.4.
 
@@ -137,3 +137,4 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 - 2026-10-31 — **F21 xong**: feature CRUD, % tiến độ từ task, sprint, lưu trữ task, người bình luận, acceptance criteria (+ cổng vào Review F22.3). Cùng ngày: inbox "Cần tôi xử lý" (F25.2), liên kết PR (F22.4), quy ước agent + CLAUDE.md mẫu (F24.5).
 - 2026-10-31 — **Điều chỉnh ưu tiên** (Lio): hoàn thiện feature & task (F21.7–F21.11) → đưa kế hoạch + tài liệu kỹ thuật lên web, DB là nguồn sự thật (F28 mới) → gắn API key + chạy agent từ web (F29 mới, chờ quyết định F29.1). F24.7, F27.1 hoãn; F20.3 thay bằng F28.
 - 2026-10-31 — **F21 xong 11/11** (mở rộng): markdown, mô tả / cỡ / mã task, phụ thuộc, trang chi tiết feature, lưu trữ feature + thứ tự ưu tiên — đủ chỗ chứa kế hoạch `.md` cho F28.
+- 2026-10-31 — **F22 xong 7/7**: lịch sử trạng thái, cổng review, cổng vào Review theo tiêu chí, liên kết PR, chỉ số chất lượng (+ thời gian block, lọc sprint), Definition of Done theo dự án.

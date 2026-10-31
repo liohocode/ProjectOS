@@ -12,6 +12,8 @@ export interface TaskContext {
   task: AgentTaskView;
   /** Mô tả markdown ("Làm gì") của task (F21.7); null = chưa có */
   description: string | null;
+  /** Definition of Done của dự án (F22.6) — người duyệt kiểm khi đưa sang Done */
+  doneDefinition: string[];
   feature: { id: string; name: string; stage: string; owner: string | null };
   docs: { id: string; title: string; version: string; summary: string; sections: DocSection[] }[];
   /** Tài liệu feature còn lại (khi vượt MAX_DOCS) — đọc thêm bằng docs_read */
@@ -51,7 +53,7 @@ export async function getTaskContext(
       select: { at: true, via: true, fromStage: true, toStage: true, fromStatus: true, toStatus: true, note: true, actor: { select: { name: true } } },
     }),
     prisma.taskCriterion.findMany({ where: { taskId }, orderBy: [{ position: "asc" }, { id: "asc" }], select: { id: true, text: true, doneAt: true } }),
-    prisma.task.findUniqueOrThrow({ where: { id: taskId }, select: { description: true } }),
+    prisma.task.findUniqueOrThrow({ where: { id: taskId }, select: { description: true, feature: { select: { project: { select: { doneDefinition: true } } } } } }),
   ]);
 
   const describe = (stage: string | null, status: string | null) => [stage, status].filter(Boolean).join(" · ") || null;
@@ -61,6 +63,7 @@ export async function getTaskContext(
     context: {
       task: view,
       description: detail.description,
+      doneDefinition: detail.feature.project.doneDefinition,
       feature: { id: feature.id, name: feature.name, stage: feature.stage, owner: feature.owner?.name ?? null },
       docs: docs.slice(0, MAX_DOCS).map((d) => ({ ...d, sections: d.sections as unknown as DocSection[] })),
       moreDocs: docs.slice(MAX_DOCS).map(({ id, title }) => ({ id, title })),

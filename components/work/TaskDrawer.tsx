@@ -21,6 +21,7 @@ export function TaskDrawer({
   agents,
   sprints = [],
   projectTasks = [],
+  doneDefinition = [],
   onClose,
 }: {
   task: Task;
@@ -31,6 +32,8 @@ export function TaskDrawer({
   sprints?: SprintOption[];
   /** Task của dự án để chọn phụ thuộc (F21.8) */
   projectTasks?: TaskRef[];
+  /** Definition of Done của dự án (F22.6) — tick khi duyệt */
+  doneDefinition?: string[];
   onClose: () => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -220,7 +223,7 @@ export function TaskDrawer({
           )}
         </div>
 
-        {task.stage === "Review" && canReview && <TaskReviewBox key={task.id} taskId={task.id} />}
+        {task.stage === "Review" && canReview && <TaskReviewBox key={task.id} taskId={task.id} doneDefinition={doneDefinition} />}
 
         {/* F21.7: mô tả "Làm gì" (markdown) */}
         {task.description && (
