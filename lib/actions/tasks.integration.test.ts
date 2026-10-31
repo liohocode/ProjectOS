@@ -1,8 +1,9 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
-import { assignTask, createTask, setTaskBlocked, updateTask, updateTaskStage, updateTaskStatus, type NewTaskInput } from "./tasks";
+import { getSessionMemberId } from "@/lib/auth/session";
+import { addTaskComment, assignTask, createTask, setTaskBlocked, updateTask, updateTaskStage, updateTaskStatus, type NewTaskInput } from "./tasks";
 
 // Task mẫu T-401 (rv-web). Lưu trạng thái seed để trả lại sau khi test ghi.
 const TASK_ID = "T-401";
@@ -182,5 +183,30 @@ describe("updateTask", () => {
     expect(await updateTask(TASK_ID, {})).toEqual({ ok: false, error: "Không có gì để cập nhật" });
     expect(await updateTask(TASK_ID, { title: "" })).toEqual({ ok: false, error: "Nhập tiêu đề task" });
     expect(await updateTask(TASK_ID, { estimatePoints: -1 })).toEqual({ ok: false, error: "Ước lượng không âm" });
+  });
+});
+
+describe("addTaskComment (F21.5)", () => {
+  afterAll(async () => {
+    await prisma.taskComment.deleteMany({ where: { body: { startsWith: "IT người:" } } });
+  });
+
+  it("người bình luận xen kẽ với agent, đúng thứ tự; chặn trống / người ngoài dự án", async () => {
+    await prisma.taskComment.create({ data: { taskId: "T-405", authorId: "agent-atlas", body: "IT người: agent hỏi trước" } });
+    expect(await addTaskComment("T-405", "  IT người: lead trả lời  ")).toEqual({ ok: true });
+    const rows = await prisma.taskComment.findMany({ where: { taskId: "T-405", body: { startsWith: "IT người:" } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] });
+    expect(rows.map((r) => [r.authorId, r.body])).toEqual([
+      ["agent-atlas", "IT người: agent hỏi trước"],
+      ["hieu", "IT người: lead trả lời"],
+    ]);
+    expect(await addTaskComment("T-405", "   ")).toEqual({ ok: false, error: "Bình luận trống" });
+
+    vi.mocked(getSessionMemberId).mockResolvedValue("nam");
+    try {
+      const other = await prisma.task.findFirstOrThrow({ where: { feature: { project: { members: { none: { memberId: "nam" } } } } } });
+      expect(await addTaskComment(other.id, "IT người: x")).toEqual({ ok: false, error: "Không tìm thấy dự án" });
+    } finally {
+      vi.mocked(getSessionMemberId).mockResolvedValue("hieu");
+    }
   });
 });
