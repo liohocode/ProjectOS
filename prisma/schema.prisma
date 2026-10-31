@@ -291,6 +291,10 @@ model Task {
   blockedFull    String?
   /// Thời điểm agent/người bắt đầu chạy task; null = không chạy
   runningSince   DateTime?
+  /// Liên kết code (F22.4) — agent báo qua MCP `tasks_update_status`, người nhập tay ở drawer
+  prUrl          String?
+  branch         String?
+  commitSha      String?
 
   sessions    McpSession[]
   comments    TaskComment[]

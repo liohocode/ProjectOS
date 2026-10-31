@@ -4,7 +4,17 @@ import { claimTask, commentOnTask, updateTaskByAgent } from "./tasks";
 
 // F16.3 — tasks_claim. Agent Scout (seed: không chạy task nào) trên rv-web; trả lại trạng thái seed sau khi chạy.
 const AGENT = "agent-scout";
-type Snapshot = { id: string; assigneeId: string; runningSince: Date | null; status: string; stage: string; blocked: string | null };
+type Snapshot = {
+  id: string;
+  assigneeId: string;
+  runningSince: Date | null;
+  status: string;
+  stage: string;
+  blocked: string | null;
+  prUrl: string | null;
+  branch: string | null;
+  commitSha: string | null;
+};
 let snapshot: Snapshot[] = [];
 let picks: string[] = [];
 let memberCurrent = "";
@@ -26,7 +36,16 @@ afterAll(async () => {
   for (const t of snapshot) {
     await prisma.task.update({
       where: { id: t.id },
-      data: { assigneeId: t.assigneeId, runningSince: t.runningSince, status: t.status as never, stage: t.stage as never, blocked: t.blocked },
+      data: {
+        assigneeId: t.assigneeId,
+        runningSince: t.runningSince,
+        status: t.status as never,
+        stage: t.stage as never,
+        blocked: t.blocked,
+        prUrl: t.prUrl,
+        branch: t.branch,
+        commitSha: t.commitSha,
+      },
     });
   }
   await prisma.member.update({ where: { id: AGENT }, data: { current: memberCurrent } });
@@ -81,8 +100,26 @@ describe("updateTaskByAgent / commentOnTask (F16.4)", () => {
     expect(await updateTaskByAgent(AGENT, picks[0], { status: "Xong" })).toMatchObject({ ok: false, reason: doneMsg });
     expect(await updateTaskByAgent(AGENT, picks[0], { status: "Đang chạy" })).toMatchObject({ ok: false, reason: "Dùng tasks_claim để chạy task" });
     expect(await updateTaskByAgent("agent-atlas", picks[0], { stage: "Dev" })).toMatchObject({ ok: false, reason: expect.stringContaining("không giao cho bạn") });
-    expect(await updateTaskByAgent(AGENT, picks[0], {})).toMatchObject({ ok: false, reason: "Cần stage hoặc status" });
+    expect(await updateTaskByAgent(AGENT, picks[0], {})).toMatchObject({ ok: false, reason: "Cần stage, status hoặc liên kết (prUrl / branch / commit)" });
     expect((await prisma.task.findUniqueOrThrow({ where: { id: picks[0] } })).stage).toBe("Review");
+  });
+
+  it("báo liên kết PR / branch / commit (F22.4): lưu trên task, không ghi lịch sử trạng thái; link sai → chặn", async () => {
+    const transitions = await prisma.taskTransition.count({ where: { taskId: picks[1] } });
+    const r = await updateTaskByAgent(AGENT, picks[1], {
+      links: { prUrl: "https://github.com/acme/web/pull/42", branch: "feat/F22.4-links", commitSha: "ABC1234" },
+    });
+    expect(r).toMatchObject({
+      ok: true,
+      task: { links: { prUrl: "https://github.com/acme/web/pull/42", branch: "feat/F22.4-links", commitSha: "abc1234" }, status: "Đang chạy" },
+    });
+    expect(await prisma.taskTransition.count({ where: { taskId: picks[1] } })).toBe(transitions);
+    expect(await updateTaskByAgent(AGENT, picks[1], { links: { prUrl: "ftp://x" } })).toMatchObject({ ok: false, reason: "Link PR phải là URL http(s)" });
+    // Gửi kèm stage: cả hai cùng áp; chuỗi rỗng xoá link.
+    expect(await updateTaskByAgent(AGENT, picks[1], { stage: "Review", status: "Chờ review", links: { branch: "" } })).toMatchObject({
+      ok: true,
+      task: { stage: "Review", links: { prUrl: "https://github.com/acme/web/pull/42", branch: null } },
+    });
   });
 
   it("bình luận: lưu trên task; chặn trống / task ngoài dự án", async () => {

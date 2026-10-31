@@ -27,6 +27,9 @@ export interface SeedTask {
   blocked?: string;
   blockedFull?: string;
   running?: string;
+  /** Liên kết code (F22.4) */
+  prUrl?: string;
+  branch?: string;
 }
 
 export interface SeedFeature {

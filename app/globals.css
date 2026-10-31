@@ -790,6 +790,9 @@ img { display: block; max-width: 100%; }
 }
 .drawer-meta-row { display: flex; justify-content: space-between; gap: var(--space-3); }
 .drawer-meta-label { color: var(--color-neutral-500); }
+.drawer-link { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; color: var(--color-accent-200); text-decoration: none; overflow-wrap: anywhere; }
+.drawer-link:hover { text-decoration: underline; }
+.drawer-link-text { min-width: 0; overflow-wrap: anywhere; text-align: right; }
 .drawer-section { margin-bottom: var(--space-4); }
 .drawer-section-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-500); margin-bottom: var(--space-2); }
 .drawer-doc-item { font-size: 13px; padding: 4px 0; display: flex; gap: 6px; align-items: center; }

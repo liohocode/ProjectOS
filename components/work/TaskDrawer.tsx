@@ -8,6 +8,7 @@ import { TaskReviewBox } from "./TaskReviewBox";
 import type { ActionResult } from "@/lib/actions/result";
 import type { Feature, Member, Task, TaskDrawerInfo } from "@/lib/types";
 import { initials, nextStage, stageTagClass } from "./taskStyle";
+import { prLabel } from "@/lib/taskLinks";
 
 export function TaskDrawer({
   task,
@@ -67,6 +68,9 @@ export function TaskDrawer({
       title: String(data.get("title") ?? ""),
       estimatePoints: estimate === "" ? null : Number(estimate),
       dueDate: due === "" ? null : due,
+      prUrl: String(data.get("prUrl") ?? ""),
+      branch: String(data.get("branch") ?? ""),
+      commitSha: String(data.get("commitSha") ?? ""),
     };
     run(() => updateTask(task.id, patch), () => setForm(null));
   }
@@ -139,6 +143,27 @@ export function TaskDrawer({
             <span className="drawer-meta-label">Hạn</span>
             <span>{task.due}</span>
           </div>
+          {/* F22.4: liên kết code — agent báo qua MCP, người nhập ở "Sửa" */}
+          {task.links.prUrl && (
+            <div className="drawer-meta-row">
+              <span className="drawer-meta-label">PR</span>
+              <a href={task.links.prUrl} target="_blank" rel="noopener noreferrer" className="drawer-link">
+                <i className="ph ph-git-pull-request" aria-hidden /> {prLabel(task.links.prUrl)}
+              </a>
+            </div>
+          )}
+          {task.links.branch && (
+            <div className="drawer-meta-row">
+              <span className="drawer-meta-label">Branch</span>
+              <span className="mono drawer-link-text">{task.links.branch}</span>
+            </div>
+          )}
+          {task.links.commitSha && (
+            <div className="drawer-meta-row">
+              <span className="drawer-meta-label">Commit</span>
+              <span className="mono">{task.links.commitSha.slice(0, 7)}</span>
+            </div>
+          )}
         </div>
 
         {task.stage === "Review" && canReview && <TaskReviewBox key={task.id} taskId={task.id} />}
@@ -201,6 +226,17 @@ export function TaskDrawer({
               </Field>
               <Field label="Hạn" htmlFor="edit-due">
                 <input id="edit-due" name="due" type="date" className="input" defaultValue={task.dueIso ?? ""} />
+              </Field>
+            </div>
+            <Field label="Link PR" htmlFor="edit-pr" hint="Bỏ trống = không có">
+              <input id="edit-pr" name="prUrl" type="url" className="input" maxLength={500} defaultValue={task.links.prUrl ?? ""} placeholder="https://github.com/…/pull/123" />
+            </Field>
+            <div className="field-row">
+              <Field label="Branch" htmlFor="edit-branch">
+                <input id="edit-branch" name="branch" className="input" maxLength={200} defaultValue={task.links.branch ?? ""} />
+              </Field>
+              <Field label="Commit" htmlFor="edit-commit">
+                <input id="edit-commit" name="commitSha" className="input" maxLength={40} defaultValue={task.links.commitSha ?? ""} />
               </Field>
             </div>
             <div className="dialog-actions">

@@ -11,7 +11,7 @@ import {
 
 const task = (id: string, over: Partial<Task> = {}): Task => ({
   id, stage: "Dev", assigneeId: "nam", title: id, who: "Nam", kind: "human", status: "Đang làm",
-  est: "1đ", due: "—", estimatePoints: 1, dueIso: null, ...over,
+  est: "1đ", due: "—", estimatePoints: 1, dueIso: null, links: { prUrl: null, branch: null, commitSha: null }, ...over,
 });
 const feature = (id: string, tasks: Task[]): Feature => ({
   id,

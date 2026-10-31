@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { parseTaskLinks, type TaskLinks, type TaskLinksInput } from "@/lib/taskLinks";
 import type { TaskStage } from "@/lib/generated/prisma/enums";
 import { formatDue, parseTaskStatus, TASK_STATUS_LABEL, toIsoDate } from "@/lib/taskFormat";
 import { DEFAULT_AGENT_CONFIG } from "@/lib/agentConfig";
@@ -30,6 +31,8 @@ export interface AgentTaskView {
   running: boolean;
   /** Lần trả lại gần nhất sau review (F22.2) — lý do để agent sửa; null = chưa bị trả lại */
   lastReturn: { reason: string; at: string } | null;
+  /** PR / branch / commit đã báo (F22.4) */
+  links: TaskLinks;
 }
 
 const MAX_TASKS = 200;
@@ -70,6 +73,9 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
       dueDate: true,
       blocked: true,
       runningSince: true,
+      prUrl: true,
+      branch: true,
+      commitSha: true,
       assignee: { select: { name: true } },
       feature: { select: { id: true, name: true, projectId: true } },
       transitions: { where: { note: { not: null }, fromStage: "Review" }, orderBy: { at: "desc" }, take: 1, select: { note: true, at: true } },
@@ -91,6 +97,7 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
     blocked: t.blocked,
     running: t.runningSince !== null,
     lastReturn: t.transitions[0] ? { reason: t.transitions[0].note!, at: t.transitions[0].at.toISOString() } : null,
+    links: { prUrl: t.prUrl, branch: t.branch, commitSha: t.commitSha },
   }));
 }
 
@@ -173,13 +180,16 @@ async function findOwnTask(agentId: string, taskId: string) {
 export async function updateTaskByAgent(
   agentId: string,
   taskId: string,
-  change: { stage?: string; status?: string },
+  change: { stage?: string; status?: string; links?: TaskLinksInput },
 ): Promise<TaskWriteResult> {
   const task = await findOwnTask(agentId, taskId);
   if (!task) return { ok: false, reason: `Không tìm thấy task ${taskId} trong dự án của bạn`, projectId: null };
   const projectId = task.feature.projectId;
   if (task.assigneeId !== agentId) return { ok: false, reason: `${taskId} không giao cho bạn — dùng tasks_claim trước`, projectId };
-  if (!change.stage && !change.status) return { ok: false, reason: "Cần stage hoặc status", projectId };
+  const links = parseTaskLinks(change.links ?? {});
+  if (!links.ok) return { ok: false, reason: links.error, projectId };
+  const hasLinks = Object.keys(links.links).length > 0;
+  if (!change.stage && !change.status && !hasLinks) return { ok: false, reason: "Cần stage, status hoặc liên kết (prUrl / branch / commit)", projectId };
   if (change.stage === "Done" || change.status === "Xong") {
     return { ok: false, reason: "Agent không tự đánh dấu Done — chuyển sang Review để người duyệt", projectId };
   }
@@ -189,7 +199,9 @@ export async function updateTaskByAgent(
     return { ok: false, reason: `Trạng thái không hợp lệ: ${change.status}`, projectId };
   }
 
-  await transitionTask(
+  // F22.4: liên kết không phải chuyển trạng thái → không ghi TaskTransition.
+  if (hasLinks) await prisma.task.update({ where: { id: taskId }, data: links.links });
+  if (change.stage || change.status) await transitionTask(
     prisma,
     taskId,
     agentId,

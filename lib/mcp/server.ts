@@ -162,21 +162,24 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
     {
       title: "Cập nhật task",
       description:
-        "Cập nhật stage và/hoặc trạng thái task đang giao cho agent. Không tự đánh dấu Done (chuyển sang stage Review để người duyệt). Đổi trạng thái sẽ rời 'Đang chạy' (nhả task khỏi giới hạn task đồng thời).",
+        "Cập nhật stage và/hoặc trạng thái task đang giao cho agent, và báo liên kết code (prUrl, branch, commit — hiện trên task cho người review). Không tự đánh dấu Done (chuyển sang stage Review để người duyệt). Đổi trạng thái sẽ rời 'Đang chạy' (nhả task khỏi giới hạn task đồng thời).",
       inputSchema: {
         taskId: z.string().trim().min(1).describe("Mã task, vd T-405"),
         stage: z.enum(AGENT_STAGES).optional().describe("Stage mới"),
         status: z.enum(AGENT_STATUSES).optional().describe("Trạng thái mới"),
+        prUrl: z.string().max(500).optional().describe("Link pull request (http/https); chuỗi rỗng = xoá"),
+        branch: z.string().max(200).optional().describe("Tên branch đang làm; chuỗi rỗng = xoá"),
+        commit: z.string().max(40).optional().describe("Mã commit (hash 7–40 ký tự); chuỗi rỗng = xoá"),
       },
     },
-    async ({ taskId, stage, status }) =>
+    async ({ taskId, stage, status, prUrl, branch, commit }) =>
       logged(agent, policy, "tasks_update_status", async () => {
-        const result = await updateTaskByAgent(agent.memberId, taskId, { stage, status });
+        const result = await updateTaskByAgent(agent.memberId, taskId, { stage, status, links: { prUrl, branch, commitSha: commit } });
         if (result.ok) revalidatePath("/[project]", "layout");
         return {
           value: result.ok ? json({ updated: true, task: result.task }) : { ...json({ updated: false, reason: result.reason }), isError: true },
           log: {
-            target: [taskId, stage, status].filter(Boolean).join(" → "),
+            target: [taskId, stage, status].filter(Boolean).join(" → ") + (prUrl ? ` (PR ${prUrl})` : ""),
             result: result.ok ? (stage === "Review" || status === "Chờ review" ? "ChoReview" : "OK") : "BiChan",
             projectId: result.projectId,
             taskId: result.ok ? taskId : null,
@@ -184,7 +187,7 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
               event: {
                 type: "task",
                 tone: stage === "Review" || status === "Chờ review" ? "review" : "ok",
-                text: `${result.task.title} → ${[stage, status].filter(Boolean).join(" · ")}`,
+                text: `${result.task.title} → ${[stage, status, prUrl && "báo PR"].filter(Boolean).join(" · ")}`,
                 taskId,
               },
             }),
