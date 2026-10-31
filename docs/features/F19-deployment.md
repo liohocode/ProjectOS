@@ -49,7 +49,7 @@ Agent (MCP) ── HTTPS + Bearer token ──▶ /api/mcp ───────
 | F19.4 | Neon production + kết nối Prisma | S | — | Xong — 2026-10-30 (chờ người dùng cất `DATABASE_URL` vào Secret Manager) |
 | F19.5 | Secrets (Secret Manager) + kiểm tra biến môi trường | S | F19.3 | Xong — 2026-10-30 |
 | F19.6 | Deploy thủ công lần đầu lên Cloud Run | S | F19.2, F19.3, F19.4, F19.5 | Xong — 2026-10-30 |
-| F19.7 | CD: GitHub Actions build → migrate → deploy | M | F19.6, F08.6 | Đang làm — workflow chạy được (deploy thành công 2026-10-30); còn thử rollback |
+| F19.7 | CD: GitHub Actions build → migrate → deploy | M | F19.6, F08.6 | Xong — 2026-10-31 |
 | F19.8 | Sao lưu Neon định kỳ + hướng dẫn khôi phục | S | F19.4 | Chuyển → F20.1 (2026-10-30) |
 | F19.9 | (Tuỳ chọn) Tên miền riêng qua Cloudflare DNS | S | F19.6 | Chưa làm |
 | F19.10 | Giảm số query mỗi request (`cache()` + hàm đếm cho badge) | S | — | Xong — 2026-10-28 (ADR-019) |
@@ -96,7 +96,7 @@ Hướng dẫn: `docs/guides/deploy-cloud-run.md` → phần 1 (lệnh chạy tr
 ### F19.7 — CD bằng GitHub Actions
 **Làm gì**: workflow `.github/workflows/deploy.yml` chạy khi CI (F08.6) xanh trên `main`: xác thực Google qua WIF (`google-github-actions/auth`) → build + push image (tag = commit SHA) → `prisma migrate deploy` (direct URL lấy từ GitHub Secret) → `gcloud run deploy` image mới. Thêm `concurrency` để không deploy chồng nhau. Hướng dẫn rollback: `gcloud run services update-traffic --to-revisions <rev>=100`.
 **Hoàn thành khi**:
-- [ ] Merge vào `main` → vài phút sau bản mới chạy (✓ lần chạy 5, ~2,5 phút); rollback thử thành công (chưa thử)
+- [x] Merge vào `main` → vài phút sau bản mới chạy (✓ lần chạy 5, ~2,5 phút); rollback thử thành công (2026-10-31: workflow `Rollback` `previous` rồi `latest`, cả hai smoke `/login` 200)
 
 ### F19.8 — Sao lưu
 **Làm gì**: Neon Free chỉ giữ lịch sử khôi phục ngắn → workflow GitHub Actions theo lịch (vd 2h sáng hằng ngày) chạy `pg_dump` (direct URL) → upload artifact GitHub (giữ 7–14 ngày) hoặc Cloud Storage. Hướng dẫn khôi phục `docs/guides/backup-restore.md`.
