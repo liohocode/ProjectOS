@@ -1,0 +1,67 @@
+name: Import plan
+
+# F28.2 / F28.5: import kế hoạch docs/features/*.md + tên phase ROADMAP vào Neon production (dự án `meridian`).
+# Chạy tay: Actions → Import plan → Run workflow. Mặc định dry-run (chạy hết rồi rollback, chỉ in số liệu).
+# Chạy lại không nhân đôi (khớp theo mã kế hoạch). Lio duyệt ghi production 2026-10-31.
+on:
+  workflow_dispatch:
+    inputs:
+      assignee:
+        description: Member nhận task mới (id)
+        default: hieu
+        required: true
+      dry_run:
+        description: Chỉ thử (không ghi)
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GCP_PROJECT_ID: pdos-513017
+  GCP_WIF_PROVIDER: projects/669737756643/locations/global/workloadIdentityPools/github/providers/github
+  GCP_DEPLOY_SA: meridian-deploy@pdos-513017.iam.gserviceaccount.com
+
+jobs:
+  import:
+    name: Import kế hoạch → production
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Import
+        env:
+          DATABASE_URL_OVERRIDE: ${{ secrets.DATABASE_URL_DIRECT }}
+          ASSIGNEE: ${{ inputs.assignee }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          DATABASE_URL="${DATABASE_URL_OVERRIDE:-$(gcloud secrets versions access latest --secret=DATABASE_URL_DIRECT --project "$GCP_PROJECT_ID")}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::Không đọc được DATABASE_URL_DIRECT"; exit 1; fi
+          echo "::add-mask::$DATABASE_URL"
+          export DATABASE_URL="${DATABASE_URL//&channel_binding=require/}"
+          npm ci
+          npx prisma generate
+          # Schema production phải đã có các migration mới nhất (workflow Deploy chạy migrate sau mỗi lần merge).
+          npx prisma migrate status
+          ARGS=(--assignee "$ASSIGNEE" --project meridian)
+          if [ "$DRY_RUN" = "true" ]; then ARGS+=(--dry-run); fi
+          npx tsx scripts/import-plan.ts "${ARGS[@]}"
