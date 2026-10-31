@@ -75,6 +75,14 @@ export interface Task {
   /** F21.8: task này phụ thuộc (done = đã Done) / các task đang chờ task này */
   dependsOn: TaskRef[];
   blocking: TaskRef[];
+  /** F24.6: tài liệu spec task trỏ tới */
+  docs: DocRef[];
+}
+
+/** Tham chiếu ngắn tới tài liệu (F24.6). */
+export interface DocRef {
+  id: string;
+  title: string;
 }
 
 /** Tham chiếu ngắn tới feature khác (F28.1). */

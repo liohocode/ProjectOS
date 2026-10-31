@@ -346,6 +346,8 @@ model Task {
   /// F21.8: task này phụ thuộc (chờ) các task kia / các task đang chờ task này
   dependsOn   TaskDependency[] @relation("DependentTask")
   blocking    TaskDependency[] @relation("PrerequisiteTask")
+  /// F24.6: tài liệu spec task trỏ tới
+  docs        TaskDoc[]
 
   @@index([featureId])
   @@index([sprintId])
@@ -446,6 +448,19 @@ model TaskCriterion {
   @@map("task_criteria")
 }
 
+/// Task ↔ tài liệu (F24.6): task trỏ tới tài liệu spec (cùng dự án); `context_get` trả các tài liệu này trước tài liệu của feature.
+model TaskDoc {
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  docId     String
+  doc       Doc      @relation(fields: [docId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([taskId, docId])
+  @@index([docId])
+  @@map("task_docs")
+}
+
 /// Task agent đề xuất (F24.2, MCP `tasks_create`) — bảng riêng, chưa phải task: list / timeline / chỉ số không phải
 /// lọc thêm. Lead duyệt → tạo task thật (T-n, kèm tiêu chí) và ghi `taskId`; từ chối → giữ lịch sử kèm lý do.
 model TaskProposal {
@@ -511,6 +526,8 @@ model Doc {
   sections     Json
 
   revisions DocRevision[]
+  /// F24.6: task trỏ tới tài liệu này
+  tasks     TaskDoc[]
 
   @@index([projectId])
   @@index([featureId])

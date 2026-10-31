@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-31 · Tổng: **127/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 32/65 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-31 · Tổng: **128/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 33/65 (đã chốt F23.1, F25.1).
 
 ## Điều chỉnh ưu tiên (Lio, 2026-10-31)
 1. **Hoàn thiện Feature & Task trước** (Phase 7): mô tả task, cỡ, phụ thuộc, trang chi tiết feature, markdown, DoD, lịch sử block, agent đề xuất task — đủ để chứa toàn bộ kế hoạch đang nằm trong `.md`.
@@ -67,7 +67,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
 | [F23](features/F23-ai-effort-tokens.md) | Ghi nhận token AI theo task / agent / dự án, ngân sách, ước lượng vs thực tế | F16, F22.1 | Chưa bắt đầu — nguồn token đã chốt (F23.1) | 1/5 |
-| [F24](features/F24-coding-agent-support.md) | `context_get`, agent chia task / đề xuất tài liệu, template tài liệu, quy ước làm việc cho repo | F16, F21.6 | Đang làm — `context_get` (F24.1), agent đề xuất task (F24.2), quy ước agent + CLAUDE.md mẫu (F24.5) | 3/7 |
+| [F24](features/F24-coding-agent-support.md) | `context_get`, agent chia task / đề xuất tài liệu, template tài liệu, quy ước làm việc cho repo | F16, F21.6 | Đang làm — `context_get` (F24.1), agent đề xuất task (F24.2), quy ước agent + CLAUDE.md mẫu (F24.5), tài liệu ↔ task (F24.6) | 4/7 |
 | [F27](features/F27-agent-skills.md) | **Skills hub**: tạo / phiên bản / duyệt skill, gán theo tổ chức / dự án / agent, phân phối qua MCP + đồng bộ vào repo (hash), agent đề xuất cải tiến, thống kê | F16, F24.1 | Chưa bắt đầu | 0/8 |
 
 ### Phase 9 — Mobile cho người quản lý
@@ -82,14 +82,13 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 
 ## Thứ tự làm
 1. **F28 ngay sau F21** (Lio duyệt 2026-10-31): F28.1 phase + phụ thuộc feature → F28.2 import `.md` → F28.3 tài liệu kỹ thuật → F28.4 màn Roadmap → F28.5 import production (dự án `meridian`, workflow `Import plan`) → F28.6 đổi quy trình sang MCP (cần Lio mở mạng + token). Từ F28.5 kế hoạch xem được trên web; `.md` vẫn là nguồn tới F28.6.
-2. Phần còn lại của Feature & Task (làm và theo dõi trên web sau F28.5): F24.2 agent đề xuất task → F24.6 gắn tài liệu ↔ task.
+2. ~~Phần còn lại của Feature & Task~~: F24.2 agent đề xuất task, F24.6 gắn tài liệu ↔ task — xong 2026-10-31.
 3. **F29** (F29.1 đã chốt — ADR-024, ADR-025): F29.2 key → F29.3 lượt chạy → F29.4 runner GitHub Actions → F29.5 theo dõi → F29.6 giới hạn.
 4. Sau đó: F23 (gộp token từ F29), F25.3–F25.6, F27, F26, F20.4–F20.5, F24.3–F24.4.
 
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F24.6](features/F24-coding-agent-support.md) Gắn tài liệu ↔ task | Phần cuối của feature & task trước F29 |
 | [F29.2](features/F29-run-agents-on-web.md) API key mã hoá (ADR-025) | Mở đầu chạy agent từ web — cần Lio thêm secret `MERIDIAN_ENCRYPTION_KEY` khi deploy |
 
 ## Quyết định đang mở (cần người dùng chốt)
@@ -137,6 +136,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 - 2026-10-30 — **Review + lập lại kế hoạch**: giai đoạn 1 (MVP) 94/103; giai đoạn 2 "data foundation" gồm F20–F27 (45 task, F27 skills hub do người dùng bổ sung) — dùng thật, quản lý công việc, chất lượng, token AI, hỗ trợ coding agent, mobile, API.
 - 2026-10-31 — **F21 xong**: feature CRUD, % tiến độ từ task, sprint, lưu trữ task, người bình luận, acceptance criteria (+ cổng vào Review F22.3). Cùng ngày: inbox "Cần tôi xử lý" (F25.2), liên kết PR (F22.4), quy ước agent + CLAUDE.md mẫu (F24.5).
 - 2026-10-31 — **Điều chỉnh ưu tiên** (Lio): hoàn thiện feature & task (F21.7–F21.11) → đưa kế hoạch + tài liệu kỹ thuật lên web, DB là nguồn sự thật (F28 mới) → gắn API key + chạy agent từ web (F29 mới, chờ quyết định F29.1). F24.7, F27.1 hoãn; F20.3 thay bằng F28.
+- 2026-10-31 — **F24.2 + F24.6**: agent đề xuất task qua MCP `tasks_create` (lead duyệt ở trang feature / inbox), gắn tài liệu spec vào task (`context_get` trả trước). Phần feature & task Lio yêu cầu đã đủ; tiếp theo F29.
 - 2026-10-31 — **F28.5 xong**: kế hoạch + 11 tài liệu kỹ thuật đã import lên production (dự án `meridian`, giao cho Lio). Xem tiến độ ở màn Roadmap trên web; `.md` vẫn là nguồn tới F28.6.
 - 2026-10-31 — **F21 xong 11/11** (mở rộng): markdown, mô tả / cỡ / mã task, phụ thuộc, trang chi tiết feature, lưu trữ feature + thứ tự ưu tiên — đủ chỗ chứa kế hoạch `.md` cho F28.
 - 2026-10-31 — **F22 xong 7/7**: lịch sử trạng thái, cổng review, cổng vào Review theo tiêu chí, liên kết PR, chỉ số chất lượng (+ thời gian block, lọc sprint), Definition of Done theo dự án.

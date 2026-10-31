@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useCan } from "@/components/auth/PermissionsProvider";
 import { useUrlDialog } from "@/components/ui/urlDialog";
 import { NEW_FEATURE_PARAM, SPRINTS_PARAM } from "./featureDialogParam";
-import type { MemberOption, SprintOption } from "@/lib/types";
+import type { DocRef, MemberOption, SprintOption } from "@/lib/types";
 import type { ActivityItem, Feature, Member, Task, TaskDrawerInfo, TimelineRow } from "@/lib/types";
 import { FeatureSection } from "./FeatureSection";
 import { TimelineView } from "./TimelineView";
@@ -28,6 +28,7 @@ export function WorkScreen({
   sprints = [],
   archivedTask,
   doneDefinition = [],
+  projectDocs = [],
 }: {
   features: Feature[];
   /** Đang áp bộ lọc "Lọc" (F14.3) — features đã lọc ở server. */
@@ -46,6 +47,8 @@ export function WorkScreen({
   archivedTask?: { task: Task; feature: Feature };
   /** Definition of Done của dự án (F22.6) */
   doneDefinition?: string[];
+  /** Tài liệu của dự án — gắn vào task trong drawer (F24.6) */
+  projectDocs?: DocRef[];
 }) {
   const canCreateFeature = useCan("feature.create");
   const { openHref: newFeatureHref } = useUrlDialog(NEW_FEATURE_PARAM);
@@ -176,6 +179,7 @@ export function WorkScreen({
           sprints={sprints}
           projectTasks={allTasks.map(({ id, title, stage }) => ({ id, title, stage, done: stage === "Done" }))}
           doneDefinition={doneDefinition}
+          projectDocs={projectDocs}
           onClose={closeTask}
         />
       )}

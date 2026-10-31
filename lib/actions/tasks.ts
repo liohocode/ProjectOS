@@ -363,6 +363,33 @@ export async function setTaskDependency(taskId: string, dependsOnId: string, add
   return ok();
 }
 
+const MAX_TASK_DOCS = 10;
+
+/** Gắn / bỏ tài liệu spec cho task (F24.6) — tài liệu phải cùng dự án; tối đa 10 tài liệu một task. */
+export async function setTaskDoc(taskId: string, docId: string, add: boolean): Promise<ActionResult> {
+  const ids = z.object({ taskId: taskIdSchema, docId: z.string().trim().min(1, "Chọn tài liệu") }).safeParse({ taskId, docId });
+  if (!ids.success) return fail(ids.error.issues[0].message);
+  const projectId = await findTaskProject(ids.data.taskId);
+  if (!projectId) return fail(`Không tìm thấy task ${ids.data.taskId}`);
+  const denied = await authorize("task.write", projectId);
+  if (denied) return fail(denied);
+
+  const key = { taskId: ids.data.taskId, docId: ids.data.docId };
+  if (add) {
+    const doc = await prisma.doc.findUnique({ where: { id: ids.data.docId }, select: { projectId: true } });
+    if (!doc || doc.projectId !== projectId) return fail("Tài liệu không thuộc dự án này");
+    if ((await prisma.taskDoc.count({ where: { taskId: key.taskId } })) >= MAX_TASK_DOCS) return fail(`Tối đa ${MAX_TASK_DOCS} tài liệu cho một task`);
+    await prisma.taskDoc.upsert({ where: { taskId_docId: key }, create: key, update: {} });
+  } else {
+    await prisma.taskDoc.deleteMany({ where: key });
+  }
+  await recordActivity("ph-file-text", `${add ? "Gắn" : "Bỏ"} tài liệu ${ids.data.docId} ${add ? "vào" : "khỏi"} ${ids.data.taskId}`, {
+    event: { projectId, type: "task", tone: "ok", taskId: ids.data.taskId },
+  });
+  revalidateTaskViews();
+  return ok();
+}
+
 /** Đổi thứ tự ưu tiên task trong feature (F21.10) — thành viên dự án. */
 export async function moveTask(taskId: string, dir: Direction): Promise<ActionResult> {
   const id = taskIdSchema.safeParse(taskId);

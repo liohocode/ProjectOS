@@ -4,7 +4,7 @@ import { groupByPhase, nextTasks, openDecisions, phaseTitle } from "./roadmap";
 
 const task = (id: string, over: Partial<Task> = {}): Task => ({
   id, stage: "TA", title: id, assigneeId: "a", who: "A", kind: "agent", status: "Chờ", est: "—", due: "—", estimatePoints: null, dueIso: null,
-  links: { prUrl: null, branch: null, commitSha: null }, sprintId: null, criteria: [], dependsOn: [], blocking: [], ...over,
+  links: { prUrl: null, branch: null, commitSha: null }, sprintId: null, criteria: [], dependsOn: [], blocking: [], docs: [], ...over,
 });
 const feature = (id: string, phaseId: string | null, tasks: Task[], over: Partial<Feature> = {}): Feature => ({
   id, name: id, stage: "Dev", owner: "", ownerKind: null, ownerId: null, plannedStart: null, plannedEnd: null, pct: 0, docs: 0, tasks,

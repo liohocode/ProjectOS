@@ -7,9 +7,10 @@ import { useCan } from "@/components/auth/PermissionsProvider";
 import { TaskReviewBox } from "./TaskReviewBox";
 import { TaskCriteria } from "./TaskCriteria";
 import { TaskDependencies } from "./TaskDependencies";
+import { TaskDocs } from "./TaskDocs";
 import { Markdown } from "@/components/ui/Markdown";
 import type { ActionResult } from "@/lib/actions/result";
-import type { Feature, Member, SprintOption, Task, TaskDrawerInfo, TaskRef } from "@/lib/types";
+import type { DocRef, Feature, Member, SprintOption, Task, TaskDrawerInfo, TaskRef } from "@/lib/types";
 import { setTaskSprint } from "@/lib/actions/sprints";
 import { initials, nextStage, stageTagClass } from "./taskStyle";
 import { prLabel } from "@/lib/taskLinks";
@@ -22,6 +23,7 @@ export function TaskDrawer({
   sprints = [],
   projectTasks = [],
   doneDefinition = [],
+  projectDocs = [],
   onClose,
 }: {
   task: Task;
@@ -34,6 +36,8 @@ export function TaskDrawer({
   projectTasks?: TaskRef[];
   /** Definition of Done của dự án (F22.6) — tick khi duyệt */
   doneDefinition?: string[];
+  /** Tài liệu của dự án — gắn vào task (F24.6) */
+  projectDocs?: DocRef[];
   onClose: () => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -236,6 +240,8 @@ export function TaskDrawer({
         <TaskCriteria key={`criteria-${task.id}`} taskId={task.id} criteria={task.criteria} canWrite={canWrite} />
 
         <TaskDependencies key={`deps-${task.id}`} task={task} candidates={projectTasks} canWrite={canWrite} />
+
+        <TaskDocs key={`docs-${task.id}`} task={task} candidates={projectDocs} canWrite={canWrite} />
 
         {info && info.contextDocs.length > 0 && (
           <div className="drawer-section">
