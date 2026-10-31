@@ -15,7 +15,8 @@ export interface TaskContext {
   /** Definition of Done của dự án (F22.6) — người duyệt kiểm khi đưa sang Done */
   doneDefinition: string[];
   feature: { id: string; name: string; stage: string; owner: string | null };
-  docs: { id: string; title: string; version: string; summary: string; sections: DocSection[] }[];
+  /** Tài liệu gắn với task (F24.6, `linked: true`) trước, rồi tài liệu của feature (mới sửa trước) */
+  docs: { id: string; title: string; version: string; summary: string; sections: DocSection[]; linked: boolean }[];
   /** Tài liệu feature còn lại (khi vượt MAX_DOCS) — đọc thêm bằng docs_read */
   moreDocs: { id: string; title: string }[];
   /** Acceptance criteria (F21.6) — agent tick bằng `criteria_check` */
@@ -35,11 +36,14 @@ export async function getTaskContext(
   const [feature, docs, comments, transitions, criteria, detail] = await Promise.all([
     prisma.feature.findUniqueOrThrow({ where: { id: view.featureId }, select: { id: true, name: true, stage: true, owner: { select: { name: true } } } }),
     opts.includeDocs
-      ? prisma.doc.findMany({
-          where: { featureId: view.featureId },
-          orderBy: { updatedAt: "desc" },
-          select: { id: true, title: true, version: true, summary: true, sections: true },
-        })
+      ? prisma.doc
+          .findMany({
+            where: { OR: [{ featureId: view.featureId }, { tasks: { some: { taskId } } }] },
+            orderBy: { updatedAt: "desc" },
+            select: { id: true, title: true, version: true, summary: true, sections: true, tasks: { where: { taskId }, select: { taskId: true } } },
+          })
+          // F24.6: tài liệu task trỏ tới lên đầu (sort ổn định — giữ thứ tự mới sửa trong mỗi nhóm).
+          .then((rows) => rows.map(({ tasks, ...d }) => ({ ...d, linked: tasks.length > 0 })).sort((a, b) => Number(b.linked) - Number(a.linked)))
       : Promise.resolve([]),
     prisma.taskComment.findMany({
       where: { taskId },

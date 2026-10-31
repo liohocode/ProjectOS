@@ -18,6 +18,7 @@ const baseTask: Task = {
   criteria: [],
   dependsOn: [],
   blocking: [],
+  docs: [],
   dueIso: "2026-01-01",
 };
 

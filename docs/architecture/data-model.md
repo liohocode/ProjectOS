@@ -8,6 +8,7 @@ Project 1─n Feature 1─n Task
 Project 1─n Sprint; Project 0..1─1 Sprint (currentSprint — sprint hiện tại); Sprint 1─n Task (F21.3, task có thể chưa xếp sprint)
 Project 1─n Doc            (Doc.featureId null = "Kho tri thức chung" của project)
 Feature 1─n Doc
+Task n─n Doc               (qua TaskDoc — tài liệu spec của task, F24.6)
 Feature 1─n TaskProposal  (task agent đề xuất — F24.2; duyệt → tạo Task)
 Doc     1─n DocRevision    (author, approvedBy → Member)
 Member  n─n Project        (qua ProjectMember — "phân bổ" người/agent vào dự án)
@@ -36,6 +37,7 @@ AuthVerification  (độc lập, Better Auth dùng cho token tạm)
 | `TaskBlock` (`task_blocks`) | cuid | Lịch sử block (F22.7): `taskId` (cascade), `reason`, `blockedAt`, `unblockedAt?` (null = đang block) — ghi qua `applyBlock` |
 | `TaskCriterion` (`task_criteria`) | `id` cuid | Acceptance criteria của task (F21.6): `taskId` (cascade), `text`, `position` (thứ tự), `doneAt?` + `doneById?` → `Member` (`SET NULL`) người / agent tick. Người sửa trong drawer (`lib/actions/criteria.ts`), agent tick qua MCP `criteria_check` |
 | `TaskProposal` (`task_proposals`) | `id` cuid | Task agent đề xuất qua MCP `tasks_create` (F24.2): `featureId` (cascade), `proposedById` → `Member` (cascade), `title`, `description?`, `size?`, `stage` (mặc định Dev), `assigneeId?` (null = agent đề xuất), `criteria String[]`, `status` pending / approved / rejected, `rejectedReason?`, `taskId?` (task tạo khi duyệt), `reviewedAt?`. Bảng riêng để list / timeline / chỉ số / `tasks_list` không phải lọc task "đề xuất". Duyệt / từ chối: `lib/domain/taskProposals.ts`, quyền `feature.review` |
+| `TaskDoc` (`task_docs`) | (`taskId`, `docId`) | Task trỏ tới tài liệu spec (F24.6), cùng dự án, tối đa 10 / task; cascade cả hai phía. Gắn / bỏ ở drawer (`setTaskDoc`, quyền `task.write`); `context_get` trả các tài liệu này trước (`linked: true`) |
 | `TaskTransition` (`task_transitions`) | `id` cuid | Lịch sử chuyển stage / trạng thái task (F22.1): `taskId` (cascade), `actorId` → `Member`, `fromStage?`/`toStage?`, `fromStatus?`/`toStatus?` (chỉ phần đổi; `from*` null = vừa tạo), `via` enum `TransitionVia` (`web`/`mcp`), `note?` (F22.2: lý do trả lại sau review), `at`. Ghi qua `lib/domain/taskTransitions.ts` |
 | `ActivityEvent` (`activity_events`) | `id` cuid | Sự kiện activity rail (F17.1): `projectId`, `actorId` → `Member`, `type` enum `ActivityType`, `tone` enum `ActivityTone`, `taskId?`/`docId?`/`featureId?` (chuỗi, không FK), `text`, `tool?` (tool MCP dạng `tasks.claim`; null = web), `at`. Index `(projectId, at desc)` |
 | `MemberSkillRow` | cuid | `label`, `level` (Cao/Trung bình/Cơ bản/Không dùng), `percent`, `sortOrder` |

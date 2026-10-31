@@ -24,7 +24,7 @@ Mục tiêu: mọi repo của công ty dùng Meridian để agent (Claude Code, 
 ## 3. Vì sao quy ước như vậy
 - **Một task = một branch = một PR**, PR gắn vào task (F22.4) → người review đi từ inbox thẳng tới diff; chỉ số chất lượng (F22.5) đếm đúng số lần trả lại.
 - **Agent không tự Done** (F22.2): cổng review của người là điểm kiểm soát chất lượng duy nhất cho việc agent làm.
-- **`context_get` trước khi làm** (F24.1): agent đọc spec và lý do bị trả lại thay vì đoán; drawer ghi lại agent đã đọc gì.
+- **`context_get` trước khi làm** (F24.1): agent đọc spec và lý do bị trả lại thay vì đoán; người giao gắn tài liệu spec vào task ở drawer (F24.6) để agent nhận đúng tài liệu đó trước; drawer ghi lại agent đã đọc gì.
 - **Vướng thì dừng và nói rõ** (`Chờ` + bình luận) thay vì đoán: lead thấy ngay ở màn work, không mất thời gian sửa việc làm sai hướng.
 - **Tài liệu qua revision**: tài liệu là nguồn ngữ cảnh cho agent sau, nên mọi thay đổi đều có người duyệt.
 

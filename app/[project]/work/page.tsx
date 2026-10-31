@@ -1,4 +1,5 @@
 import { getArchivedTask, getFeaturesByProject, getProposedFeatures } from "@/lib/data/features";
+import { getDocGroupsByProject } from "@/lib/data/docs";
 import { getTimelineByProject } from "@/lib/data/timeline";
 import { getActivityFeed } from "@/lib/data/activity";
 import { getTaskDrawerInfo } from "@/lib/data/taskDrawer";
@@ -17,7 +18,7 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
   const { new: newParam } = searchParams;
   const filter = parseWorkFilter(searchParams);
 
-  const [features, timeline, activity, projectTeam, proposals, sprints, project] = await Promise.all([
+  const [features, timeline, activity, projectTeam, proposals, sprints, project, docGroups] = await Promise.all([
     getFeaturesByProject(projectId),
     getTimelineByProject(projectId),
     getActivityFeed(projectId),
@@ -25,6 +26,7 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
     getProposedFeatures(projectId),
     getSprintsByProject(projectId),
     getProjectById(projectId),
+    getDocGroupsByProject(projectId),
   ]);
   const projectAgents = projectTeam.filter((m) => m.kind === "agent");
   const memberOptions = projectTeam.map(({ id, name, kind }) => ({ id, name, kind }));
@@ -57,6 +59,7 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
         sprints={sprints}
         archivedTask={archived && archivedFeature ? { task: archived.task, feature: archivedFeature } : undefined}
         doneDefinition={project?.doneDefinition ?? []}
+        projectDocs={docGroups.flatMap((g) => g.items.map(({ id, title }) => ({ id, title })))}
       />
       {/* "Sprint" ở toolbar đặt ?sprints=1 (F21.3) */}
       {searchParams[SPRINTS_PARAM] === "1" && <SprintDialog projectId={projectId} sprints={sprints} />}
