@@ -194,6 +194,9 @@ async function main() {
               branch: t.branch ?? null,
               // F21.3: dữ liệu mẫu chỉ có một sprint / dự án → mọi task thuộc sprint hiện tại.
               sprintId: sprintIdByProject.get(p.id) ?? null,
+              description: t.description ?? null,
+              size: t.size ?? null,
+              needsDecision: t.needsDecision ?? false,
               // F22.1 / F22.5: lịch sử mẫu (task khác không có — như task tạo trước F22.1).
               transitions: t.history && {
                 create: t.history.map((h) => ({

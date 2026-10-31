@@ -161,9 +161,20 @@ describe("setTaskBlocked", () => {
 });
 
 describe("updateTask", () => {
-  let original: { title: string; estimatePoints: number | null; dueDate: Date | null };
+  let original: {
+    title: string;
+    estimatePoints: number | null;
+    dueDate: Date | null;
+    description: string | null;
+    size: "S" | "M" | "L" | null;
+    code: string | null;
+    needsDecision: boolean;
+  };
   beforeAll(async () => {
-    original = await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID }, select: { title: true, estimatePoints: true, dueDate: true } });
+    original = await prisma.task.findUniqueOrThrow({
+      where: { id: TASK_ID },
+      select: { title: true, estimatePoints: true, dueDate: true, description: true, size: true, code: true, needsDecision: true },
+    });
   });
   afterAll(async () => {
     await prisma.task.update({ where: { id: TASK_ID }, data: original });
@@ -177,6 +188,14 @@ describe("updateTask", () => {
 
     expect(await updateTask(TASK_ID, { estimatePoints: null, dueDate: null })).toEqual({ ok: true });
     expect(await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).toMatchObject({ title: "Tiêu đề mới", estimatePoints: null, dueDate: null });
+  });
+
+  it("F21.7: mô tả markdown, cỡ, mã kế hoạch, cần quyết định; chuỗi rỗng xoá", async () => {
+    expect(await updateTask(TASK_ID, { description: "## Làm gì\n- a", size: "M", code: "F21.7", needsDecision: true })).toEqual({ ok: true });
+    expect(await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).toMatchObject({ description: "## Làm gì\n- a", size: "M", code: "F21.7", needsDecision: true });
+    expect(await updateTask(TASK_ID, { description: "  ", size: null, code: "", needsDecision: false })).toEqual({ ok: true });
+    expect(await prisma.task.findUniqueOrThrow({ where: { id: TASK_ID } })).toMatchObject({ description: null, size: null, code: null, needsDecision: false });
+    expect(await updateTask(TASK_ID, { code: "F 21" })).toEqual({ ok: false, error: "Mã chỉ gồm chữ, số, dấu chấm, gạch" });
   });
 
   it("từ chối patch rỗng, tiêu đề trống, ước lượng âm", async () => {

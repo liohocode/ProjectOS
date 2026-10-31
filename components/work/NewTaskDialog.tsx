@@ -40,6 +40,8 @@ export function NewTaskDialog({
         assigneeId: String(form.get("assigneeId") ?? ""),
         estimatePoints: estimate === "" ? null : Number(estimate),
         dueDate: due === "" ? null : due,
+        description: String(form.get("description") ?? ""),
+        size: (String(form.get("size") ?? "") || null) as "S" | "M" | "L" | null,
       });
       if (result.ok) close();
       else setError(result.error);
@@ -122,7 +124,18 @@ export function NewTaskDialog({
           <Field label="Hạn" htmlFor="nt-due">
             <input id="nt-due" name="due" type="date" className="input" />
           </Field>
+          <Field label="Cỡ" htmlFor="nt-size">
+            <select id="nt-size" name="size" className="input" defaultValue="">
+              <option value="">Chưa đặt</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+            </select>
+          </Field>
         </div>
+        <Field label="Mô tả (markdown)" htmlFor="nt-description" hint="Làm gì, phạm vi — agent đọc qua context_get">
+          <textarea id="nt-description" name="description" className="input" rows={4} maxLength={10_000} />
+        </Field>
         {error && (
           <div className="drawer-warning" role="alert">
             <i className="ph ph-warning-circle" aria-hidden /> Không tạo được: {error}

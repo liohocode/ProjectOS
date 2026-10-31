@@ -112,6 +112,11 @@ const estimateSchema = z
   .nullable();
 /** "YYYY-MM-DD" từ <input type="date">; null = chưa có hạn */
 const dueDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Hạn không hợp lệ").nullable();
+// F21.7: mô tả markdown, cỡ, mã trong kế hoạch, cần quyết định. Chuỗi rỗng = xoá.
+const descriptionSchema = z.string().max(10_000, "Mô tả tối đa 10.000 ký tự").nullable();
+const sizeSchema = z.enum(["S", "M", "L"], { error: "Cỡ không hợp lệ" }).nullable();
+const codeSchema = z.string().trim().max(20, "Mã tối đa 20 ký tự").regex(/^[\w.-]*$/, "Mã chỉ gồm chữ, số, dấu chấm, gạch").nullable();
+const emptyToNull = (v: string | null | undefined) => (v === undefined ? undefined : v && v.trim() ? v : null);
 const toDueDate = (iso: string | null) => (iso ? new Date(`${iso}T00:00:00Z`) : null);
 
 const newTaskSchema = z.object({
@@ -122,6 +127,8 @@ const newTaskSchema = z.object({
   assigneeId: memberIdSchema,
   estimatePoints: estimateSchema,
   dueDate: dueDateSchema,
+  description: descriptionSchema.optional(),
+  size: sizeSchema.optional(),
 });
 export type NewTaskInput = z.input<typeof newTaskSchema>;
 
@@ -164,6 +171,8 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
         estimatePoints: data.estimatePoints,
         dueDate: toDueDate(data.dueDate),
         sprintId: feature.project.currentSprintId,
+        description: emptyToNull(data.description) ?? null,
+        size: data.size ?? null,
       },
     });
     await recordTaskCreated(tx, id, creatorId, "web", data.stage, "Cho");
@@ -210,7 +219,18 @@ export async function setTaskBlocked(taskId: string, block: { short: string; ful
 // F22.4: liên kết code — kiểm tra chi tiết bằng parseTaskLinks (dùng chung với MCP); chuỗi rỗng = xoá.
 const linkSchema = z.string().max(500).nullable();
 const taskPatchSchema = z
-  .object({ title: titleSchema, estimatePoints: estimateSchema, dueDate: dueDateSchema, prUrl: linkSchema, branch: linkSchema, commitSha: linkSchema })
+  .object({
+    title: titleSchema,
+    estimatePoints: estimateSchema,
+    dueDate: dueDateSchema,
+    prUrl: linkSchema,
+    branch: linkSchema,
+    commitSha: linkSchema,
+    description: descriptionSchema,
+    size: sizeSchema,
+    code: codeSchema,
+    needsDecision: z.boolean(),
+  })
   .partial()
   .refine((patch) => Object.keys(patch).length > 0, "Không có gì để cập nhật");
 export type TaskPatch = z.input<typeof taskPatchSchema>;
@@ -224,7 +244,7 @@ export async function updateTask(taskId: string, patch: TaskPatch): Promise<Acti
   if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
   const denied = await authorize("task.write", projectId);
   if (denied) return fail(denied);
-  const { title, estimatePoints, dueDate, prUrl, branch, commitSha } = input.data.patch;
+  const { title, estimatePoints, dueDate, prUrl, branch, commitSha, description, size, code, needsDecision } = input.data.patch;
   const links = parseTaskLinks({ prUrl, branch, commitSha });
   if (!links.ok) return fail(links.error);
   // Chỉ ghi nhận liên kết thật sự đổi (form gửi lại cả giá trị cũ).
@@ -237,6 +257,10 @@ export async function updateTask(taskId: string, patch: TaskPatch): Promise<Acti
       ...(estimatePoints !== undefined && { estimatePoints }),
       ...(dueDate !== undefined && { dueDate: toDueDate(dueDate) }),
       ...linkChanges,
+      ...(description !== undefined && { description: emptyToNull(description) }),
+      ...(size !== undefined && { size }),
+      ...(code !== undefined && { code: emptyToNull(code) }),
+      ...(needsDecision !== undefined && { needsDecision }),
     },
   });
   const changed = [
@@ -244,6 +268,7 @@ export async function updateTask(taskId: string, patch: TaskPatch): Promise<Acti
     estimatePoints !== undefined && "ước lượng",
     dueDate !== undefined && "hạn",
     Object.keys(linkChanges).length > 0 && "liên kết",
+    (description !== undefined || size !== undefined || code !== undefined || needsDecision !== undefined) && "mô tả",
   ].filter(Boolean);
   await recordActivity("ph-pencil-simple", `Sửa ${input.data.taskId} (${changed.join(", ")})`, {
     event: { projectId, type: "task", tone: "ok", taskId: input.data.taskId },

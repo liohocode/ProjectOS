@@ -39,6 +39,10 @@ function toTask(t: TaskRow, now: Date): Task {
     sprintId: t.sprintId,
     criteria: t.criteria.map((c) => ({ id: c.id, text: c.text, done: c.doneAt !== null, doneBy: c.doneBy?.name ?? null })),
     ...(t.archivedAt && { archived: true as const }),
+    ...(t.description && { description: t.description }),
+    ...(t.size && { size: t.size }),
+    ...(t.code && { code: t.code }),
+    ...(t.needsDecision && { needsDecision: true as const }),
   };
 }
 

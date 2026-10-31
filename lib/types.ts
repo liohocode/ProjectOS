@@ -57,6 +57,11 @@ export interface Task {
   criteria: TaskCriterionView[];
   /** Đã lưu trữ (F21.4) — chỉ có khi mở bằng deep link */
   archived?: true;
+  /** F21.7: mô tả markdown ("Làm gì"), cỡ, mã trong kế hoạch (vd "F21.3"), cần người quyết định */
+  description?: string;
+  size?: "S" | "M" | "L";
+  code?: string;
+  needsDecision?: true;
 }
 
 export interface Feature {
