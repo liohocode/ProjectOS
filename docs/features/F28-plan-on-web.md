@@ -1,0 +1,38 @@
+# F28 — Kế hoạch & tài liệu kỹ thuật của Meridian trên web (dogfooding)
+
+| Trạng thái | Phase | Phụ thuộc | Yêu cầu |
+|---|---|---|---|
+| Chưa bắt đầu | 7b | F21.7–F21.11 | FR-DF-01…05 |
+
+## Mục tiêu
+Chuyển kế hoạch đang nằm trong `.md` (ROADMAP, file feature, yêu cầu, ADR, data model) lên chính Meridian: **dự án "Meridian" là dự án thật đầu tiên**. Vừa code vừa xem tiến độ trên web; DB là nguồn sự thật, agent nhận / đóng task qua MCP thay vì sửa `.md`.
+
+## Phạm vi
+- **Trong**: script import `.md` → DB (feature, task, tiêu chí, phụ thuộc, ghi chú quyết định, tài liệu kỹ thuật), màn Roadmap, chuyển quy trình làm việc (WORKFLOW / CLAUDE.md) sang MCP, bản export `.md` tự sinh để đọc trong repo.
+- **Ngoài**: chạy agent từ web (F29), nhiều tổ chức (backlog).
+
+## Tham chiếu
+- Nguồn import: `docs/ROADMAP.md`, `docs/features/F*.md`, `docs/product/requirements.md`, `docs/architecture/*.md`, `docs/guides/*.md`
+- Quy trình hiện tại: `docs/WORKFLOW.md`, `docs/guides/agent-workflow.md`
+
+## Tasks
+| Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
+|---|---|---|---|---|
+| F28.1 | Feature có phase + phụ thuộc giữa feature; dự án có danh sách phase (tên, mục tiêu, thứ tự) | S | F21.9 | Chưa làm |
+| F28.2 | Script `scripts/import-plan.ts`: đọc `docs/features/*.md` + ROADMAP → upsert dự án `meridian` (feature, task, mô tả, cỡ, phụ thuộc, tiêu chí "Hoàn thành khi", trạng thái, ghi chú quyết định); `--dry-run`, chạy lại không nhân đôi | M | F28.1, F21.8 | Chưa làm |
+| F28.3 | Import tài liệu kỹ thuật (requirements, ADR, data model, overview, guides) thành Doc markdown, gắn feature khi có | S | F21.11 | Chưa làm |
+| F28.4 | Màn **Roadmap** của dự án: tiến độ theo phase / feature, quyết định đang mở (task "Cần quyết định"), "việc nên nhận tiếp" (task chưa làm có phụ thuộc đã xong) | M | F28.1 | Chưa làm |
+| F28.5 | Import lên production (dự án `meridian`) + chuyển nguồn sự thật: WORKFLOW / CLAUDE.md / agent-workflow đổi sang nhận – đóng task qua MCP; `.md` kế hoạch thành bản export tự sinh (`npm run plan:export`) | M | F28.2–F28.4 | Chưa làm — **cần Lio duyệt** ghi DB production |
+| F28.6 | Agent phát triển Meridian (Claude Code) dùng token MCP production cho dự án `meridian` — dogfooding hằng ngày (gộp F24.7) | S | F28.5 | Chưa làm — Lio tạo token |
+
+### F28.2 — Import kế hoạch
+**Làm gì**: parser thuần (`lib/planImport.ts`, unit test trên file feature mẫu) tách: bảng đầu (trạng thái / phase / phụ thuộc), Mục tiêu + Phạm vi → mô tả feature, bảng Tasks (mã, tiêu đề, cỡ, phụ thuộc, trạng thái → stage), mục `### FXX.n` (Làm gì → mô tả task, "Hoàn thành khi" → tiêu chí, `[x]` → đã đạt), "Quyết định / ghi chú" → ghi chú feature. Mã feature giữ nguyên (`F21`), mã task `F21.3` lưu ở trường mã hiển thị riêng (id task vẫn `T-n`).
+**Hoàn thành khi**:
+- [ ] Import toàn bộ `docs/features` vào DB dev: số feature / task / task xong khớp ROADMAP; chạy lại lần 2 không đổi gì
+
+### F28.5 — Chuyển nguồn sự thật
+**Hoàn thành khi**:
+- [ ] Một task mới làm từ đầu đến cuối chỉ qua Meridian (claim → context_get → PR → Review → duyệt trên web), không sửa `.md` kế hoạch bằng tay
+
+## Quyết định / ghi chú
+- **2026-10-31** (Lio): hoàn thiện feature & task trước, rồi đưa kế hoạch + tài liệu kỹ thuật từ `.md` lên web (lưu DB), để vừa code vừa theo dõi tiến độ trên web. Thay cho F20.3 (onboarding dự án thật): Meridian là dự án thật đầu tiên.

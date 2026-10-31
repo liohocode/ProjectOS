@@ -109,6 +109,21 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-AG-12 | Agent đề xuất tài liệu mới, lead duyệt | ⬜ | F24 |
 | FR-AG-13 | Template tài liệu: PRD, tech spec, ADR, runbook | ⬜ | F24 |
 | FR-AG-14 | Quy ước làm việc chuẩn (CLAUDE.md mẫu) cho repo dùng Meridian | 🟡 mẫu + guide (F24.5); chờ thử trên repo thật (F24.7) | F24 |
+| FR-PM-07 | Task có mô tả (markdown), cỡ, mã hiển thị, nhãn "Cần quyết định" | ⬜ | F21 |
+| FR-PM-08 | Phụ thuộc giữa task; không nhận task khi phụ thuộc chưa xong | ⬜ | F21 |
+| FR-PM-09 | Trang chi tiết feature: mục tiêu, phạm vi, ghi chú quyết định, task, tài liệu | ⬜ | F21 |
+| FR-PM-10 | Lưu trữ feature, sắp xếp ưu tiên feature / task | ⬜ | F21 |
+| FR-PM-11 | Nội dung mô tả / tài liệu hiển thị markdown (bảng, danh sách, code) | ⬜ | F21 |
+| FR-DF-01 | Kế hoạch dự án (phase, feature, task, tiêu chí, phụ thuộc) import được từ `.md` vào DB, chạy lại không nhân đôi | ⬜ | F28 |
+| FR-DF-02 | Tài liệu kỹ thuật (yêu cầu, ADR, data model, hướng dẫn) lưu DB, xem / sửa trên web | ⬜ | F28 |
+| FR-DF-03 | Màn Roadmap: tiến độ theo phase, quyết định đang mở, việc nên nhận tiếp | ⬜ | F28 |
+| FR-DF-04 | DB là nguồn sự thật của kế hoạch; agent nhận / đóng task qua MCP; `.md` chỉ là bản export | ⬜ | F28 |
+| FR-DF-05 | Meridian dùng chính Meridian để quản lý việc phát triển (dogfooding) | ⬜ | F28 |
+| FR-RUN-01 | Gắn API key cho dự án / feature, lưu mã hoá, chỉ hiện 4 ký tự cuối | ⬜ | F29 |
+| FR-RUN-02 | Chạy agent cho task / feature trực tiếp từ web | ⬜ | F29 |
+| FR-RUN-03 | Theo dõi lượt chạy (trạng thái, log, PR) và huỷ trên web | ⬜ | F29 |
+| FR-RUN-04 | Token / chi phí thật của từng lượt chạy | ⬜ | F29 |
+| FR-RUN-05 | Giới hạn lượt chạy đồng thời + ngân sách chi phí | ⬜ | F29 |
 | FR-MB-01 | Inbox "Cần tôi xử lý" gom mọi việc chờ duyệt | ✅ | F25 |
 | FR-MB-02 | Theo dõi trạng thái và duyệt trên màn hình điện thoại (390px) | ⬜ | F25 |
 | FR-MB-03 | Cài lên màn hình chính (PWA) | ⬜ | F25 |

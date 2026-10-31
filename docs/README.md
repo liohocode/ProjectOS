@@ -33,7 +33,7 @@ docs/
   features/
     _TEMPLATE.md            mẫu cho feature mới
     F01 … F07               đã xong (UI v1 + backend)
-    F08 … F19               kế hoạch: mỗi file = 1 feature + danh sách task chi tiết
+    F08 … F29               kế hoạch: mỗi file = 1 feature + danh sách task chi tiết (F28: đưa kế hoạch lên web)
   guides/
     deploy-cloud-run.md     triển khai Cloud Run + Neon (F19), từng bước cho người dùng và agent
     google-oauth.md         tạo OAuth client Google cho đăng nhập (F15.2)

@@ -20,7 +20,7 @@ Chuyển production từ bản demo sang **dữ liệu thật của công ty** a
 |---|---|---|---|---|
 | F20.1 | Backup Neon hằng đêm + hướng dẫn khôi phục (= F19.8, đã duyệt) | S | — | Xong — 2026-10-30 |
 | F20.2 | Quản trị thành viên: sửa hồ sơ, email đăng nhập, gán / bỏ tech lead | M | — | Xong — 2026-10-31 |
-| F20.3 | Hướng dẫn onboarding dự án thật + checklist go-live | S | F20.1, F20.2 | Chưa làm |
+| F20.3 | Hướng dẫn onboarding dự án thật + checklist go-live | S | F20.1, F20.2 | Chưa làm — thay bằng F28 (Meridian là dự án thật đầu tiên, 2026-10-31); viết hướng dẫn từ kinh nghiệm F28 |
 | F20.4 | Production không chạy seed demo; seed tách "demo" / "tối thiểu" | S | — | Chưa làm |
 | F20.5 | Xoá cột cũ `Member.config` (migration mất dữ liệu — người dùng **đã duyệt** 2026-10-30, làm sau F20.1) | S | F20.1 | Chưa làm |
 
