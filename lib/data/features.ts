@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { Feature, ProjectPhaseView, ProposedFeature, Task } from "@/lib/types";
+import type { Feature, ProjectPhaseView, ProposedFeature, ProposedTask, Task } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning, toIsoDate } from "@/lib/taskFormat";
@@ -132,6 +132,32 @@ export const getProposedFeatures = cache(async (projectId: string): Promise<Prop
     proposal: f.proposal ?? "",
     proposedBy: f.proposedBy?.name ?? "Agent",
     when: f.proposedAt ? formatRelativeVi(f.proposedAt) : "",
+  }));
+});
+
+/** Task agent đề xuất đang chờ duyệt (F24.2), cũ trước — cả dự án hoặc một feature. Chỉ feature đang hoạt động. */
+export const getProposedTasks = cache(async (projectId: string, featureId?: string): Promise<ProposedTask[]> => {
+  const rows = await prisma.taskProposal.findMany({
+    where: { status: "pending", feature: { projectId, status: "active", archivedAt: null, ...(featureId && { id: featureId }) } },
+    orderBy: [{ proposedAt: "asc" }, { id: "asc" }],
+    include: { feature: { select: { name: true } }, proposedBy: { select: { name: true } } },
+  });
+  const assigneeIds = [...new Set(rows.map((r) => r.assigneeId).filter((id): id is string => Boolean(id)))];
+  const names = new Map(
+    (assigneeIds.length ? await prisma.member.findMany({ where: { id: { in: assigneeIds } }, select: { id: true, name: true } }) : []).map((m) => [m.id, m.name]),
+  );
+  return rows.map((p) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    size: p.size,
+    stage: p.stage,
+    criteria: p.criteria,
+    featureId: p.featureId,
+    featureName: p.feature.name,
+    proposedBy: p.proposedBy.name,
+    assignee: p.assigneeId ? (names.get(p.assigneeId) ?? p.assigneeId) : null,
+    when: formatRelativeVi(p.proposedAt),
   }));
 });
 

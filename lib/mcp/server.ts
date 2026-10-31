@@ -4,6 +4,7 @@ import type { AgentPrincipal } from "@/lib/auth/agentToken";
 import { revalidatePath } from "next/cache";
 import { appendDocForAgent, readDocForAgent, searchDocsForAgent } from "@/lib/domain/agentDocs";
 import { proposeFeature } from "@/lib/domain/features";
+import { MAX_PROPOSAL_CRITERIA, proposeTask } from "@/lib/domain/taskProposals";
 import { getTaskContext } from "@/lib/domain/taskContext";
 import { checkCriterionByAgent } from "@/lib/domain/taskCriteria";
 import { AGENT_STAGES, AGENT_STATUSES, claimTask, commentOnTask, listTasksForMember, updateTaskByAgent } from "@/lib/domain/tasks";
@@ -278,6 +279,40 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
             result: result.ok ? "ChoReview" : "BiChan",
             projectId: result.projectId,
             ...(result.ok && { event: { type: "feature", tone: "review", text: `Đề xuất ${result.featureId} ${name}`, featureId: result.featureId } }),
+          },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "tasks_create",
+    {
+      title: "Đề xuất task",
+      description:
+        "Đề xuất một task mới cho feature đang hoạt động (agent chia task). Task ở trạng thái chờ duyệt — tech lead duyệt mới thành task thật (T-n, trạng thái Chờ, kèm tiêu chí). Gọi nhiều lần để chia nhiều task.",
+      inputSchema: {
+        featureId: z.string().trim().min(1).describe("Id feature, vd FEAT-12"),
+        title: z.string().trim().min(1).max(200).describe("Tiêu đề task"),
+        description: z.string().max(10_000).optional().describe("Mô tả markdown: làm gì, file liên quan"),
+        size: z.enum(["S", "M", "L"]).optional().describe("Cỡ ước lượng"),
+        stage: z.enum(AGENT_STAGES).optional().describe("Stage bắt đầu, mặc định Dev"),
+        assigneeId: z.string().trim().min(1).optional().describe("Member id người / agent đề xuất làm; bỏ trống = chính bạn"),
+        criteria: z.array(z.string().trim().min(1).max(300)).max(MAX_PROPOSAL_CRITERIA).optional().describe("Tiêu chí hoàn thành"),
+      },
+    },
+    async (input) =>
+      logged(agent, policy, "tasks_create", async () => {
+        const result = await proposeTask(agent.memberId, input);
+        if (result.ok) revalidatePath("/[project]", "layout");
+        return {
+          value: result.ok
+            ? json({ proposed: true, proposalId: result.proposalId, featureId: result.featureId, status: "Chờ lead duyệt" })
+            : { ...json({ proposed: false, reason: result.reason }), isError: true },
+          log: {
+            target: `${input.featureId} ${input.title}`,
+            result: result.ok ? "ChoReview" : "BiChan",
+            projectId: result.projectId,
+            ...(result.ok && { event: { type: "task", tone: "review", text: `Đề xuất task ${input.title}`, featureId: result.featureId } }),
           },
         };
       }),

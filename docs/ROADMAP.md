@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-31 · Tổng: **126/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 31/65 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-31 · Tổng: **127/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 32/65 (đã chốt F23.1, F25.1).
 
 ## Điều chỉnh ưu tiên (Lio, 2026-10-31)
 1. **Hoàn thiện Feature & Task trước** (Phase 7): mô tả task, cỡ, phụ thuộc, trang chi tiết feature, markdown, DoD, lịch sử block, agent đề xuất task — đủ để chứa toàn bộ kế hoạch đang nằm trong `.md`.
@@ -67,7 +67,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
 | [F23](features/F23-ai-effort-tokens.md) | Ghi nhận token AI theo task / agent / dự án, ngân sách, ước lượng vs thực tế | F16, F22.1 | Chưa bắt đầu — nguồn token đã chốt (F23.1) | 1/5 |
-| [F24](features/F24-coding-agent-support.md) | `context_get`, agent chia task / đề xuất tài liệu, template tài liệu, quy ước làm việc cho repo | F16, F21.6 | Đang làm — `context_get` (F24.1), quy ước agent + CLAUDE.md mẫu (F24.5) | 2/7 |
+| [F24](features/F24-coding-agent-support.md) | `context_get`, agent chia task / đề xuất tài liệu, template tài liệu, quy ước làm việc cho repo | F16, F21.6 | Đang làm — `context_get` (F24.1), agent đề xuất task (F24.2), quy ước agent + CLAUDE.md mẫu (F24.5) | 3/7 |
 | [F27](features/F27-agent-skills.md) | **Skills hub**: tạo / phiên bản / duyệt skill, gán theo tổ chức / dự án / agent, phân phối qua MCP + đồng bộ vào repo (hash), agent đề xuất cải tiến, thống kê | F16, F24.1 | Chưa bắt đầu | 0/8 |
 
 ### Phase 9 — Mobile cho người quản lý
@@ -89,8 +89,8 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F24.2](features/F24-coding-agent-support.md) Agent đề xuất task (`tasks_create`) | Hoàn thiện feature & task; kế hoạch đã lên web (F28.5 xong) |
-| [F24.6](features/F24-coding-agent-support.md) Gắn tài liệu ↔ task | Như trên |
+| [F24.6](features/F24-coding-agent-support.md) Gắn tài liệu ↔ task | Phần cuối của feature & task trước F29 |
+| [F29.2](features/F29-run-agents-on-web.md) API key mã hoá (ADR-025) | Mở đầu chạy agent từ web — cần Lio thêm secret `MERIDIAN_ENCRYPTION_KEY` khi deploy |
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Khuyến nghị |

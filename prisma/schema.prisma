@@ -171,6 +171,7 @@ model Member {
   activityEvents    ActivityEvent[]  @relation("ActivityActor")
   taskTransitions   TaskTransition[] @relation("TransitionActor")
   criteriaDone      TaskCriterion[]  @relation("CriterionDoneBy")
+  proposedTasks     TaskProposal[]   @relation("TaskProposer")
 
   @@map("members")
 }
@@ -288,6 +289,8 @@ model Feature {
   rejectedReason String?
 
   tasks Task[]
+  /// F24.2: task agent đề xuất cho feature này, chờ lead duyệt
+  taskProposals TaskProposal[]
   docs  Doc[]
 
   @@index([projectId])
@@ -441,6 +444,34 @@ model TaskCriterion {
 
   @@index([taskId, position])
   @@map("task_criteria")
+}
+
+/// Task agent đề xuất (F24.2, MCP `tasks_create`) — bảng riêng, chưa phải task: list / timeline / chỉ số không phải
+/// lọc thêm. Lead duyệt → tạo task thật (T-n, kèm tiêu chí) và ghi `taskId`; từ chối → giữ lịch sử kèm lý do.
+model TaskProposal {
+  id             String    @id @default(cuid())
+  featureId      String
+  feature        Feature   @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  proposedById   String
+  proposedBy     Member    @relation("TaskProposer", fields: [proposedById], references: [id], onDelete: Cascade)
+  proposedAt     DateTime  @default(now())
+  title          String
+  description    String?
+  size           TaskSize?
+  stage          TaskStage @default(Dev)
+  /// Người / agent đề xuất làm; null = chính agent đề xuất
+  assigneeId     String?
+  /// Acceptance criteria — thành TaskCriterion khi duyệt
+  criteria       String[]  @default([])
+  /// pending | approved | rejected
+  status         String    @default("pending")
+  rejectedReason String?
+  /// Task tạo ra khi duyệt
+  taskId         String?
+  reviewedAt     DateTime?
+
+  @@index([featureId, status])
+  @@map("task_proposals")
 }
 
 /// Bình luận trên task (F16.4) — agent ghi qua MCP `tasks_comment`, hiện ở mục "Bình luận" của task drawer.

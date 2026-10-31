@@ -1,4 +1,4 @@
-import type { DocRevision, MemberKind, ProposedFeature } from "@/lib/types";
+import type { DocRevision, MemberKind, ProposedFeature, ProposedTask } from "@/lib/types";
 
 // Inbox "Cần tôi xử lý" (F25.2) — hàm thuần: phần nào của inbox người dùng thấy, theo quyền (F15.4).
 // Ai cũng thấy task bị block; revision / task Review / feature đề xuất chỉ hiện cho người có quyền duyệt tương ứng.
@@ -48,5 +48,7 @@ export interface Inbox {
   revisions: InboxRevision[];
   reviewTasks: InboxTask[];
   proposals: ProposedFeature[];
+  /** Task agent đề xuất (F24.2) — cùng quyền `feature.review`, đếm chung vào `proposals` */
+  taskProposals: ProposedTask[];
   blockedTasks: InboxTask[];
 }

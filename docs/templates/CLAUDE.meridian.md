@@ -15,7 +15,7 @@ Dự án này quản lý task trên **Meridian** (dự án `<MÃ-DỰ-ÁN>`), k�
 1. **Chọn task** — người giao mã task (vd `T-405`) thì dùng mã đó; không thì `tasks_list` (`assigneeId: "me"`, rồi stage `Dev`) và chọn task chưa Done, không bị block. Không tự tạo việc ngoài task.
 2. **Nhận** — `tasks_claim(taskId)`. Bị chặn → đọc `reason`, báo người, **dừng** (không làm task đang bị block hay đang có người chạy).
 3. **Lấy ngữ cảnh** — `context_get(taskId)` một lần: task, feature, tài liệu spec, bình luận, lịch sử. Có `lastReturn` → đây là lần làm lại: sửa đúng lý do trong `lastReturn.reason` trước tiên.
-4. **Làm** — trên branch riêng `<taskId>-<mô-tả-ngắn>` (vd `T-405-autosave`). Chỉ làm đúng phạm vi task; việc phát sinh → `tasks_comment` đề xuất, không làm lấn.
+4. **Làm** — trên branch riêng `<taskId>-<mô-tả-ngắn>` (vd `T-405-autosave`). Chỉ làm đúng phạm vi task; việc phát sinh → `tasks_create(featureId, title, description, criteria)` đề xuất task mới (lead duyệt mới thành task) hoặc `tasks_comment`, không làm lấn.
 5. **Báo tiến độ** — mốc đáng kể (xong thiết kế, mở PR, gặp vướng) → `tasks_comment` một dòng ngắn, viết cho người đọc sau.
 6. **Vướng** — thiếu thông tin / chờ người khác → `tasks_comment` nêu rõ cần ai làm gì, rồi `tasks_update_status(status: "Chờ")`. Không đoán thay người quyết định.
 7. **Kiểm tra** — chạy `<lệnh kiểm tra>` (lint, test, build) cho tới khi xanh. Không tắt / bỏ qua test để cho xanh. Mỗi acceptance criterion (`context_get` → `criteria`) đã kiểm chứng → `criteria_check(taskId, criterionId, done: true)`; tiêu chí chưa đạt được thì nêu lý do bằng `tasks_comment`.

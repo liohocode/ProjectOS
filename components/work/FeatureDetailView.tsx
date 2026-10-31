@@ -7,10 +7,11 @@ import { Field } from "@/components/ui/Field";
 import { Markdown } from "@/components/ui/Markdown";
 import { setFeatureArchived, setFeatureDependency, setFeaturePhase, updateFeatureContent } from "@/lib/actions/features";
 import { moveTask } from "@/lib/actions/tasks";
+import { ProposedTasks } from "./ProposedTasks";
 import type { ActionResult } from "@/lib/actions/result";
 import { MoveButtons } from "./MoveButtons";
 import type { FeatureDetail } from "@/lib/data/features";
-import type { FeatureRef, ProjectPhaseView } from "@/lib/types";
+import type { FeatureRef, ProjectPhaseView, ProposedTask } from "@/lib/types";
 import { initials, stageTagClass } from "./taskStyle";
 
 /** Trang chi tiết feature (F21.9). Nội dung markdown sửa được bởi tech lead / người tạo dự án (`feature.manage`). */
@@ -19,12 +20,15 @@ export function FeatureDetailView({
   detail,
   phases = [],
   candidates = [],
+  taskProposals = [],
 }: {
   projectId: string;
   detail: FeatureDetail;
   /** F28.1: phase của kế hoạch + feature khác để chọn phụ thuộc */
   phases?: ProjectPhaseView[];
   candidates?: FeatureRef[];
+  /** F24.2: task agent đề xuất cho feature này, chờ duyệt */
+  taskProposals?: ProposedTask[];
 }) {
   const { feature, goal, scope, notes, docs } = detail;
   const canEdit = useCan("feature.manage");
@@ -202,6 +206,7 @@ export function FeatureDetailView({
             ))}
           </ul>
         )}
+        <ProposedTasks proposals={taskProposals} showFeature={false} />
       </section>
 
       <FeatureDeps feature={feature} candidates={candidates} canEdit={canEdit && !feature.archived} projectId={projectId} />

@@ -10,6 +10,8 @@ import { PRIORITY_ORDER } from "@/lib/data/features";
 import { moveInList, type Direction } from "@/lib/reorder";
 import { wouldCreateCycle } from "@/lib/taskDeps";
 import { recordActivity } from "./_activity";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { reviewTaskProposal, taskProposalProject } from "@/lib/domain/taskProposals";
 
 // Duyệt / từ chối feature agent đề xuất (F16.6) — tech lead hoặc người tạo dự án (`feature.review`).
 
@@ -212,4 +214,37 @@ export async function setFeatureDependency(featureId: string, dependsOnId: strin
   }
   revalidatePath("/[project]", "layout");
   return ok();
+}
+
+// ── Task agent đề xuất (F24.2) — cùng quyền duyệt với feature đề xuất (`feature.review`). ──
+
+const proposalIdSchema = z.string().trim().min(1, "Thiếu đề xuất");
+
+async function reviewProposedTask(proposalId: string, decision: { approve: true } | { approve: false; reason: string }): Promise<ActionResult<{ taskId: string | null }>> {
+  const id = proposalIdSchema.safeParse(proposalId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const projectId = await taskProposalProject(id.data);
+  if (!projectId) return fail("Không tìm thấy đề xuất");
+  const denied = await authorize("feature.review", projectId);
+  if (denied) return fail(denied);
+  const reviewerId = await getCurrentUserId();
+
+  const result = await reviewTaskProposal(id.data, reviewerId, decision);
+  if (!result.ok) return fail(result.error);
+  await recordActivity(
+    result.taskId ? "ph-check-circle" : "ph-x-circle",
+    result.taskId ? `Duyệt task đề xuất → ${result.taskId} ${result.title}` : `Từ chối task đề xuất ${result.title}`,
+    { event: { projectId, type: "task", tone: "ok", featureId: result.featureId, ...(result.taskId && { taskId: result.taskId }) } },
+  );
+  revalidatePath("/[project]", "layout");
+  return { ok: true, taskId: result.taskId };
+}
+
+/** Duyệt task agent đề xuất → tạo task thật (T-n) kèm tiêu chí. */
+export async function approveTaskProposal(proposalId: string): Promise<ActionResult<{ taskId: string | null }>> {
+  return reviewProposedTask(proposalId, { approve: true });
+}
+
+export async function rejectTaskProposal(proposalId: string, reason: string): Promise<ActionResult<{ taskId: string | null }>> {
+  return reviewProposedTask(proposalId, { approve: false, reason: String(reason ?? "") });
 }
