@@ -1,9 +1,9 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { getSessionMemberId } from "@/lib/auth/session";
-import { getFeaturesByProject } from "@/lib/data/features";
+import { getFeatureDetail, getFeaturesByProject } from "@/lib/data/features";
 import { getTimelineByProject } from "@/lib/data/timeline";
-import { createFeature, updateFeature } from "./features";
+import { createFeature, updateFeature, updateFeatureContent } from "./features";
 
 // F21.1 — tạo / sửa feature. Trung Hiếu (tech lead) mặc định; Nam là thành viên thường của rv-web.
 const startedAt = new Date();
@@ -50,6 +50,30 @@ describe("createFeature / updateFeature (F21.1)", () => {
     vi.mocked(getSessionMemberId).mockResolvedValue("nam");
     try {
       expect(await createFeature("rv-app", base)).toEqual({ ok: false, error: "Không tìm thấy dự án" });
+    } finally {
+      vi.mocked(getSessionMemberId).mockResolvedValue("hieu");
+    }
+  });
+});
+
+describe("nội dung trang chi tiết feature (F21.9)", () => {
+  afterAll(async () => {
+    await prisma.feature.update({ where: { id: "FEAT-119" }, data: { goal: null, scope: null, notes: null } });
+  });
+
+  it("tech lead sửa mục tiêu / phạm vi / ghi chú (markdown, rỗng = xoá); thành viên thường bị chặn", async () => {
+    expect(await updateFeatureContent("FEAT-119", { goal: "  Lọc **nhanh**  ", scope: "- Trong: giá", notes: "" })).toEqual({ ok: true });
+    const detail = await getFeatureDetail("rv-web", "FEAT-119");
+    expect(detail).toMatchObject({ goal: "Lọc **nhanh**", scope: "- Trong: giá", notes: null, feature: { id: "FEAT-119" } });
+    expect(detail!.feature.tasks.length).toBeGreaterThan(0);
+    expect(await getFeatureDetail("crm", "FEAT-119")).toBeNull();
+
+    vi.mocked(getSessionMemberId).mockResolvedValue("nam");
+    try {
+      expect(await updateFeatureContent("FEAT-119", { goal: "x", scope: "", notes: "" })).toEqual({
+        ok: false,
+        error: "Chỉ tech lead hoặc người tạo dự án được sửa feature",
+      });
     } finally {
       vi.mocked(getSessionMemberId).mockResolvedValue("hieu");
     }

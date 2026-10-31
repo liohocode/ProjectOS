@@ -5,6 +5,9 @@ const FEATURES_BY_PROJECT: Record<string, Feature[]> = {
     {
       id: "FEAT-118",
       name: "Listing rework",
+      goal: "Làm lại luồng đăng tin để người bán đăng xong trong **dưới 3 phút** và không mất dữ liệu giữa chừng.",
+      scope: "- **Trong**: form đăng tin nhiều bước, lưu nháp, trang chi tiết tin mới, trường pháp lý\n- **Ngoài**: thanh toán đẩy tin (FEAT-121), app mobile",
+      notes: "- **2026-08-12**: lưu nháp ở `localStorage`, chưa đồng bộ server (đơn giản, đủ cho bản đầu).\n- **2026-08-19**: trường pháp lý chờ ADR-11 chốt cách version schema.",
       stage: "Dev",
       owner: "Trần Mỹ Linh",
       pct: 62,

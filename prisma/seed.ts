@@ -177,6 +177,9 @@ async function main() {
           name: f.name,
           stage: f.stage,
           ownerId: resolveMemberId(members, f.owner),
+          goal: f.goal ?? null,
+          scope: f.scope ?? null,
+          notes: f.notes ?? null,
           pct: f.pct,
           tasks: {
             create: f.tasks.map((t) => ({

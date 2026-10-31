@@ -124,3 +124,22 @@ export const getArchivedTask = cache(async (projectId: string, taskId: string): 
   });
   return row ? { task: toTask(row, new Date()), featureId: row.featureId } : null;
 });
+
+export interface FeatureDetail {
+  feature: Feature;
+  goal: string | null;
+  scope: string | null;
+  notes: string | null;
+  docs: { id: string; title: string }[];
+}
+
+/** Trang chi tiết feature (F21.9) — feature đang chạy của dự án; null nếu không có. */
+export const getFeatureDetail = cache(async (projectId: string, featureId: string): Promise<FeatureDetail | null> => {
+  const feature = (await getFeaturesByProject(projectId)).find((f) => f.id === featureId);
+  if (!feature) return null;
+  const row = await prisma.feature.findUniqueOrThrow({
+    where: { id: featureId },
+    select: { goal: true, scope: true, notes: true, docs: { select: { id: true, title: true }, orderBy: { title: "asc" } } },
+  });
+  return { feature, goal: row.goal, scope: row.scope, notes: row.notes, docs: row.docs };
+});
