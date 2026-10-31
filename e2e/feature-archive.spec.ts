@@ -26,7 +26,10 @@ test("lưu trữ feature có xác nhận → biến khỏi màn work; khôi ph�
 
 test("đưa feature lên đầu danh sách", async ({ page }) => {
   await page.goto("/rv-web/work");
-  const ids = async () => page.locator(".feature-section").evaluateAll((els) => els.map((e) => e.id));
+  // Chỉ section feature thật (skeleton lúc tải cũng dùng .feature-section nhưng không có id) — chờ list hiện rồi mới đọc.
+  const sections = page.locator('.feature-section[id^="feature-"]');
+  await expect(sections.first()).toBeVisible();
+  const ids = async () => sections.evaluateAll((els) => els.map((e) => e.id));
   const before = await ids();
   await page.getByRole("button", { name: "Đưa FEAT-119 lên" }).click();
   await expect.poll(ids).toEqual([before[1], before[0], ...before.slice(2)]);
