@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { comparePhaseCodes, type PlanDoc, type PlanFeature } from "@/lib/planImport";
+import { comparePhaseCodes, type PlanDoc, type PlanFeature, type PlanTask } from "@/lib/planImport";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import { markdownToSections } from "@/lib/markdownSections";
 import { parseTaskStatus } from "@/lib/taskFormat";
 
@@ -74,16 +75,15 @@ export async function importPlan(features: PlanFeature[], opts: ImportOptions): 
           summary[existing ? "featuresUpdated" : "featuresCreated"]++;
         }
         await tx.featureDependency.deleteMany({ where: { feature: { projectId: opts.projectId } } });
-        for (const f of features) {
-          for (const dep of f.dependsOn) {
-            if (!featureCodes.has(dep)) {
-              summary.missingRefs.push(`${f.code} → ${dep}`);
-              continue;
-            }
-            await tx.featureDependency.create({ data: { featureId: f.code, dependsOnId: dep } });
-            summary.featureDeps++;
-          }
-        }
+        const featureDeps = features.flatMap((f) =>
+          f.dependsOn.flatMap((dep) => {
+            if (featureCodes.has(dep)) return [{ featureId: f.code, dependsOnId: dep }];
+            summary.missingRefs.push(`${f.code} → ${dep}`);
+            return [];
+          }),
+        );
+        if (featureDeps.length) await tx.featureDependency.createMany({ data: featureDeps });
+        summary.featureDeps = featureDeps.length;
 
         // Task.
         const existingTasks = await tx.task.findMany({ where: { feature: { projectId: opts.projectId }, code: { not: null } }, select: { id: true, code: true } });
@@ -92,6 +92,10 @@ export async function importPlan(features: PlanFeature[], opts: ImportOptions): 
         const [{ max }] = await tx.$queryRaw<{ max: number }[]>`
           SELECT COALESCE(MAX(CAST(SUBSTRING(id FROM 3) AS INTEGER)), 0) AS max FROM tasks WHERE id ~ '^T-[0-9]+$'`;
         let next = max;
+        // Gom lệnh theo lô: DB production ở xa runner CI (mỗi lệnh ~200 ms) — tránh hàng nghìn lệnh tuần tự trong transaction.
+        const now = new Date();
+        const creates: Prisma.TaskCreateManyInput[] = [];
+        const rows: { taskId: string; t: PlanTask; blocked: string | null; blockedFull: string | null }[] = [];
         for (const f of features) {
           for (const [i, t] of f.tasks.entries()) {
             const data = {
@@ -105,48 +109,65 @@ export async function importPlan(features: PlanFeature[], opts: ImportOptions): 
               // Task đã chuyển / thay bằng task khác: lưu trữ (F21.4), lý do giữ trong blockedFull để xem lại.
               blocked: t.blocked && !t.superseded ? shortReason(t.blocked) : null,
               blockedFull: t.blocked,
-              archivedAt: t.superseded ? new Date() : null,
+              archivedAt: t.superseded ? now : null,
               position: i + 1,
             };
-            const id = taskIds.get(t.code);
-            if (id) {
-              await tx.task.update({ where: { id }, data });
+            let taskId = taskIds.get(t.code);
+            if (taskId) {
+              await tx.task.update({ where: { id: taskId }, data });
               summary.tasksUpdated++;
             } else {
-              const newId = `T-${++next}`;
-              await tx.task.create({ data: { id: newId, code: t.code, assigneeId: opts.assigneeId, ...data } });
-              await tx.taskTransition.create({ data: { taskId: newId, actorId: opts.assigneeId, via: "web", toStage: t.stage, toStatus: data.status } });
-              taskIds.set(t.code, newId);
+              taskId = `T-${++next}`;
+              creates.push({ id: taskId, code: t.code, assigneeId: opts.assigneeId, ...data });
+              taskIds.set(t.code, taskId);
               summary.tasksCreated++;
             }
-            const taskId = taskIds.get(t.code)!;
-            await tx.taskCriterion.deleteMany({ where: { taskId } });
-            if (t.criteria.length) {
-              await tx.taskCriterion.createMany({
-                data: t.criteria.map((c, j) => ({ taskId, text: c.text, position: j + 1, ...(c.done && { doneAt: new Date(), doneById: opts.assigneeId }) })),
-              });
-              summary.criteria += t.criteria.length;
-            }
+            rows.push({ taskId, t, blocked: data.blocked, blockedFull: data.blockedFull });
           }
         }
-        const imported = [...taskIds.values()];
+        if (creates.length) {
+          await tx.task.createMany({ data: creates });
+          await tx.taskTransition.createMany({
+            data: creates.map((c) => ({ taskId: c.id, actorId: opts.assigneeId, via: "web" as const, toStage: c.stage, toStatus: c.status })),
+          });
+        }
+        const imported = rows.map((r) => r.taskId);
+
+        // F22.7: lịch sử block khớp trạng thái block từ `.md` — mở dòng cho task mới bị block, đóng dòng của task hết block.
+        const open = await tx.taskBlock.findMany({ where: { taskId: { in: imported }, unblockedAt: null }, select: { id: true, taskId: true, reason: true } });
+        const openByTask = new Map(open.map((b) => [b.taskId, b]));
+        const toOpen = rows.filter((r) => r.blocked && !openByTask.has(r.taskId));
+        if (toOpen.length) await tx.taskBlock.createMany({ data: toOpen.map((r) => ({ taskId: r.taskId, reason: r.blocked!, blockedAt: now })) });
+        const toClose = rows.filter((r) => !r.blocked && openByTask.has(r.taskId)).map((r) => openByTask.get(r.taskId)!.id);
+        if (toClose.length) await tx.taskBlock.updateMany({ where: { id: { in: toClose } }, data: { unblockedAt: now } });
+
+        // Tiêu chí: thay toàn bộ.
+        await tx.taskCriterion.deleteMany({ where: { taskId: { in: imported } } });
+        const criteria = rows.flatMap((r) =>
+          r.t.criteria.map((c, j) => ({ taskId: r.taskId, text: c.text, position: j + 1, ...(c.done && { doneAt: now, doneById: opts.assigneeId }) })),
+        );
+        if (criteria.length) await tx.taskCriterion.createMany({ data: criteria });
+        summary.criteria = criteria.length;
+
+        // Phụ thuộc task.
         await tx.taskDependency.deleteMany({ where: { taskId: { in: imported } } });
-        for (const f of features) {
-          for (const t of f.tasks) {
-            for (const dep of t.dependsOn) {
-              const depId = taskIds.get(dep);
-              if (!depId || dep === t.code) {
-                summary.missingRefs.push(`${t.code} → ${dep}`);
-                continue;
-              }
-              await tx.taskDependency.create({ data: { taskId: taskIds.get(t.code)!, dependsOnId: depId } });
-              summary.taskDeps++;
+        const deps: { taskId: string; dependsOnId: string }[] = [];
+        for (const r of rows) {
+          for (const dep of r.t.dependsOn) {
+            const depId = taskIds.get(dep);
+            if (!depId || dep === r.t.code) {
+              summary.missingRefs.push(`${r.t.code} → ${dep}`);
+              continue;
             }
+            deps.push({ taskId: r.taskId, dependsOnId: depId });
           }
         }
+        if (deps.length) await tx.taskDependency.createMany({ data: deps, skipDuplicates: true });
+        summary.taskDeps = deps.length;
         if (opts.dryRun) throw new DryRun();
       },
-      { timeout: 120_000, maxWait: 10_000 },
+      // Lần đầu ~vài chục lệnh; chạy lại cập nhật từng task (~170 lệnh) — đủ rộng cho DB ở xa.
+      { timeout: 600_000, maxWait: 10_000 },
     );
   } catch (e) {
     if (!(e instanceof DryRun)) throw e;
@@ -183,7 +204,7 @@ export async function importDocs(projectId: string, docs: PlanDoc[], authorId: s
         }
         if (dryRun) throw new DryRun();
       },
-      { timeout: 60_000, maxWait: 10_000 },
+      { timeout: 300_000, maxWait: 10_000 },
     );
   } catch (e) {
     if (!(e instanceof DryRun)) throw e;
