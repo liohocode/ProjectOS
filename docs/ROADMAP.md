@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **104/148 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 9/45 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **105/148 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 10/45 (đã chốt F23.1, F25.1).
 
 ## Mục tiêu giai đoạn 2 (người dùng chốt 2026-10-30)
 Meridian là **data foundation cho các dự án của công ty**: quản lý tiến độ, công việc và coding agent; quy trình đảm bảo **chất lượng** và kiểm soát **effort / AI token**; người thật theo dõi trạng thái và review chi tiết; hỗ trợ coding agent làm việc qua MCP; tài liệu feature / task / kỹ thuật; người quản lý làm việc được trên **mobile**; Meridian **tạo, quản lý và cung cấp skills dùng chung đồng nhất** cho mọi coding agent.
@@ -57,7 +57,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 9 — Mobile cho người quản lý
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F25](features/F25-mobile-manager.md) | Inbox "Cần tôi xử lý", giao diện responsive, PWA | F22.2 | Chưa bắt đầu — hướng mobile đã chốt (F25.1) | 1/6 |
+| [F25](features/F25-mobile-manager.md) | Inbox "Cần tôi xử lý", giao diện responsive, PWA | F22.2 | Đang làm — inbox "Cần tôi xử lý" (F25.2) | 2/6 |
 
 ### Phase 10 — Data foundation & tích hợp
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -74,10 +74,10 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F25.2](features/F25-mobile-manager.md) Inbox "Cần tôi xử lý" | Gom mọi việc chờ duyệt (revision, task Review, feature đề xuất) |
 | [F24.5](features/F24-coding-agent-support.md) Quy ước làm việc cho agent (CLAUDE.md mẫu) | Để dogfooding với Claude Code; thành skill dùng chung ở F27.8 |
 | [F21.3](features/F21-work-management.md) Sprint | Lead quản lý sprint |
 | [F20.3](features/F20-go-live.md) Hướng dẫn onboarding dự án thật | Lio bắt đầu dùng thật |
+| [F25.3](features/F25-mobile-manager.md) App shell responsive | Mở đường cho inbox / duyệt trên điện thoại |
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Khuyến nghị |

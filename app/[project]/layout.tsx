@@ -5,6 +5,8 @@ import { getDocCountByProject, getPendingRevisionCount } from "@/lib/data/docs";
 import { getAgentOptions, getMemberCountByProject, getMemberOptionsByProject, getPipelineAgents } from "@/lib/data/team";
 import { getCurrentUser, getCurrentUserId } from "@/lib/auth/currentUser";
 import { getMcpServers } from "@/lib/data/mcp";
+import { getInboxCounts } from "@/lib/data/inbox";
+import { inboxScope, inboxTotal } from "@/lib/inbox";
 import { getPermissions } from "@/lib/data/permissions";
 import { PermissionsProvider } from "@/components/auth/PermissionsProvider";
 import { ProjectEventsProvider } from "@/components/realtime/ProjectEvents";
@@ -23,7 +25,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   const activeProjects = myProjects.filter((p) => !p.archived || p.id === projectId);
 
   // Badge chỉ cần số → hàm đếm, không tải danh sách task/thành viên (page cần thì tự tải).
-  const [taskCounts, docCount, pendingRevisions, memberCount, pipeline, mcpServers, currentUser, memberOptions, agentOptions, permissions] =
+  const [taskCounts, docCount, pendingRevisions, memberCount, pipeline, mcpServers, currentUser, memberOptions, agentOptions, permissions, inboxCounts] =
     await Promise.all([
       getTaskCountsByProject(projectId),
       getDocCountByProject(projectId),
@@ -37,9 +39,13 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
       getAgentOptions(),
       // Ẩn/khoá nút theo quyền (F15.6).
       getPermissions(userId, projectId),
+      // F25.2: badge "Cần tôi xử lý" — chỉ đếm phần người dùng có quyền xử lý.
+      getInboxCounts(projectId),
     ]);
+  const inboxCount = inboxTotal(inboxCounts, inboxScope(permissions));
 
   const navCounts: Record<ScreenId, number> = {
+    inbox: inboxCount,
     portfolio: projects.length,
     docs: docCount,
     work: taskCounts.total,
@@ -47,6 +53,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
     mcp: mcpServers.length,
   };
   const navAlerts: Record<ScreenId, number> = {
+    inbox: inboxCount,
     portfolio: 0,
     docs: pendingRevisions,
     work: taskCounts.blocked,

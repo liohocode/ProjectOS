@@ -1,7 +1,7 @@
 import type { SectionDiff } from "@/lib/diffSections";
 import type { AgentConfigValues } from "@/lib/agentConfig";
 
-export type ScreenId = "portfolio" | "docs" | "work" | "team" | "mcp";
+export type ScreenId = "inbox" | "portfolio" | "docs" | "work" | "team" | "mcp";
 
 export interface Project {
   id: string;

@@ -109,7 +109,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-AG-12 | Agent đề xuất tài liệu mới, lead duyệt | ⬜ | F24 |
 | FR-AG-13 | Template tài liệu: PRD, tech spec, ADR, runbook | ⬜ | F24 |
 | FR-AG-14 | Quy ước làm việc chuẩn (CLAUDE.md mẫu) cho repo dùng Meridian | ⬜ | F24 |
-| FR-MB-01 | Inbox "Cần tôi xử lý" gom mọi việc chờ duyệt | ⬜ | F25 |
+| FR-MB-01 | Inbox "Cần tôi xử lý" gom mọi việc chờ duyệt | ✅ | F25 |
 | FR-MB-02 | Theo dõi trạng thái và duyệt trên màn hình điện thoại (390px) | ⬜ | F25 |
 | FR-MB-03 | Cài lên màn hình chính (PWA) | ⬜ | F25 |
 | FR-SK-01 | Tạo / sửa skill theo định dạng `SKILL.md`, có phiên bản + diff | ⬜ | F27 |
