@@ -19,7 +19,7 @@ Meridian là **nơi tạo, quản lý và phân phối skills** cho mọi coding
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F27.1 | Model `Skill` + `SkillVersion` (phạm vi tổ chức / dự án, nội dung `SKILL.md` + file kèm, hash, trạng thái) + ADR định dạng | M | — | Chưa làm |
+| F27.1 | Model `Skill` + `SkillVersion` (phạm vi tổ chức / dự án, nội dung `SKILL.md` + file kèm, hash, trạng thái) + ADR định dạng | M | — | Hoãn (Lio, 2026-10-31) — sau F28 / F29 |
 | F27.2 | Màn **Skills**: danh sách, xem, tạo / sửa (tech lead), lịch sử phiên bản + diff, nhập từ `SKILL.md` | L | F27.1 | Chưa làm |
 | F27.3 | Gán skill: bộ dùng chung toàn tổ chức, bắt buộc theo dự án, thêm theo agent (`AgentConfig`); ghim phiên bản | M | F27.1 | Chưa làm |
 | F27.4 | MCP `skills_list`, `skills_get(name)` — trả đúng bộ + phiên bản được gán cho agent / dự án; ghi nhật ký | M | F27.3 | Chưa làm |

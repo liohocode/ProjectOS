@@ -20,7 +20,7 @@ Agent lấy đủ ngữ cảnh trong **một lệnh**, tự chia task / đề xu
 | F24.4 | Template tài liệu (PRD, Tech spec, ADR, Runbook) khi tạo tài liệu — UI + MCP | S | — | Chưa làm |
 | F24.5 | `docs/guides/agent-workflow.md` + CLAUDE.md mẫu cho repo dùng Meridian: claim → context → làm → báo PR → Review → báo token (thành skill dùng chung ở F27.8) | S | F22.4 | Xong — 2026-10-31 (bước báo token thêm khi F23.2 xong) |
 | F24.6 | Gắn tài liệu ↔ task (task trỏ tới tài liệu spec; `context_get` trả kèm) | S | — | Chưa làm |
-| F24.7 | Thử quy ước F24.5 trên một repo thật: agent dùng CLAUDE.md mẫu tự claim, làm, báo PR, đẩy Review không cần nhắc — sửa mẫu theo kết quả | S | F24.5 | Chưa làm — **cần Lio** chọn repo thử + tạo token agent trên production |
+| F24.7 | Thử quy ước F24.5 trên một repo thật: agent dùng CLAUDE.md mẫu tự claim, làm, báo PR, đẩy Review không cần nhắc — sửa mẫu theo kết quả | S | F24.5 | Hoãn (Lio, 2026-10-31) — gộp vào F28.6 (thử trên chính repo Meridian) |
 
 ### F24.1 — `context_get`
 **Hoàn thành khi**:
