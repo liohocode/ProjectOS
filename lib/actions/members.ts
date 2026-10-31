@@ -187,3 +187,59 @@ export async function updateAgentConfig(memberId: string, input: AgentConfigInpu
   revalidateMemberViews();
   return ok();
 }
+
+const memberProfileSchema = z.object({
+  name: z.string().trim().min(1, "Nhập tên").max(60, "Tên tối đa 60 ký tự"),
+  handle: z.string().trim().min(1, "Nhập handle").max(60, "Handle tối đa 60 ký tự"),
+  role: z.string().trim().min(1, "Nhập vai trò").max(60, "Vai trò tối đa 60 ký tự"),
+  /** Cách nhau bằng dấu phẩy */
+  skills: z.string().trim().max(300, "Skills tối đa 300 ký tự"),
+  /** Chỉ người; trống = không cho đăng nhập */
+  email: z.string().trim().toLowerCase().email("Email không hợp lệ").or(z.literal("")),
+  isTechLead: z.boolean(),
+});
+export type MemberProfileInput = z.input<typeof memberProfileSchema>;
+
+/**
+ * Sửa hồ sơ + quyền thành viên (F20.2) — tech lead. Chặn: agent có email / là tech lead, email trùng người khác,
+ * bỏ tech lead cuối cùng (tổ chức luôn còn ít nhất một người quản trị được).
+ */
+export async function updateMember(memberId: string, input: MemberProfileInput): Promise<ActionResult> {
+  const denied = await authorize("org.members");
+  if (denied) return fail(denied);
+  const id = memberIdSchema.safeParse(memberId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const parsed = memberProfileSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+  const data = parsed.data;
+
+  const member = await prisma.member.findUnique({ where: { id: id.data }, select: { kind: true, isTechLead: true } });
+  if (!member) return fail("Không tìm thấy thành viên");
+  if (member.kind === "agent" && (data.email || data.isTechLead)) return fail("Agent không có email đăng nhập / quyền tech lead");
+  if (data.email) {
+    const taken = await prisma.member.findFirst({ where: { email: data.email, id: { not: id.data } }, select: { id: true } });
+    if (taken) return fail("Email này đã thuộc một thành viên khác");
+  }
+  if (member.isTechLead && !data.isTechLead) {
+    const leads = await prisma.member.count({ where: { isTechLead: true } });
+    if (leads <= 1) return fail("Tổ chức phải còn ít nhất một tech lead");
+  }
+
+  await prisma.member.update({
+    where: { id: id.data },
+    data: {
+      name: data.name,
+      handle: data.handle,
+      role: data.role,
+      skills: data.skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      email: data.email || null,
+      isTechLead: data.isTechLead,
+    },
+  });
+  await recordActivity("ph-user-gear", `Sửa hồ sơ ${data.name}${member.isTechLead !== data.isTechLead ? (data.isTechLead ? " · cấp tech lead" : " · bỏ tech lead") : ""}`);
+  revalidateMemberViews();
+  return ok();
+}

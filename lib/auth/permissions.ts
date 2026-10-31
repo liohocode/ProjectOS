@@ -5,7 +5,7 @@
 // | Duyệt / từ chối revision, sửa trực tiếp tài liệu                 | Tech lead, người tạo dự án           |
 // | Duyệt / từ chối feature agent đề xuất (F16.6), sửa feature (F21.1) | Tech lead, người tạo dự án          |
 // | Tạo feature (F21.1)                                              | Thành viên dự án                     |
-// | Tạo dự án, quản lý MCP server, sửa cấu hình agent (toàn tổ chức) | Tech lead                            |
+// | Tạo dự án, quản lý MCP server, sửa cấu hình agent, sửa hồ sơ / quyền thành viên (toàn tổ chức) | Tech lead |
 // | Thêm / gỡ thành viên, lưu trữ dự án                              | Tech lead                            |
 // | Tạo / sửa / giao / chuyển stage task, tạo tài liệu               | Thành viên dự án                     |
 // Hành động gắn dự án luôn yêu cầu là thành viên dự án đó (kể cả tech lead) — như quyền xem (F15.3).
@@ -14,6 +14,7 @@ export type PermissionAction =
   | "project.create"
   | "mcpServer.manage"
   | "agent.configure"
+  | "org.members"
   | "project.archive"
   | "member.manage"
   | "doc.review"
@@ -37,7 +38,7 @@ export interface ProjectRef {
 }
 
 /** Hành động toàn tổ chức — không gắn dự án nào. */
-const ORG_ACTIONS: ReadonlySet<PermissionAction> = new Set(["project.create", "mcpServer.manage", "agent.configure"]);
+const ORG_ACTIONS: ReadonlySet<PermissionAction> = new Set(["project.create", "mcpServer.manage", "agent.configure", "org.members"]);
 
 export const isOrgAction = (action: PermissionAction) => ORG_ACTIONS.has(action);
 
@@ -63,6 +64,7 @@ const DENIED: Record<PermissionAction, string> = {
   "project.create": "Chỉ tech lead được tạo dự án",
   "mcpServer.manage": "Chỉ tech lead được quản lý MCP server",
   "agent.configure": "Chỉ tech lead được sửa cấu hình agent",
+  "org.members": "Chỉ tech lead được sửa hồ sơ / quyền thành viên",
   "project.archive": "Chỉ tech lead được lưu trữ / khôi phục dự án",
   "member.manage": "Chỉ tech lead được thêm / gỡ thành viên",
   "doc.review": "Chỉ tech lead hoặc người tạo dự án được duyệt / từ chối revision",

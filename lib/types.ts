@@ -144,6 +144,9 @@ export interface Member {
   config?: [string, string][];
   /** Giá trị có cấu trúc cho form sửa cấu hình (F13.5) — chỉ agent */
   agentConfig?: AgentConfigValues;
+  /** Email Google đăng nhập (chỉ người) + quyền quản trị — form "Sửa thành viên" (F20.2) */
+  email: string | null;
+  isTechLead: boolean;
 }
 
 export interface TimelineRow {
