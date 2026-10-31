@@ -264,6 +264,10 @@ model Feature {
   plannedStart   DateTime?     @db.Date
   plannedEnd     DateTime?     @db.Date
   status         FeatureStatus @default(active)
+  /// F21.9: nội dung markdown của trang chi tiết — mục tiêu, phạm vi, ghi chú quyết định (tương ứng file feature `.md`)
+  goal           String?
+  scope          String?
+  notes          String?
   /// F16.6: agent đề xuất (features_propose), mô tả / lý do đề xuất, lý do từ chối
   proposedById   String?
   proposedBy     Member?       @relation("FeatureProposer", fields: [proposedById], references: [id], onDelete: SetNull)

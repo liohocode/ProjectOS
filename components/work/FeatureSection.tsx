@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCan } from "@/components/auth/PermissionsProvider";
@@ -32,7 +33,10 @@ export function FeatureSection({
           <i className={`ph ${open ? "ph-caret-down" : "ph-caret-right"}`} aria-hidden />
         </button>
         <span className="trow-id nowrap">{feature.id}</span>
-        <span className="frow-name">{feature.name}</span>
+        {/* F21.9: tên feature mở trang chi tiết */}
+        <Link href={`/${projectId}/work/features/${encodeURIComponent(feature.id)}`} className="frow-name frow-link">
+          {feature.name}
+        </Link>
         <span className={`${stageTagClass(feature.stage)} f-stage`}>{feature.stage}</span>
         <span className="text-muted nowrap f-docs" style={{ fontSize: 11 }}>
           <i className="ph ph-file-text" aria-hidden /> {feature.docs} docs

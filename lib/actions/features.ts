@@ -96,3 +96,33 @@ export async function updateFeature(featureId: string, input: FeatureFieldsInput
   revalidatePath("/[project]", "layout");
   return ok();
 }
+
+const contentSchema = z.object({
+  goal: z.string().max(10_000, "Tối đa 10.000 ký tự"),
+  scope: z.string().max(10_000, "Tối đa 10.000 ký tự"),
+  notes: z.string().max(50_000, "Ghi chú tối đa 50.000 ký tự"),
+});
+export type FeatureContentInput = z.input<typeof contentSchema>;
+
+/** Sửa nội dung trang chi tiết feature (F21.9): mục tiêu, phạm vi, ghi chú quyết định — markdown; rỗng = xoá. */
+export async function updateFeatureContent(featureId: string, input: FeatureContentInput): Promise<ActionResult> {
+  const id = featureIdSchema.safeParse(featureId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const projectId = await projectOf(id.data);
+  if (!projectId) return fail("Không tìm thấy feature");
+  const denied = await authorize("feature.manage", projectId);
+  if (denied) return fail(denied);
+  const parsed = contentSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+
+  const clean = (v: string) => (v.trim() ? v.trim() : null);
+  await prisma.feature.update({
+    where: { id: id.data },
+    data: { goal: clean(parsed.data.goal), scope: clean(parsed.data.scope), notes: clean(parsed.data.notes) },
+  });
+  await recordActivity("ph-note-pencil", `Sửa nội dung feature ${id.data}`, {
+    event: { projectId, type: "feature", tone: "ok", featureId: id.data },
+  });
+  revalidatePath("/[project]", "layout");
+  return ok();
+}

@@ -43,6 +43,10 @@ export interface SeedTask {
 export interface SeedFeature {
   id: string;
   name: string;
+  /** F21.9: nội dung trang chi tiết (markdown) */
+  goal?: string;
+  scope?: string;
+  notes?: string;
   stage: SeedTaskStage;
   owner: string;
   pct: number;

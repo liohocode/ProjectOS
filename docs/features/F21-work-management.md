@@ -26,7 +26,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 | F21.11 | Hiển thị markdown (GFM: bảng, danh sách, code) dùng chung — mô tả task / feature, tài liệu | S | — | Xong — 2026-10-31 |
 | F21.7 | Mô tả task (markdown "Làm gì"), cỡ S / M / L, mã hiển thị (vd `F21.3`), nhãn "Cần quyết định" — UI + MCP `context_get` | M | F21.11 | Xong — 2026-10-31 |
 | F21.8 | Phụ thuộc giữa task: drawer thêm / bỏ, hiện task đang chặn; `tasks_claim` bị chặn khi phụ thuộc chưa Done | M | — | Xong — 2026-10-31 |
-| F21.9 | Trang chi tiết feature: mục tiêu, phạm vi, ghi chú quyết định (markdown), task, tài liệu, tiến độ | M | F21.11 | Chưa làm |
+| F21.9 | Trang chi tiết feature: mục tiêu, phạm vi, ghi chú quyết định (markdown), task, tài liệu, tiến độ | M | F21.11 | Xong — 2026-10-31 |
 | F21.10 | Lưu trữ feature; sắp xếp thứ tự ưu tiên feature / task | S | — | Chưa làm |
 
 ### F21.1 — Feature CRUD
@@ -60,6 +60,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 - [x] Lead thêm tiêu chí, agent tick qua MCP (F24) / người tick trên UI (integration `lib/actions/criteria.integration.test.ts`, MCP `app/api/mcp/client.integration.test.ts`, e2e `task-criteria.spec.ts`)
 
 ## Quyết định / ghi chú
+- **F21.9 (2026-10-31)**: migration chỉ thêm `Feature.goal?` / `scope?` / `notes?` (markdown — ứng với "Mục tiêu", "Phạm vi", "Quyết định / ghi chú" của file feature `.md`, dùng cho import F28.2). Route `/[project]/work/features/[featureId]` (tên feature ở màn work là link): tiến độ, người phụ trách, kế hoạch, task (link mở drawer), tài liệu gắn feature. "Sửa nội dung" — quyền `feature.manage` (`updateFeatureContent`, rỗng = xoá). Seed: FEAT-118 có nội dung mẫu.
 - **F21.8 (2026-10-31)**: migration chỉ thêm bảng `task_dependencies` (khoá chính `taskId + dependsOnId`, cascade khi xoá task). Cùng dự án, không vòng (`lib/taskDeps.ts`, kiểm tra trong transaction có advisory lock theo dự án). Quyền `task.write`. Drawer mục "Phụ thuộc": task cần xong trước (bỏ được) + task đang chờ task này, link mở task đó; hàng task hiện "chờ T-…" khi còn phụ thuộc chưa Done. MCP: `tasks_claim` trả "đang chờ … xong trước", `tasks_list` trả `waitingOn`. Chỉ chặn **bắt đầu** (claim) — người vẫn chuyển stage tay được. Task đã lưu trữ không tính là đang chờ.
 - **F21.7 (2026-10-31)**: migration chỉ thêm `Task.description?` (markdown, ≤ 10.000 ký tự), `size?` (enum `TaskSize` S/M/L), `code?` (mã trong kế hoạch, vd `F21.3` — id vẫn `T-n`, dùng cho import F28.2), `needsDecision` (mặc định false). Sửa ở form "Sửa" của drawer (chuỗi rỗng = xoá), tạo task có mô tả + cỡ. Drawer: mã / cỡ / nhãn "Cần quyết định" ở đầu, mục "Mô tả" (markdown); hàng task hiện mã + nhãn. MCP: `tasks_list` trả `code`, `size`, `needsDecision`; `context_get` trả thêm `description`. Seed: T-396 có mô tả (bảng), T-418 cần quyết định. **Sửa test integration chập chờn tận gốc**: các file integration chạy tuần tự, nhưng nhiều file để lại `ActivityEvent` → feed rv-web (30 mục mới nhất) mất sự kiện seed khi `aggregates.integration.test.ts` chạy sau. `test/integration-env.ts` giờ xoá mọi sự kiện do file test tạo ra (afterAll chung) — chẩn đoán "chạy song song" ở F21.6 là sai.
 - **F21.11 (2026-10-31)**: `components/ui/Markdown.tsx` (ADR-023: `react-markdown` + `remark-gfm`, không HTML thô). Đoạn tài liệu ở màn Docs hiển thị markdown; `markdownToSections` giữ xuống dòng / thụt lề / khối code (trước đây nối dòng bằng dấu cách làm vỡ bảng, danh sách). Mô tả task / feature dùng component này ở F21.7 / F21.9.
@@ -71,6 +72,10 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 ### F21.8 — Phụ thuộc giữa task
 **Hoàn thành khi**:
 - [x] Thêm / bỏ phụ thuộc ở drawer (chặn tự phụ thuộc, vòng, khác dự án); agent không claim được task còn chờ (integration `lib/actions/taskDependencies.integration.test.ts`, e2e `task-dependencies.spec.ts`)
+
+### F21.9 — Trang chi tiết feature
+**Hoàn thành khi**:
+- [x] Mở từ màn work, xem mục tiêu / phạm vi / ghi chú (markdown), task, tài liệu; tech lead sửa nội dung (integration `lib/actions/features.integration.test.ts`, e2e `feature-detail.spec.ts`)
 
 ### F21.11 — Markdown
 **Hoàn thành khi**:
