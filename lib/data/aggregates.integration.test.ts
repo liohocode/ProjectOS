@@ -3,6 +3,8 @@ import { getPortfolioSummaries } from "./portfolio";
 import { getActivityFeed } from "./activity";
 import { getTaskDrawerInfo } from "./taskDrawer";
 import { getTimelineByProject } from "./timeline";
+import { getFeaturesByProject } from "./features";
+import { featureProgress } from "@/lib/featureProgress";
 
 describe("portfolio", () => {
   it("tổng hợp đúng số liệu từng dự án", async () => {
@@ -10,8 +12,10 @@ describe("portfolio", () => {
     expect(summaries.reduce((sum, p) => sum + p.blockedCount, 0)).toBe(3);
 
     const rvWeb = summaries.find((p) => p.id === "rv-web");
-    // FEAT-126 chưa giao (0%) cũng là feature → 5 feature, trung bình (62+45+78+12+0)/5 ≈ 39
-    expect(rvWeb).toMatchObject({ featureCount: 5, taskCount: 13, agentCount: 4, humanCount: 3, blockedCount: 2, avgPct: 39 });
+    // FEAT-126 chưa giao (0%) cũng là feature → 5 feature. avgPct = trung bình % tính từ task (F21.2).
+    expect(rvWeb).toMatchObject({ featureCount: 5, taskCount: 13, agentCount: 4, humanCount: 3, blockedCount: 2 });
+    const features = await getFeaturesByProject("rv-web");
+    expect(rvWeb?.avgPct).toBe(Math.round(features.reduce((s, f) => s + featureProgress(f.tasks), 0) / features.length));
     expect(rvWeb?.avatars.length).toBeLessThanOrEqual(6);
   });
 });
@@ -54,10 +58,30 @@ describe("timeline (từ DB)", () => {
       ["FEAT-126", 7, 2, "none"],
     ]);
     expect(rows.at(-1)).toMatchObject({ owner: "Chưa giao", label: "Chưa bắt đầu" });
-    expect(rows[0].label).toBe("Dev · 62%");
+    // % từ task (F21.2), khớp % ở list theo feature.
+    const feat118 = (await getFeaturesByProject("rv-web")).find((f) => f.id === "FEAT-118")!;
+    expect(rows[0].label).toBe(`Dev · ${feat118.pct}%`);
+    expect(feat118.pct).toBe(featureProgress(feat118.tasks));
   });
 
   it("dự án không tồn tại trả mảng rỗng", async () => {
     expect(await getTimelineByProject("khong-ton-tai")).toEqual([]);
+  });
+});
+
+describe("tiến độ feature tính từ task (F21.2)", () => {
+  it("chuyển một task sang Done → % feature và % trung bình portfolio tăng", async () => {
+    const { prisma } = await import("@/lib/prisma");
+    const before = (await getFeaturesByProject("rv-web")).find((f) => f.tasks.some((t) => t.stage !== "Done"))!;
+    const task = before.tasks.find((t) => t.stage !== "Done")!;
+    const avgBefore = (await getPortfolioSummaries()).find((p) => p.id === "rv-web")!.avgPct;
+    await prisma.task.update({ where: { id: task.id }, data: { stage: "Done" } });
+    try {
+      const after = (await getFeaturesByProject("rv-web")).find((f) => f.id === before.id)!;
+      expect(after.pct).toBeGreaterThan(before.pct);
+      expect((await getPortfolioSummaries()).find((p) => p.id === "rv-web")!.avgPct).toBeGreaterThanOrEqual(avgBefore);
+    } finally {
+      await prisma.task.update({ where: { id: task.id }, data: { stage: task.stage } });
+    }
   });
 });

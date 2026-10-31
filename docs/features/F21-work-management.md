@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 7 | F11, F16.6 | FR-PM-01…06 |
+| Đang làm | 7 | F11, F16.6 | FR-PM-01…06 |
 
 ## Mục tiêu
 Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian (hiện chỉ agent đề xuất được feature, sprint chỉ tạo lúc tạo dự án, % tiến độ feature là số tĩnh trong seed).
@@ -18,7 +18,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | F21.1 | Tạo / sửa feature: tên, owner, stage, kế hoạch (ngày bắt đầu/kết thúc) | M | — | Chưa làm |
-| F21.2 | % tiến độ feature tính từ task (bỏ đọc cột `pct` tĩnh) | S | — | Chưa làm |
+| F21.2 | % tiến độ feature tính từ task (bỏ đọc cột `pct` tĩnh) | S | — | Xong — 2026-10-31 |
 | F21.3 | Sprint: tạo, đặt sprint hiện tại, gán task vào sprint, lọc theo sprint | M | — | Chưa làm |
 | F21.4 | Lưu trữ task (ẩn khỏi list, giữ lịch sử) | S | — | Chưa làm |
 | F21.5 | Người bình luận trên task (drawer), dùng chung `TaskComment` | S | F16.4 | Chưa làm |
@@ -32,7 +32,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 ### F21.2 — Tiến độ tính từ task
 **Làm gì**: `pct` = tỉ lệ task Done (có trọng số story point nếu có ước lượng). Đọc tính toán trong `lib/data/features.ts`; cột `Feature.pct` giữ nguyên (không xoá) nhưng không còn đọc.
 **Hoàn thành khi**:
-- [ ] Chuyển task sang Done → % feature + portfolio cập nhật (integration)
+- [x] Chuyển task sang Done → % feature + portfolio cập nhật (integration `aggregates.integration.test.ts`)
 
 ### F21.3 — Sprint
 **Làm gì**: migration chỉ thêm `Task.sprintId?`. Màn work: chọn sprint (hiện tại / tất cả / chưa xếp), dialog tạo sprint + đặt làm hiện tại, gán task vào sprint ở drawer.
@@ -55,3 +55,4 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 - [ ] Lead thêm tiêu chí, agent tick qua MCP (F24) / người tick trên UI
 
 ## Quyết định / ghi chú
+- **F21.2 (2026-10-31)**: `lib/featureProgress.ts` — trọng số story point, task chưa ước lượng tính 1 điểm, feature không có task = 0%. Dùng ở list theo feature, timeline (nhãn "Dev · n%") và trung bình portfolio. Cột `Feature.pct` giữ nguyên nhưng không đọc (đánh dấu CŨ trong schema). **Hệ quả với dữ liệu mẫu**: % hiển thị đổi (vd FEAT-118 62% → 29%) vì giờ phản ánh task thật. Sửa kèm: seed nhật ký MCP mẫu không còn tạo mốc thời gian ở tương lai khi chạy seed sau nửa đêm.

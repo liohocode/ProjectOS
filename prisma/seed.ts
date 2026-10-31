@@ -294,10 +294,15 @@ async function main() {
   }
 
   const log = await getMcpLog();
+  const seededAt = new Date();
   for (const entry of log) {
+    // Giờ trong dữ liệu mẫu ("14:32:08") là của hôm nay; chạy seed trước giờ đó (vd sau nửa đêm) thì lùi về hôm qua —
+    // nhật ký không bao giờ nằm ở tương lai (trước đây làm lẫn vào các truy vấn / test lọc theo thời gian).
+    const at = new Date(`${seededAt.toDateString()} ${entry.at}`);
+    if (at > seededAt) at.setDate(at.getDate() - 1);
     await prisma.mcpLogEntry.create({
       data: {
-        at: new Date(`${new Date().toDateString()} ${entry.at}`),
+        at,
         agentId: resolveMemberId(members, entry.agent),
         tool: entry.tool,
         target: entry.target,
