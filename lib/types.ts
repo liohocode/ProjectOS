@@ -55,6 +55,8 @@ export interface Task {
   sprintId: string | null;
   /** Acceptance criteria (F21.6), theo thứ tự */
   criteria: TaskCriterionView[];
+  /** Đã lưu trữ (F21.4) — chỉ có khi mở bằng deep link */
+  archived?: true;
 }
 
 export interface Feature {

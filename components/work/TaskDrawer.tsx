@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
 import { trapTab, useDismiss } from "@/components/ui/a11y";
-import { addTaskComment, assignTask, setTaskBlocked, updateTask, updateTaskStage } from "@/lib/actions/tasks";
+import { addTaskComment, assignTask, setTaskArchived, setTaskBlocked, updateTask, updateTaskStage } from "@/lib/actions/tasks";
 import { Field } from "@/components/ui/Field";
 import { RunningTime } from "@/components/ui/RunningTime";
 import { useCan } from "@/components/auth/PermissionsProvider";
@@ -31,7 +31,7 @@ export function TaskDrawer({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Form phụ mở trong drawer: sửa nhanh (F11.6) hoặc đặt block (F11.5) — mỗi lúc một form.
-  const [form, setForm] = useState<"edit" | "block" | null>(null);
+  const [form, setForm] = useState<"edit" | "block" | "archive" | null>(null);
   const [comment, setComment] = useState("");
   const [isPending, startTransition] = useTransition();
   const canReview = useCan("task.review");
@@ -122,6 +122,16 @@ export function TaskDrawer({
         </div>
         <h4 id="task-drawer-title">{task.title}</h4>
 
+        {task.archived && (
+          <div className="drawer-warning drawer-archived" role="status">
+            <i className="ph ph-archive" aria-hidden /> Task đã lưu trữ — không hiện trong danh sách, timeline, inbox và MCP.
+            {canWrite && (
+              <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => run(() => setTaskArchived(task.id, false))}>
+                Khôi phục
+              </button>
+            )}
+          </div>
+        )}
         {task.blocked && <div className="drawer-warning">{task.blockedFull ?? task.blocked}</div>}
         {error && (
           <div className="drawer-warning" role="alert">
@@ -327,6 +337,21 @@ export function TaskDrawer({
           </form>
         )}
 
+        {form === "archive" && (
+          <div className="drawer-section" role="region" aria-label="Lưu trữ task">
+            <div className="drawer-section-title">Lưu trữ {task.id}?</div>
+            <p className="review-box-hint">Task sẽ ẩn khỏi danh sách, timeline, inbox và MCP; lịch sử, bình luận giữ nguyên. Mở lại bằng link và khôi phục khi cần.</p>
+            <div className="dialog-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setForm(null)} disabled={isPending}>
+                Huỷ
+              </button>
+              <button type="button" className="btn btn-primary" disabled={isPending} onClick={() => run(() => setTaskArchived(task.id, true), () => setForm(null))}>
+                {isPending ? "Đang lưu…" : "Lưu trữ"}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="drawer-footer" style={{ flexWrap: "wrap" }}>
           <button
             type="button"
@@ -339,6 +364,11 @@ export function TaskDrawer({
           {form !== "edit" && (
             <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => setForm("edit")}>
               <i className="ph ph-pencil-simple" aria-hidden /> Sửa
+            </button>
+          )}
+          {!task.archived && canWrite && form !== "archive" && (
+            <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => setForm("archive")}>
+              <i className="ph ph-archive" aria-hidden /> Lưu trữ
             </button>
           )}
           {task.blocked ? (

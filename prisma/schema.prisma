@@ -299,6 +299,8 @@ model Task {
   branch         String?
   commitSha      String?
   /// Sprint task thuộc về (F21.3); null = chưa xếp sprint. Xoá sprint → task về "chưa xếp".
+  /// Lưu trữ (F21.4): khác null = ẩn khỏi list / timeline / inbox / MCP, vẫn mở được bằng deep link; giữ lịch sử
+  archivedAt     DateTime?
   sprintId       String?
   sprint         Sprint?    @relation(fields: [sprintId], references: [id], onDelete: SetNull)
 

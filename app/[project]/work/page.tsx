@@ -1,4 +1,4 @@
-import { getFeaturesByProject, getProposedFeatures } from "@/lib/data/features";
+import { getArchivedTask, getFeaturesByProject, getProposedFeatures } from "@/lib/data/features";
 import { getTimelineByProject } from "@/lib/data/timeline";
 import { getActivityFeed } from "@/lib/data/activity";
 import { getTaskDrawerInfo } from "@/lib/data/taskDrawer";
@@ -29,7 +29,13 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
   const projectAgents = projectTeam.filter((m) => m.kind === "agent");
   const memberOptions = projectTeam.map(({ id, name, kind }) => ({ id, name, kind }));
 
-  const taskIds = features.flatMap((f) => f.tasks.map((t) => t.id));
+  // F21.4: `?task=` trỏ tới task đã lưu trữ → vẫn mở drawer (không hiện trong list).
+  const requestedTask = typeof searchParams.task === "string" ? searchParams.task : undefined;
+  const archived =
+    requestedTask && !features.some((f) => f.tasks.some((t) => t.id === requestedTask)) ? await getArchivedTask(projectId, requestedTask) : null;
+  const archivedFeature = archived ? features.find((f) => f.id === archived.featureId) : undefined;
+
+  const taskIds = [...features.flatMap((f) => f.tasks.map((t) => t.id)), ...(archived ? [archived.task.id] : [])];
   const drawerEntries = await Promise.all(
     taskIds.map(async (id) => [id, await getTaskDrawerInfo(projectId, id)] as const),
   );
@@ -49,6 +55,7 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
         proposals={proposals}
         projectMembers={memberOptions}
         sprints={sprints}
+        archivedTask={archived && archivedFeature ? { task: archived.task, feature: archivedFeature } : undefined}
       />
       {/* "Sprint" ở toolbar đặt ?sprints=1 (F21.3) */}
       {searchParams[SPRINTS_PARAM] === "1" && <SprintDialog projectId={projectId} sprints={sprints} />}
