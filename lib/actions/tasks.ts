@@ -7,6 +7,7 @@ import { parseTaskStatus, TASK_STATUS_LABEL } from "@/lib/taskFormat";
 import { authorize } from "@/lib/auth/authorize";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { recordTaskCreated, transitionTask } from "@/lib/domain/taskTransitions";
+import { reviewTask, type ReviewDecision } from "@/lib/domain/taskReview";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
 
@@ -37,6 +38,13 @@ export async function updateTaskStage(taskId: string, stage: string): Promise<Ac
   if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
   const denied = await authorize("task.write", projectId);
   if (denied) return fail(denied);
+  // F22.2: task do agent làm chỉ sang Done qua người có quyền review (cổng chất lượng).
+  if (input.data.stage === "Done") {
+    const task = await prisma.task.findUnique({ where: { id: input.data.taskId }, select: { stage: true, assignee: { select: { kind: true } } } });
+    if (task?.stage !== "Done" && task?.assignee.kind === "agent" && (await authorize("task.review", projectId))) {
+      return fail("Task của agent phải được tech lead / người tạo dự án duyệt mới sang Done");
+    }
+  }
   await transitionTask(prisma, input.data.taskId, await getCurrentUserId(), "web", { stage: input.data.stage });
   await recordActivity("ph-arrow-right", `Chuyển ${input.data.taskId} sang ${input.data.stage}`, {
     event: { projectId, type: "task", tone: "ok", taskId: input.data.taskId },
@@ -213,6 +221,35 @@ export async function updateTask(taskId: string, patch: TaskPatch): Promise<Acti
   await recordActivity("ph-pencil-simple", `Sửa ${input.data.taskId} (${changed.join(", ")})`, {
     event: { projectId, type: "task", tone: "ok", taskId: input.data.taskId },
   });
+  revalidateTaskViews();
+  return ok();
+}
+
+/** Duyệt task đang ở Review → Done (F22.2). */
+export async function approveTaskReview(taskId: string): Promise<ActionResult> {
+  return review(taskId, { approve: true });
+}
+
+/** Trả lại task đang ở Review → Dev kèm lý do (F22.2) — lý do vào lịch sử + bình luận, agent đọc được qua MCP. */
+export async function returnTaskReview(taskId: string, reason: string): Promise<ActionResult> {
+  return review(taskId, { approve: false, reason: String(reason ?? "") });
+}
+
+async function review(taskId: string, decision: ReviewDecision): Promise<ActionResult> {
+  const id = taskIdSchema.safeParse(taskId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const projectId = await findTaskProject(id.data);
+  if (!projectId) return fail(`Không tìm thấy task ${id.data}`);
+  const denied = await authorize("task.review", projectId);
+  if (denied) return fail(denied);
+
+  const result = await reviewTask(id.data, await getCurrentUserId(), decision);
+  if (!result.ok) return fail(result.error);
+  await recordActivity(
+    decision.approve ? "ph-seal-check" : "ph-arrow-u-up-left",
+    decision.approve ? `Duyệt ${id.data} — ${result.title}` : `Trả lại ${id.data}: ${decision.reason.trim()}`,
+    { event: { projectId, type: "task", tone: decision.approve ? "ok" : "block", taskId: id.data } },
+  );
   revalidateTaskViews();
   return ok();
 }

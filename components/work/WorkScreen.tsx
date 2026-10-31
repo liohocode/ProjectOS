@@ -53,6 +53,8 @@ export function WorkScreen({
 
   const allTasks = useMemo(() => features.flatMap((f) => f.tasks), [features]);
   const blockedTasks = useMemo(() => allTasks.filter((t) => t.blocked), [allTasks]);
+  // F22.2: task đang chờ người duyệt — mở drawer để Duyệt / Trả lại.
+  const reviewTasks = useMemo(() => allTasks.filter((t) => t.stage === "Review"), [allTasks]);
 
   const activeTask = openTaskId
     ? features.flatMap((f) => f.tasks.map((t) => ({ task: t, feature: f }))).find((x) => x.task.id === openTaskId)
@@ -97,6 +99,20 @@ export function WorkScreen({
         )}
 
         {view === "list" && <ProposedFeatures proposals={proposals} />}
+        {view === "list" && reviewTasks.length > 0 && (
+          <section className="proposals review-queue" aria-label="Task chờ review">
+            <div className="proposals-title">
+              <i className="ph ph-seal-check" aria-hidden /> Chờ review <span className="text-muted">({reviewTasks.length})</span>
+            </div>
+            {reviewTasks.map((t) => (
+              <Link key={t.id} href={taskHref(t.id)} scroll={false} className="review-queue-item">
+                <span className="mono text-muted">{t.id}</span>
+                <span className="review-queue-title">{t.title}</span>
+                <span className={`tag ${t.kind === "agent" ? "tag-accent" : "tag-neutral"} nowrap`}>{t.who}</span>
+              </Link>
+            ))}
+          </section>
+        )}
 
         {features.length === 0 && filtered && view === "list" ? (
           <EmptyState

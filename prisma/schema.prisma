@@ -313,6 +313,8 @@ model TaskTransition {
   fromStatus TaskStatus?
   toStatus   TaskStatus?
   via        TransitionVia
+  /// Lý do kèm theo (F22.2: lý do trả lại khi review)
+  note       String?
   at         DateTime      @default(now())
 
   @@index([taskId, at])
