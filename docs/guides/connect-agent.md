@@ -20,11 +20,14 @@ Dev local thay URL bằng `http://localhost:3000/api/mcp`. Kiểm tra: `claude m
 
 Thử: *"Dùng Meridian liệt kê task của tôi đang ở stage Dev"* → Claude gọi `tasks_list`.
 
+Luồng làm một task: `tasks_claim` → `context_get` → làm → `tasks_comment` (tiến độ) → `tasks_update_status` stage Review → chờ người duyệt (bị trả lại thì `lastReturn` có lý do).
+
 ## 3. Danh sách tool
 | Tool | Server | Tham số | Làm gì |
 |---|---|---|---|
 | `tasks_list` | core | `projectId?`, `stage?` (BA/TA/Dev/Review/Done), `assigneeId?` (`"me"` = chính agent) | Task trong các dự án agent thuộc về (tối đa 200) |
 | `tasks_claim` | core | `taskId` | Nhận task: giao cho agent, "Đang chạy" |
+| `context_get` | core | `taskId` | **Một lệnh đủ ngữ cảnh**: task (kèm `lastReturn`), feature, tài liệu của feature (đầy đủ, tối đa 5 — cần `meridian-docs`), bình luận, lịch sử trạng thái |
 | `tasks_update_status` | core | `taskId`, `stage?` (BA/TA/Dev/Review), `status?` (Đang làm/Chờ/Chờ review) | Báo tiến độ task **của mình**; đổi trạng thái = nhả task |
 | `tasks_comment` | core | `taskId`, `body` | Bình luận — hiện ở mục "Bình luận" của task |
 | `docs_search` | docs | `query`, `projectId?` | Tìm từ khoá (không dấu) trong tiêu đề / tóm tắt / nội dung, tối đa 10 |

@@ -55,9 +55,19 @@ afterAll(async () => {
 const data = (r: Awaited<ReturnType<Client["callTool"]>>) => JSON.parse((r.content as { text: string }[])[0].text);
 
 describe("MCP client SDK → /api/mcp (F16.9)", () => {
-  it("liệt kê đủ 8 tool", async () => {
+  it("liệt kê đủ 9 tool", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
-    expect(names).toEqual(["docs_append", "docs_read", "docs_search", "features_propose", "tasks_claim", "tasks_comment", "tasks_list", "tasks_update_status"]);
+    expect(names).toEqual([
+      "context_get",
+      "docs_append",
+      "docs_read",
+      "docs_search",
+      "features_propose",
+      "tasks_claim",
+      "tasks_comment",
+      "tasks_list",
+      "tasks_update_status",
+    ]);
   });
 
   it("luồng làm việc: list → claim → comment → chuyển Review; đọc + đề xuất sửa tài liệu", async () => {
@@ -82,5 +92,25 @@ describe("MCP client SDK → /api/mcp (F16.9)", () => {
     const log = await prisma.mcpLogEntry.findMany({ where: { agentId: "agent-bao", at: { gte: startedAt } }, orderBy: { at: "asc" } });
     expect(log.map((l) => l.tool)).toEqual(["tasks.list", "tasks.claim", "tasks.comment", "tasks.update_status", "docs.search", "docs.read", "docs.append"]);
     expect(log.at(-1)?.result).toBe("ChoReview");
+  });
+
+  it("context_get (F24.1): một lệnh đủ task + feature + tài liệu + bình luận + lịch sử; tài liệu tính là đã đọc ở drawer", async () => {
+    const t = await prisma.task.findFirstOrThrow({
+      where: { feature: { projectId: "rv-web", docs: { some: {} } }, stage: { not: "Done" }, blocked: null, runningSince: null },
+      orderBy: { id: "asc" },
+      select: { id: true, featureId: true },
+    });
+    expect(data(await client.callTool({ name: "tasks_claim", arguments: { taskId: t.id } }))).toMatchObject({ claimed: true });
+    const ctx = data(await client.callTool({ name: "context_get", arguments: { taskId: t.id } }));
+    expect(ctx.task).toMatchObject({ id: t.id, assigneeId: "agent-bao" });
+    expect(ctx.feature.id).toBe(t.featureId);
+    expect(ctx.docs.length).toBeGreaterThan(0);
+    expect(ctx.docs[0].sections.length).toBeGreaterThan(0);
+    expect(ctx.history.at(-1)).toMatchObject({ actor: "Bảo", via: "mcp", to: "DangChay" });
+
+    const { getTaskDrawerInfo } = await import("@/lib/data/taskDrawer");
+    const info = await getTaskDrawerInfo("rv-web", t.id);
+    expect(info!.contextDocs).toContain(ctx.docs[0].title);
+    expect(data(await client.callTool({ name: "context_get", arguments: { taskId: "T-khong-co" } }))).toMatchObject({ reason: expect.stringContaining("Không tìm thấy") });
   });
 });
