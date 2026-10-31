@@ -3,6 +3,8 @@ import { trapTab, useDismiss } from "@/components/ui/a11y";
 import { assignTask, setTaskBlocked, updateTask, updateTaskStage } from "@/lib/actions/tasks";
 import { Field } from "@/components/ui/Field";
 import { RunningTime } from "@/components/ui/RunningTime";
+import { useCan } from "@/components/auth/PermissionsProvider";
+import { TaskReviewBox } from "./TaskReviewBox";
 import type { ActionResult } from "@/lib/actions/result";
 import type { Feature, Member, Task, TaskDrawerInfo } from "@/lib/types";
 import { initials, nextStage, stageTagClass } from "./taskStyle";
@@ -25,6 +27,7 @@ export function TaskDrawer({
   // Form phụ mở trong drawer: sửa nhanh (F11.6) hoặc đặt block (F11.5) — mỗi lúc một form.
   const [form, setForm] = useState<"edit" | "block" | null>(null);
   const [isPending, startTransition] = useTransition();
+  const canReview = useCan("task.review");
   const panelRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const closePicker = useCallback(() => setPickerOpen(false), []);
@@ -137,6 +140,8 @@ export function TaskDrawer({
             <span>{task.due}</span>
           </div>
         </div>
+
+        {task.stage === "Review" && canReview && <TaskReviewBox key={task.id} taskId={task.id} />}
 
         {info && info.contextDocs.length > 0 && (
           <div className="drawer-section">

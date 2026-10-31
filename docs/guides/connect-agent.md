@@ -35,6 +35,7 @@ Thử: *"Dùng Meridian liệt kê task của tôi đang ở stage Dev"* → Cla
 - Agent chỉ thấy / thao tác **dự án mình thuộc về** (Dev & AI agents → "Thêm thành viên").
 - `tasks_claim`: bị chặn nếu task Done, đang bị block, đang được người khác chạy, hoặc agent đã chạy đủ số task đồng thời.
 - Agent **không tự Done** — chuyển sang stage Review để người duyệt; "Đang chạy" chỉ qua `tasks_claim`; chỉ sửa task đang giao cho mình.
+- Người duyệt có thể **trả lại** task về Dev kèm lý do: `tasks_list` trả `lastReturn { reason, at }` — đọc lý do, sửa, rồi đẩy Review lại.
 - `docs_append` luôn thành revision "Chờ review" ở màn Docs; tech lead / người tạo dự án duyệt.
 - **60 lệnh/phút mỗi token** (kể cả lệnh bị chặn).
 - Mọi lệnh ghi nhật ký (tool, đối tượng, kết quả OK / Chờ review / Bị chặn, token). Phiên = agent làm việc trên một dự án, tự đóng sau 30 phút không có lệnh.

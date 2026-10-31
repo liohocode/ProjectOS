@@ -23,6 +23,7 @@ export async function transitionTask(
   via: TransitionVia,
   change: TaskChange,
   extra: Prisma.TaskUncheckedUpdateInput = {},
+  note?: string,
 ): Promise<boolean> {
   const current = await db.task.findUnique({ where: { id: taskId }, select: { stage: true, status: true } });
   if (!current) return false;
@@ -36,6 +37,7 @@ export async function transitionTask(
         taskId,
         actorId,
         via,
+        ...(note && { note }),
         ...(stageChanged && { fromStage: current.stage, toStage: change.stage }),
         ...(statusChanged && { fromStatus: current.status, toStatus: change.status }),
       },

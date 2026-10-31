@@ -28,6 +28,8 @@ export interface AgentTaskView {
   due: string;
   blocked: string | null;
   running: boolean;
+  /** Lần trả lại gần nhất sau review (F22.2) — lý do để agent sửa; null = chưa bị trả lại */
+  lastReturn: { reason: string; at: string } | null;
 }
 
 const MAX_TASKS = 200;
@@ -70,6 +72,7 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
       runningSince: true,
       assignee: { select: { name: true } },
       feature: { select: { id: true, name: true, projectId: true } },
+      transitions: { where: { note: { not: null }, fromStage: "Review" }, orderBy: { at: "desc" }, take: 1, select: { note: true, at: true } },
     },
   });
   return rows.map((t) => ({
@@ -87,6 +90,7 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
     due: formatDue(t.dueDate),
     blocked: t.blocked,
     running: t.runningSince !== null,
+    lastReturn: t.transitions[0] ? { reason: t.transitions[0].note!, at: t.transitions[0].at.toISOString() } : null,
   }));
 }
 
