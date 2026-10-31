@@ -12,8 +12,10 @@ const FEATURES_BY_PROJECT: Record<string, Feature[]> = {
       tasks: [
         { id: "T-401", stage: "Dev", title: "Form đăng tin — bước 1 và 2", who: "Trần Mỹ Linh", kind: "human", status: "Đang làm", est: "5đ", due: "22/08" },
         { id: "T-412", stage: "TA", title: "Chuẩn hoá bảng listing_attributes", who: "Nguyễn Nam", kind: "human", status: "Đang làm", est: "3đ", due: "25/08" },
-        { id: "T-418", stage: "Dev", title: "Viết migration cho trường pháp lý", who: "Atlas", kind: "agent", status: "Chờ", est: "2đ", due: "26/08", blocked: "chờ ADR-11", blockedFull: "Bị block: cần ADR-11 chốt cách versioning schema trước khi agent sinh migration." },
-        { id: "T-396", stage: "Review", title: "Lưu nháp tự động 30 giây", who: "Atlas", kind: "agent", status: "Chờ review", est: "2đ", due: "20/08", prUrl: "https://github.com/rever/web/pull/412", branch: "feat/T-396-autosave", criteria: [
+        { id: "T-418", stage: "Dev", title: "Viết migration cho trường pháp lý", who: "Atlas", kind: "agent", status: "Chờ", est: "2đ", due: "26/08", needsDecision: true, size: "S", blocked: "chờ ADR-11", blockedFull: "Bị block: cần ADR-11 chốt cách versioning schema trước khi agent sinh migration." },
+        { id: "T-396", stage: "Review", title: "Lưu nháp tự động 30 giây", who: "Atlas", kind: "agent", status: "Chờ review", est: "2đ", due: "20/08", prUrl: "https://github.com/rever/web/pull/412", branch: "feat/T-396-autosave", size: "M",
+          description: "Form đăng tin tự lưu nháp để người bán không mất dữ liệu khi đóng tab hoặc mất mạng.\n\n- Lưu vào `localStorage` mỗi **30 giây** khi form thay đổi\n- Khi mở lại form: hỏi khôi phục bản nháp\n\n| Trường hợp | Kết quả |\n|---|---|\n| Mất mạng | Giữ nháp, thử lại khi có mạng |\n| Gửi thành công | Xoá nháp |",
+          criteria: [
           { text: "Tự lưu nháp mỗi 30 giây khi form có thay đổi", done: true },
           { text: "Khôi phục nháp khi mở lại form", done: true },
           { text: "Có test cho trường hợp mất mạng khi đang lưu" },

@@ -36,6 +36,10 @@ export interface AgentTaskView {
   links: TaskLinks;
   /** Acceptance criteria đã đạt / tổng (F21.6) — chi tiết ở context_get */
   criteria: { done: number; total: number };
+  /** F21.7: mã trong kế hoạch (vd "F21.3"), cỡ S/M/L, cần người quyết định (agent không tự làm) */
+  code: string | null;
+  size: "S" | "M" | "L" | null;
+  needsDecision: boolean;
 }
 
 const MAX_TASKS = 200;
@@ -82,6 +86,9 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
       branch: true,
       commitSha: true,
       criteria: { select: { doneAt: true } },
+      code: true,
+      size: true,
+      needsDecision: true,
       assignee: { select: { name: true } },
       feature: { select: { id: true, name: true, projectId: true } },
       transitions: { where: { note: { not: null }, fromStage: "Review" }, orderBy: { at: "desc" }, take: 1, select: { note: true, at: true } },
@@ -105,6 +112,9 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
     lastReturn: t.transitions[0] ? { reason: t.transitions[0].note!, at: t.transitions[0].at.toISOString() } : null,
     links: { prUrl: t.prUrl, branch: t.branch, commitSha: t.commitSha },
     criteria: { done: t.criteria.filter((c) => c.doneAt !== null).length, total: t.criteria.length },
+    code: t.code,
+    size: t.size,
+    needsDecision: t.needsDecision,
   }));
 }
 

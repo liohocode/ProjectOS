@@ -6,6 +6,7 @@ import { RunningTime } from "@/components/ui/RunningTime";
 import { useCan } from "@/components/auth/PermissionsProvider";
 import { TaskReviewBox } from "./TaskReviewBox";
 import { TaskCriteria } from "./TaskCriteria";
+import { Markdown } from "@/components/ui/Markdown";
 import type { ActionResult } from "@/lib/actions/result";
 import type { Feature, Member, SprintOption, Task, TaskDrawerInfo } from "@/lib/types";
 import { setTaskSprint } from "@/lib/actions/sprints";
@@ -83,6 +84,10 @@ export function TaskDrawer({
       prUrl: String(data.get("prUrl") ?? ""),
       branch: String(data.get("branch") ?? ""),
       commitSha: String(data.get("commitSha") ?? ""),
+      description: String(data.get("description") ?? ""),
+      size: (String(data.get("size") ?? "") || null) as "S" | "M" | "L" | null,
+      code: String(data.get("code") ?? ""),
+      needsDecision: data.get("needsDecision") === "on",
     };
     run(() => updateTask(task.id, patch), () => setForm(null));
   }
@@ -112,7 +117,10 @@ export function TaskDrawer({
       >
         <div className="drawer-head">
           <span className="trow-id nowrap">{task.id}</span>
+          {task.code && <span className="mono text-muted nowrap">{task.code}</span>}
           <span className={stageTagClass(task.stage)}>{task.stage}</span>
+          {task.size && <span className="tag tag-neutral nowrap" title="Cỡ task">{task.size}</span>}
+          {task.needsDecision && <span className="tag tag-decision nowrap">Cần quyết định</span>}
           <span className={`tag ${task.kind === "agent" ? "tag-accent" : "tag-neutral"} nowrap`}>
             {task.kind === "agent" ? task.who : "Người"}
           </span>
@@ -210,6 +218,14 @@ export function TaskDrawer({
 
         {task.stage === "Review" && canReview && <TaskReviewBox key={task.id} taskId={task.id} />}
 
+        {/* F21.7: mô tả "Làm gì" (markdown) */}
+        {task.description && (
+          <div className="drawer-section" role="region" aria-label="Mô tả task">
+            <div className="drawer-section-title">Mô tả</div>
+            <Markdown className="drawer-md">{task.description}</Markdown>
+          </div>
+        )}
+
         <TaskCriteria key={`criteria-${task.id}`} taskId={task.id} criteria={task.criteria} canWrite={canWrite} />
 
         {info && info.contextDocs.length > 0 && (
@@ -295,6 +311,25 @@ export function TaskDrawer({
                 <input id="edit-due" name="due" type="date" className="input" defaultValue={task.dueIso ?? ""} />
               </Field>
             </div>
+            <Field label="Mô tả (markdown)" htmlFor="edit-description" hint="Làm gì, phạm vi, ghi chú — bảng / danh sách / code được">
+              <textarea id="edit-description" name="description" className="input" rows={6} maxLength={10_000} defaultValue={task.description ?? ""} />
+            </Field>
+            <div className="field-row">
+              <Field label="Cỡ" htmlFor="edit-size" hint="S ≤ 2 giờ · M ~ nửa ngày · L ≥ 1 ngày">
+                <select id="edit-size" name="size" className="input" defaultValue={task.size ?? ""}>
+                  <option value="">Chưa đặt</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                </select>
+              </Field>
+              <Field label="Mã trong kế hoạch" htmlFor="edit-code" hint="vd F21.3">
+                <input id="edit-code" name="code" className="input" maxLength={20} defaultValue={task.code ?? ""} />
+              </Field>
+            </div>
+            <label className="filter-check">
+              <input type="checkbox" name="needsDecision" defaultChecked={Boolean(task.needsDecision)} /> Cần người quyết định (agent không tự làm)
+            </label>
             <Field label="Link PR" htmlFor="edit-pr" hint="Bỏ trống = không có">
               <input id="edit-pr" name="prUrl" type="url" className="input" maxLength={500} defaultValue={task.links.prUrl ?? ""} placeholder="https://github.com/…/pull/123" />
             </Field>

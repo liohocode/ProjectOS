@@ -116,6 +116,8 @@ describe("MCP client SDK → /api/mcp (F16.9)", () => {
     expect(ctx.task).toMatchObject({ id: t.id, assigneeId: "agent-bao" });
     expect(ctx.feature.id).toBe(t.featureId);
     expect(ctx.criteria).toEqual(expect.any(Array)); // F21.6
+    expect(ctx).toHaveProperty("description"); // F21.7
+    expect(ctx.task).toMatchObject({ code: null, needsDecision: expect.any(Boolean) });
     expect(ctx.docs.length).toBeGreaterThan(0);
     expect(ctx.docs[0].sections.length).toBeGreaterThan(0);
     expect(ctx.history.at(-1)).toMatchObject({ actor: "Bảo", via: "mcp", to: "DangChay" });

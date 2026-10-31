@@ -30,6 +30,10 @@ export interface SeedTask {
   /** Liên kết code (F22.4) */
   prUrl?: string;
   branch?: string;
+  /** F21.7: mô tả markdown, cỡ, cần người quyết định */
+  description?: string;
+  size?: "S" | "M" | "L";
+  needsDecision?: boolean;
   /** Acceptance criteria (F21.6); done = người / agent thực hiện đã tick */
   criteria?: { text: string; done?: boolean }[];
   /** Lịch sử chuyển stage mẫu (F22.1) — cho chỉ số chất lượng F22.5. `by` mặc định người thực hiện; note = lý do trả lại */

@@ -278,6 +278,13 @@ model Feature {
   @@map("features")
 }
 
+/// Cỡ task (F21.7): S ≤ 2 giờ · M ~ nửa ngày · L ≥ 1 ngày (nên tách nhỏ)
+enum TaskSize {
+  S
+  M
+  L
+}
+
 model Task {
   id             String     @id
   featureId      String
@@ -299,6 +306,11 @@ model Task {
   branch         String?
   commitSha      String?
   /// Sprint task thuộc về (F21.3); null = chưa xếp sprint. Xoá sprint → task về "chưa xếp".
+  /// F21.7: mô tả markdown ("Làm gì"), cỡ, mã hiển thị trong kế hoạch (vd "F21.3" — id vẫn T-n), cần người quyết định
+  description    String?
+  size           TaskSize?
+  code           String?
+  needsDecision  Boolean    @default(false)
   /// Lưu trữ (F21.4): khác null = ẩn khỏi list / timeline / inbox / MCP, vẫn mở được bằng deep link; giữ lịch sử
   archivedAt     DateTime?
   sprintId       String?

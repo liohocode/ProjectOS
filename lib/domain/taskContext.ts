@@ -10,6 +10,8 @@ const MAX_COMMENTS = 30;
 
 export interface TaskContext {
   task: AgentTaskView;
+  /** Mô tả markdown ("Làm gì") của task (F21.7); null = chưa có */
+  description: string | null;
   feature: { id: string; name: string; stage: string; owner: string | null };
   docs: { id: string; title: string; version: string; summary: string; sections: DocSection[] }[];
   /** Tài liệu feature còn lại (khi vượt MAX_DOCS) — đọc thêm bằng docs_read */
@@ -28,7 +30,7 @@ export async function getTaskContext(
   const [view] = (await listTasksForMember(agentId, {})).filter((t) => t.id === taskId);
   if (!view) return { ok: false, reason: `Không tìm thấy task ${taskId} trong dự án của bạn` };
 
-  const [feature, docs, comments, transitions, criteria] = await Promise.all([
+  const [feature, docs, comments, transitions, criteria, detail] = await Promise.all([
     prisma.feature.findUniqueOrThrow({ where: { id: view.featureId }, select: { id: true, name: true, stage: true, owner: { select: { name: true } } } }),
     opts.includeDocs
       ? prisma.doc.findMany({
@@ -49,6 +51,7 @@ export async function getTaskContext(
       select: { at: true, via: true, fromStage: true, toStage: true, fromStatus: true, toStatus: true, note: true, actor: { select: { name: true } } },
     }),
     prisma.taskCriterion.findMany({ where: { taskId }, orderBy: [{ position: "asc" }, { id: "asc" }], select: { id: true, text: true, doneAt: true } }),
+    prisma.task.findUniqueOrThrow({ where: { id: taskId }, select: { description: true } }),
   ]);
 
   const describe = (stage: string | null, status: string | null) => [stage, status].filter(Boolean).join(" · ") || null;
@@ -57,6 +60,7 @@ export async function getTaskContext(
     projectId: view.projectId,
     context: {
       task: view,
+      description: detail.description,
       feature: { id: feature.id, name: feature.name, stage: feature.stage, owner: feature.owner?.name ?? null },
       docs: docs.slice(0, MAX_DOCS).map((d) => ({ ...d, sections: d.sections as unknown as DocSection[] })),
       moreDocs: docs.slice(MAX_DOCS).map(({ id, title }) => ({ id, title })),

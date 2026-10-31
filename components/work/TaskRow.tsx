@@ -8,7 +8,11 @@ export function TaskRow({ task, onOpen }: { task: Task; onOpen: () => void }) {
     <div className="trow rowhover" style={taskRowStyle(task)} aria-label={`${task.id}: ${task.title}`} {...buttonLikeProps(onOpen)}>
       <span className="trow-id nowrap">{task.id}</span>
       <span className={`${stageTagClass(task.stage)} c-stage`}>{task.stage}</span>
-      <span className="trow-title">{task.title}</span>
+      <span className="trow-title">
+        {task.code && <span className="trow-code mono">{task.code}</span>}
+        {task.title}
+        {task.needsDecision && <span className="tag tag-decision trow-decision">Cần quyết định</span>}
+      </span>
       <span className={`trow-flag${task.blocked ? " is-blocked" : task.running ? " is-running" : ""}`}>
         {task.blocked && (
           <>
