@@ -10,7 +10,7 @@ import { POST } from "./route";
 const startedAt = new Date();
 let client: Client;
 let snapshot: {
-  tasks: { id: string; assigneeId: string; runningSince: Date | null; status: string; stage: string }[];
+  tasks: { id: string; assigneeId: string; runningSince: Date | null; status: string; stage: string; prUrl: string | null; branch: string | null }[];
   current: string;
   maxConcurrentTasks: number;
   flowsReadBy: string[];
@@ -39,7 +39,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await client?.close();
   for (const t of snapshot.tasks) {
-    await prisma.task.update({ where: { id: t.id }, data: { assigneeId: t.assigneeId, runningSince: t.runningSince, status: t.status as never, stage: t.stage as never } });
+    await prisma.task.update({ where: { id: t.id }, data: { assigneeId: t.assigneeId, runningSince: t.runningSince, status: t.status as never, stage: t.stage as never, prUrl: t.prUrl, branch: t.branch } });
   }
   await prisma.member.update({ where: { id: "agent-bao" }, data: { current: snapshot.current } });
   await prisma.agentConfig.update({ where: { memberId: "agent-bao" }, data: { maxConcurrentTasks: snapshot.maxConcurrentTasks } });
@@ -78,9 +78,13 @@ describe("MCP client SDK → /api/mcp (F16.9)", () => {
     expect(data(await client.callTool({ name: "tasks_list", arguments: { projectId: "rv-web" } })).count).toBeGreaterThan(0);
     expect(data(await client.callTool({ name: "tasks_claim", arguments: { taskId: free } }))).toMatchObject({ claimed: true });
     expect(data(await client.callTool({ name: "tasks_comment", arguments: { taskId: free, body: "IT: bắt đầu" } }))).toMatchObject({ commented: true });
-    expect(data(await client.callTool({ name: "tasks_update_status", arguments: { taskId: free, stage: "Review", status: "Chờ review" } }))).toMatchObject({
+    // Bước 8 của quy ước agent (F24.5): một lệnh đẩy Review kèm PR + branch (F22.4).
+    const prUrl = "https://github.com/acme/web/pull/7";
+    expect(
+      data(await client.callTool({ name: "tasks_update_status", arguments: { taskId: free, stage: "Review", status: "Chờ review", prUrl, branch: `${free}-it` } })),
+    ).toMatchObject({
       updated: true,
-      task: { stage: "Review", running: false },
+      task: { stage: "Review", running: false, links: { prUrl, branch: `${free}-it` } },
     });
 
     expect(data(await client.callTool({ name: "docs_search", arguments: { query: "user flows", projectId: "rv-web" } })).docs[0]).toMatchObject({ id: "flows" });

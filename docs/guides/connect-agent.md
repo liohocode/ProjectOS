@@ -20,7 +20,7 @@ Dev local thay URL bằng `http://localhost:3000/api/mcp`. Kiểm tra: `claude m
 
 Thử: *"Dùng Meridian liệt kê task của tôi đang ở stage Dev"* → Claude gọi `tasks_list`.
 
-Luồng làm một task: `tasks_claim` → `context_get` → làm → `tasks_comment` (tiến độ) → `tasks_update_status` stage Review kèm `prUrl` / `branch` → chờ người duyệt (bị trả lại thì `lastReturn` có lý do).
+Luồng làm một task (quy ước đầy đủ + CLAUDE.md mẫu cho repo: [`agent-workflow.md`](agent-workflow.md)): `tasks_claim` → `context_get` → làm → `tasks_comment` (tiến độ) → `tasks_update_status` stage Review kèm `prUrl` / `branch` → chờ người duyệt (bị trả lại thì `lastReturn` có lý do).
 
 ## 3. Danh sách tool
 | Tool | Server | Tham số | Làm gì |
