@@ -56,7 +56,7 @@ afterAll(async () => {
 const data = (r: Awaited<ReturnType<Client["callTool"]>>) => JSON.parse((r.content as { text: string }[])[0].text);
 
 describe("MCP client SDK → /api/mcp (F16.9)", () => {
-  it("liệt kê đủ 10 tool", async () => {
+  it("liệt kê đủ 11 tool", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "context_get",
@@ -67,6 +67,7 @@ describe("MCP client SDK → /api/mcp (F16.9)", () => {
       "features_propose",
       "tasks_claim",
       "tasks_comment",
+      "tasks_create",
       "tasks_list",
       "tasks_update_status",
     ]);

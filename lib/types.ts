@@ -323,3 +323,19 @@ export interface ProposedFeature {
   proposedBy: string;
   when: string;
 }
+
+/** Task agent đề xuất chờ duyệt (F24.2). */
+export interface ProposedTask {
+  id: string;
+  title: string;
+  description: string | null;
+  size: "S" | "M" | "L" | null;
+  stage: TaskStage;
+  criteria: string[];
+  featureId: string;
+  featureName: string;
+  proposedBy: string;
+  /** Người được đề xuất làm; null = chính agent đề xuất */
+  assignee: string | null;
+  when: string;
+}

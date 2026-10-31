@@ -12,6 +12,7 @@ import { commentOnTask } from "@/lib/domain/tasks";
 import { reviewGateBlocker } from "@/lib/domain/taskCriteria";
 import { addDependency, removeDependency } from "@/lib/domain/taskDependencies";
 import { applyBlock } from "@/lib/domain/taskBlocks";
+import { allocateTaskId } from "@/lib/domain/taskProposals";
 import { parseTaskLinks } from "@/lib/taskLinks";
 import { moveInList, type Direction } from "@/lib/reorder";
 import { fail, ok, type ActionResult } from "./result";
@@ -136,8 +137,7 @@ const newTaskSchema = z.object({
 export type NewTaskInput = z.input<typeof newTaskSchema>;
 
 /**
- * Tạo task mới với id `T-<số lớn nhất + 1>` (ADR-006). Sinh id trong transaction có advisory lock
- * để hai request tạo cùng lúc không lấy trùng số.
+ * Tạo task mới với id `T-<số lớn nhất + 1>` (ADR-006, `allocateTaskId` — advisory lock trong transaction).
  */
 export async function createTask(input: NewTaskInput): Promise<ActionResult<{ taskId: string }>> {
   const parsed = newTaskSchema.safeParse(input);
@@ -159,10 +159,7 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
 
   const creatorId = await getCurrentUserId();
   const taskId = await prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('meridian:task-id'))`;
-    const [{ max }] = await tx.$queryRaw<{ max: number }[]>`
-      SELECT COALESCE(MAX(CAST(SUBSTRING(id FROM 3) AS INTEGER)), 0) AS max FROM tasks WHERE id ~ '^T-[0-9]+$'`;
-    const id = `T-${max + 1}`;
+    const id = await allocateTaskId(tx);
     await tx.task.create({
       data: {
         id,

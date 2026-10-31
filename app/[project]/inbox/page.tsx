@@ -18,6 +18,7 @@ export default async function InboxPage(props: PageProps<"/[project]/inbox">) {
       revisions={scope.revisions ? inbox.revisions : []}
       reviewTasks={scope.reviewTasks ? inbox.reviewTasks : []}
       proposals={scope.proposals ? inbox.proposals : []}
+      taskProposals={scope.proposals ? inbox.taskProposals : []}
       blockedTasks={inbox.blockedTasks}
       canReviewAnything={scope.revisions || scope.reviewTasks || scope.proposals}
       doneDefinition={project?.doneDefinition ?? []}

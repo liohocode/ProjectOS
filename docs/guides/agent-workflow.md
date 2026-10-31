@@ -13,6 +13,7 @@ Mục tiêu: mọi repo của công ty dùng Meridian để agent (Claude Code, 
 |---|---|---|
 | Nhận việc | `tasks_claim` | Task giao cho agent, "Đang chạy" (thời gian chạy tự tăng), phiên MCP mở |
 | Lấy ngữ cảnh | `context_get` | "Context agent đã pull" trong drawer |
+| Phát sinh việc ngoài phạm vi | `tasks_create(featureId, title, description, criteria)` | "Task đề xuất — chờ duyệt" ở trang feature + inbox; lead duyệt → task thật (Chờ, kèm tiêu chí) |
 | Báo tiến độ / vướng | `tasks_comment`, `tasks_update_status(status: "Chờ")` | Bình luận trong drawer; task rời "Đang chạy" |
 | Đạt tiêu chí | `criteria_check(taskId, criterionId, done: true)` | Tiêu chí hoàn thành trong drawer được tick, ghi agent đã tick |
 | Mở PR + xin review | `tasks_update_status(stage: "Review", status: "Chờ review", prUrl, branch)` | Task trong "Chờ review" (màn work + inbox), link PR trong drawer |

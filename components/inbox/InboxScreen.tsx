@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import type { ProposedFeature } from "@/lib/types";
+import type { ProposedFeature, ProposedTask } from "@/lib/types";
 import type { InboxRevision, InboxTask } from "@/lib/inbox";
 import { RevisionItem } from "@/components/docs/RevisionItem";
 import { TaskReviewBox } from "@/components/work/TaskReviewBox";
 import { ProposedFeatures } from "@/components/work/ProposedFeatures";
+import { ProposedTasks } from "@/components/work/ProposedTasks";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 /** Inbox "Cần tôi xử lý" (F25.2): gom việc chờ duyệt của dự án — duyệt / trả lại tại chỗ. */
@@ -14,6 +15,7 @@ export function InboxScreen({
   revisions,
   reviewTasks,
   proposals,
+  taskProposals = [],
   blockedTasks,
   canReviewAnything,
   doneDefinition = [],
@@ -22,13 +24,15 @@ export function InboxScreen({
   revisions: InboxRevision[];
   reviewTasks: InboxTask[];
   proposals: ProposedFeature[];
+  /** Task agent đề xuất (F24.2) */
+  taskProposals?: ProposedTask[];
   blockedTasks: InboxTask[];
   /** Người dùng có ít nhất một quyền duyệt — không thì giải thích vì sao inbox chỉ có task bị block. */
   canReviewAnything: boolean;
   /** Definition of Done của dự án (F22.6) */
   doneDefinition?: string[];
 }) {
-  const total = revisions.length + reviewTasks.length + proposals.length + blockedTasks.length;
+  const total = revisions.length + reviewTasks.length + proposals.length + taskProposals.length + blockedTasks.length;
   const taskHref = (id: string) => `/${projectId}/work?task=${id}`;
 
   return (
@@ -42,7 +46,7 @@ export function InboxScreen({
         <EmptyState
           icon="ph-tray"
           title="Đã xử lý hết"
-          description="Revision tài liệu, task chờ review, feature agent đề xuất và task bị block sẽ hiện ở đây."
+          description="Revision tài liệu, task chờ review, feature / task agent đề xuất và task bị block sẽ hiện ở đây."
         />
       )}
 
@@ -79,6 +83,12 @@ export function InboxScreen({
       {proposals.length > 0 && (
         <div className="inbox-section">
           <ProposedFeatures proposals={proposals} />
+        </div>
+      )}
+
+      {taskProposals.length > 0 && (
+        <div className="inbox-section">
+          <ProposedTasks proposals={taskProposals} />
         </div>
       )}
 

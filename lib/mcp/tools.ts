@@ -10,6 +10,7 @@ export const TOOL_SERVER = {
   criteria_check: "meridian-core",
   context_get: "meridian-core",
   features_propose: "meridian-core",
+  tasks_create: "meridian-core",
   docs_read: "meridian-docs",
   docs_search: "meridian-docs",
   docs_append: "meridian-docs",

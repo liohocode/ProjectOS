@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useCan } from "@/components/auth/PermissionsProvider";
 import { approveFeatureProposal, rejectFeatureProposal } from "@/lib/actions/features";
 import type { ProposedFeature } from "@/lib/types";
@@ -15,13 +15,50 @@ export function ProposedFeatures({ proposals }: { proposals: ProposedFeature[] }
         <i className="ph ph-lightbulb" aria-hidden /> Feature đề xuất — chờ duyệt <span className="text-muted">({proposals.length})</span>
       </div>
       {proposals.map((p) => (
-        <ProposalRow key={p.id} proposal={p} canReview={canReview} />
+        <ProposalRow
+          key={p.id}
+          id={p.id}
+          label={p.id}
+          name={p.name}
+          proposedBy={p.proposedBy}
+          when={p.when}
+          canReview={canReview}
+          rejectLabel="Từ chối feature"
+          onApprove={() => approveFeatureProposal(p.id)}
+          onReject={(reason) => rejectFeatureProposal(p.id, reason)}
+        >
+          <p className="proposal-desc">{p.proposal}</p>
+        </ProposalRow>
       ))}
     </section>
   );
 }
 
-function ProposalRow({ proposal, canReview }: { proposal: ProposedFeature; canReview: boolean }) {
+/** Một đề xuất chờ duyệt (feature F16.6 / task F24.2): duyệt hoặc từ chối kèm lý do. */
+export function ProposalRow({
+  id,
+  label,
+  name,
+  proposedBy,
+  when,
+  canReview,
+  rejectLabel,
+  onApprove,
+  onReject,
+  children,
+}: {
+  id: string;
+  /** Mã hiển thị đầu dòng (feature: FEAT-n; task: mã feature) */
+  label: string;
+  name: string;
+  proposedBy: string;
+  when: string;
+  canReview: boolean;
+  rejectLabel: string;
+  onApprove: () => Promise<{ ok: boolean; error?: string }>;
+  onReject: (reason: string) => Promise<{ ok: boolean; error?: string }>;
+  children?: ReactNode;
+}) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -38,25 +75,25 @@ function ProposalRow({ proposal, canReview }: { proposal: ProposedFeature; canRe
     <div className="proposal-row">
       <div className="proposal-main">
         <div className="proposal-head">
-          <span className="mono text-muted">{proposal.id}</span>
-          <span className="proposal-name">{proposal.name}</span>
-          <span className="tag tag-accent nowrap">{proposal.proposedBy}</span>
-          <span className="text-muted proposal-when">{proposal.when}</span>
+          <span className="mono text-muted">{label}</span>
+          <span className="proposal-name">{name}</span>
+          <span className="tag tag-accent nowrap">{proposedBy}</span>
+          <span className="text-muted proposal-when">{when}</span>
         </div>
-        <p className="proposal-desc">{proposal.proposal}</p>
+        {children}
         {rejecting && (
           <form
             className="revision-reject"
             onSubmit={(e) => {
               e.preventDefault();
-              run(() => rejectFeatureProposal(proposal.id, reason));
+              run(() => onReject(reason));
             }}
           >
-            <label htmlFor={`reject-${proposal.id}`} className="revision-reject-label">
+            <label htmlFor={`reject-${id}`} className="revision-reject-label">
               Lý do từ chối
             </label>
             <textarea
-              id={`reject-${proposal.id}`}
+              id={`reject-${id}`}
               className="input revision-reject-input"
               rows={2}
               maxLength={500}
@@ -70,7 +107,7 @@ function ProposalRow({ proposal, canReview }: { proposal: ProposedFeature; canRe
                 Huỷ
               </button>
               <button type="submit" className="btn btn-secondary" disabled={isPending || !reason.trim()}>
-                {isPending ? "Đang lưu…" : "Từ chối feature"}
+                {isPending ? "Đang lưu…" : rejectLabel}
               </button>
             </div>
           </form>
@@ -86,7 +123,7 @@ function ProposalRow({ proposal, canReview }: { proposal: ProposedFeature; canRe
           <button type="button" className="btn btn-secondary" onClick={() => setRejecting(true)} disabled={isPending}>
             Từ chối
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => run(() => approveFeatureProposal(proposal.id))} disabled={isPending}>
+          <button type="button" className="btn btn-primary" onClick={() => run(onApprove)} disabled={isPending}>
             {isPending ? "Đang duyệt…" : "Duyệt"}
           </button>
         </div>

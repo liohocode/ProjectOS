@@ -105,7 +105,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-TK-03 | Ngân sách token theo dự án / agent, cảnh báo, tuỳ chọn chặn | ⬜ | F23 |
 | FR-TK-04 | So sánh ước lượng với effort thực tế (thời gian chạy + token) | ⬜ | F23 |
 | FR-AG-10 | Agent lấy đủ ngữ cảnh task trong một lệnh (`context_get`) | ✅ (F24.1; acceptance criteria thêm khi có F21.6) | F24 |
-| FR-AG-11 | TA agent đề xuất chia task, lead duyệt | ⬜ | F24 |
+| FR-AG-11 | TA agent đề xuất chia task, lead duyệt | ✅ MCP `tasks_create` → bảng `task_proposals`; lead duyệt ở trang feature / inbox (F24.2) | F24 |
 | FR-AG-12 | Agent đề xuất tài liệu mới, lead duyệt | ⬜ | F24 |
 | FR-AG-13 | Template tài liệu: PRD, tech spec, ADR, runbook | ⬜ | F24 |
 | FR-AG-14 | Quy ước làm việc chuẩn (CLAUDE.md mẫu) cho repo dùng Meridian | 🟡 mẫu + guide (F24.5); chờ thử trên repo thật (F24.7) | F24 |
