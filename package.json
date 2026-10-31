@@ -12,7 +12,8 @@
     "db:test:prepare": "tsx scripts/test-db-prepare.ts",
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "test:e2e": "playwright test",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "plan:import": "tsx scripts/import-plan.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",
