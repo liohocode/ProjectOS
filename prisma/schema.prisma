@@ -123,6 +123,8 @@ model Sprint {
   endDate   DateTime @db.Date
 
   currentFor Project? @relation("CurrentSprint")
+  /// Task xếp vào sprint (F21.3)
+  tasks      Task[]
 
   @@index([projectId])
   @@map("sprints")
@@ -295,12 +297,16 @@ model Task {
   prUrl          String?
   branch         String?
   commitSha      String?
+  /// Sprint task thuộc về (F21.3); null = chưa xếp sprint. Xoá sprint → task về "chưa xếp".
+  sprintId       String?
+  sprint         Sprint?    @relation(fields: [sprintId], references: [id], onDelete: SetNull)
 
   sessions    McpSession[]
   comments    TaskComment[]
   transitions TaskTransition[]
 
   @@index([featureId])
+  @@index([sprintId])
   @@map("tasks")
 }
 

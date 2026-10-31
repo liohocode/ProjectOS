@@ -126,7 +126,11 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
   if (!parsed.success) return fail(parsed.error.issues[0].message);
   const data = parsed.data;
 
-  const feature = await prisma.feature.findUnique({ where: { id: data.featureId, status: "active" }, select: { projectId: true } });
+  const feature = await prisma.feature.findUnique({
+    where: { id: data.featureId, status: "active" },
+    // F21.3: task mới vào sprint hiện tại của dự án (đổi được ở drawer).
+    select: { projectId: true, project: { select: { currentSprintId: true } } },
+  });
   const denied = await authorize("task.write", data.projectId);
   if (denied) return fail(denied);
   if (!feature || feature.projectId !== data.projectId) return fail("Feature không thuộc dự án này");
@@ -151,6 +155,7 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
         status: "Cho",
         estimatePoints: data.estimatePoints,
         dueDate: toDueDate(data.dueDate),
+        sprintId: feature.project.currentSprintId,
       },
     });
     await recordTaskCreated(tx, id, creatorId, "web", data.stage, "Cho");

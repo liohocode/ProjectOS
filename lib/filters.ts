@@ -12,7 +12,7 @@ export const TASK_STAGES: readonly TaskStage[] = ["BA", "TA", "Dev", "Review", "
 export const SESSION_RESULT_KEYS = ["DangChay", "ChoReview", "BiChan", "Xong"] as const;
 
 export const FILTER_KEYS: Record<FilterScreen, readonly string[]> = {
-  work: ["stage", "who", "blocked", "running"],
+  work: ["sprint", "stage", "who", "blocked", "running"],
   docs: ["agent", "pending"],
   mcp: ["agent", "project", "result"],
 };
@@ -23,7 +23,12 @@ function param(params: SearchParams, key: string): string | undefined {
   return s ? s : undefined;
 }
 
+/** Lọc theo sprint (F21.3): sprint hiện tại, chưa xếp sprint, hoặc id sprint. */
+export const SPRINT_CURRENT = "current";
+export const SPRINT_NONE = "none";
+
 export interface WorkFilter {
+  sprint?: string;
   stage?: TaskStage;
   who?: string;
   blocked?: boolean;
@@ -42,6 +47,7 @@ export interface McpFilter {
 export function parseWorkFilter(params: SearchParams): WorkFilter {
   const stage = param(params, "stage");
   return {
+    sprint: param(params, "sprint"),
     stage: TASK_STAGES.includes(stage as TaskStage) ? (stage as TaskStage) : undefined,
     who: param(params, "who"),
     blocked: param(params, "blocked") === "1" || undefined,
@@ -68,14 +74,17 @@ export function countActiveFilters(screen: FilterScreen, params: SearchParams): 
   return Object.values(parsed).filter((v) => v !== undefined).length;
 }
 
-/** Lọc task trong từng feature; khi có tiêu chí, ẩn feature không còn task nào khớp. */
-export function filterFeatures(features: Feature[], f: WorkFilter): Feature[] {
-  if (!f.stage && !f.who && !f.blocked && !f.running) return features;
+/** Lọc task trong từng feature; khi có tiêu chí, ẩn feature không còn task nào khớp. `currentSprintId` để hiểu `sprint=current`. */
+export function filterFeatures(features: Feature[], f: WorkFilter, currentSprintId: string | null = null): Feature[] {
+  if (!f.sprint && !f.stage && !f.who && !f.blocked && !f.running) return features;
+  // Dự án chưa có sprint hiện tại → "sprint hiện tại" không khớp task nào (không lẫn với "chưa xếp").
+  const sprintId = f.sprint === SPRINT_CURRENT ? (currentSprintId ?? undefined) : f.sprint === SPRINT_NONE ? null : f.sprint;
   return features
     .map((feature) => ({
       ...feature,
       tasks: feature.tasks.filter(
         (t) =>
+          (!f.sprint || (sprintId !== undefined && t.sprintId === sprintId)) &&
           (!f.stage || t.stage === f.stage) &&
           (!f.who || t.assigneeId === f.who) &&
           (!f.blocked || Boolean(t.blocked)) &&

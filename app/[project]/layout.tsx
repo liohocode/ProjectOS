@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getProjectById, getProjects, getProjectsByMember } from "@/lib/data/projects";
+import { getProjectById, getProjects, getProjectsByMember, getSprintsByProject } from "@/lib/data/projects";
 import { getTaskCountsByProject } from "@/lib/data/features";
 import { getDocCountByProject, getPendingRevisionCount } from "@/lib/data/docs";
 import { getAgentOptions, getMemberCountByProject, getMemberOptionsByProject, getPipelineAgents } from "@/lib/data/team";
@@ -25,7 +25,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   const activeProjects = myProjects.filter((p) => !p.archived || p.id === projectId);
 
   // Badge chỉ cần số → hàm đếm, không tải danh sách task/thành viên (page cần thì tự tải).
-  const [taskCounts, docCount, pendingRevisions, memberCount, pipeline, mcpServers, currentUser, memberOptions, agentOptions, permissions, inboxCounts] =
+  const [taskCounts, docCount, pendingRevisions, memberCount, pipeline, mcpServers, currentUser, memberOptions, agentOptions, permissions, inboxCounts, sprints] =
     await Promise.all([
       getTaskCountsByProject(projectId),
       getDocCountByProject(projectId),
@@ -41,6 +41,8 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
       getPermissions(userId, projectId),
       // F25.2: badge "Cần tôi xử lý" — chỉ đếm phần người dùng có quyền xử lý.
       getInboxCounts(projectId),
+      // Bộ lọc sprint ở màn work (F21.3).
+      getSprintsByProject(projectId),
     ]);
   const inboxCount = inboxTotal(inboxCounts, inboxScope(permissions));
 
@@ -79,7 +81,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
         <div className="main-area">
           <Header
             project={project}
-            filterOptions={{ members: memberOptions, agents: agentOptions, projects: activeProjects.map(({ id, name }) => ({ id, name })) }}
+            filterOptions={{ members: memberOptions, agents: agentOptions, projects: activeProjects.map(({ id, name }) => ({ id, name })), sprints: sprints.map(({ id, label }) => ({ id, label })) }}
           />
           <div className="content-area">{props.children}</div>
         </div>

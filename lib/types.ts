@@ -11,6 +11,8 @@ export interface Project {
   status: string;
   desc: string;
   sprint: string;
+  /** Sprint hiện tại (F21.3) — null = dự án chưa có sprint */
+  currentSprintId: string | null;
   /** Lưu trữ (F13.7) — ẩn khỏi project switcher, hiện mờ ở portfolio */
   archived: boolean;
 }
@@ -40,6 +42,8 @@ export interface Task {
   runningSince?: string;
   /** Liên kết code (F22.4) — PR, branch, commit */
   links: TaskLinks;
+  /** Sprint task thuộc về (F21.3); null = chưa xếp */
+  sprintId: string | null;
 }
 
 export interface Feature {
@@ -250,6 +254,15 @@ export interface Page<T> {
 }
 
 /** Feature agent đề xuất chờ lead duyệt (F16.6) */
+/** Sprint của dự án (F21.3) — chọn trong bộ lọc / drawer / dialog sprint. */
+export interface SprintOption {
+  id: string;
+  name: string;
+  /** "Sprint 14 · 12–26/08" */
+  label: string;
+  current: boolean;
+}
+
 export interface ProposedFeature {
   id: string;
   name: string;

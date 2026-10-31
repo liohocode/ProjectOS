@@ -3,7 +3,7 @@
 import { useCallback, useOptimistic, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { MemberOption } from "@/lib/types";
-import { countActiveFilters, FILTER_KEYS, SESSION_RESULT_KEYS, TASK_STAGES, type FilterScreen } from "@/lib/filters";
+import { countActiveFilters, FILTER_KEYS, SESSION_RESULT_KEYS, SPRINT_CURRENT, SPRINT_NONE, TASK_STAGES, type FilterScreen } from "@/lib/filters";
 import { Field } from "@/components/ui/Field";
 import { useDismiss } from "@/components/ui/a11y";
 
@@ -24,6 +24,8 @@ export interface FilterOptions {
   agents: MemberOption[];
   /** Dự án người dùng thuộc về (màn MCP) */
   projects: { id: string; name: string }[];
+  /** Sprint của dự án (màn work, F21.3) */
+  sprints: { id: string; label: string }[];
 }
 
 export function FilterMenu({ options }: { options: FilterOptions }) {
@@ -97,6 +99,11 @@ export function FilterMenu({ options }: { options: FilterOptions }) {
         <div className="switcher-dropdown filter-panel" role="dialog" aria-label="Bộ lọc">
           {screen === "work" && (
             <>
+              {select("sprint", "Sprint", [
+                { value: SPRINT_CURRENT, text: "Sprint hiện tại" },
+                { value: SPRINT_NONE, text: "Chưa xếp sprint" },
+                ...options.sprints.map((s) => ({ value: s.id, text: s.label })),
+              ])}
               {select("stage", "Stage", TASK_STAGES.map((s) => ({ value: s, text: s })))}
               {select("who", "Người / agent thực hiện", options.members.map((m) => ({ value: m.id, text: memberText(m) })))}
               {check("blocked", "Chỉ task bị block")}

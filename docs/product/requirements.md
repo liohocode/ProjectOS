@@ -91,7 +91,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-OR-03 | Dự án thật chạy song song dự án mẫu đã lưu trữ | ⬜ | F20 |
 | FR-PM-01 | Lead tạo / sửa feature (owner, stage, kế hoạch) | ✅ tạo (thành viên) / sửa (tech lead, người tạo dự án) (F21.1); agent đề xuất + lead duyệt (F16.6) | F21 |
 | FR-PM-02 | % tiến độ feature / dự án tính từ task thật | ✅ trọng số story point (F21.2) | F21 |
-| FR-PM-03 | Quản lý sprint: tạo, đặt sprint hiện tại, gán / lọc task theo sprint | ⬜ | F21 |
+| FR-PM-03 | Quản lý sprint: tạo, đặt sprint hiện tại, gán / lọc task theo sprint | ✅ (F21.3) | F21 |
 | FR-PM-04 | Lưu trữ task | ⬜ | F21 |
 | FR-PM-05 | Người và agent cùng bình luận trên task | 🟡 agent bình luận qua MCP (F16.4) | F21 |
 | FR-PM-06 | Acceptance criteria dạng checklist trên task | ⬜ | F21 |

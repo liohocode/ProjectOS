@@ -5,7 +5,7 @@ Nguồn sự thật: `prisma/schema.prisma`. File này giải thích quan hệ, 
 ## Sơ đồ quan hệ
 ```
 Project 1─n Feature 1─n Task
-Project 1─n Sprint; Project 0..1─1 Sprint (currentSprint — sprint hiện tại)
+Project 1─n Sprint; Project 0..1─1 Sprint (currentSprint — sprint hiện tại); Sprint 1─n Task (F21.3, task có thể chưa xếp sprint)
 Project 1─n Doc            (Doc.featureId null = "Kho tri thức chung" của project)
 Feature 1─n Doc
 Doc     1─n DocRevision    (author, approvedBy → Member)
@@ -24,7 +24,7 @@ AuthVerification  (độc lập, Better Auth dùng cho token tạm)
 | Model (bảng) | Khoá | Ghi chú |
 |---|---|---|
 | `Project` (`projects`) | `id` chuỗi (`rv-web`) | `currentSprintId` → sprint hiện tại; nhãn hiển thị "Sprint 14 · 12–26/08" dựng lại bằng `lib/sprint.ts`; `archivedAt` (F13.7) khác null = dự án lưu trữ — ẩn khỏi switcher, hiện mờ ở portfolio; `createdById` (F15.4) → `Member` người tạo, null với dự án mẫu — được duyệt/sửa tài liệu của dự án |
-| `Sprint` (`sprints`) | cuid | `name`, `startDate`, `endDate` (kiểu `DATE`) |
+| `Sprint` (`sprints`) | cuid | `name`, `startDate`, `endDate` (kiểu `DATE`); `Task.sprintId?` (F21.3) — xoá sprint → task về "chưa xếp" (`SET NULL`); task mới vào sprint hiện tại |
 | `Member` (`members`) | `id` chuỗi (`agent-atlas`, `hieu`) | `kind` = `human`/`agent`; `status` enum `MemberStatus` (nhãn ở `lib/memberFormat.ts`); `current` chuỗi tự do; `skills String[]`; `config Json?` **cũ, không còn dùng** (thay bằng `AgentConfig`, F13.5 — giữ cột để không phải migration xoá dữ liệu); `email String? @unique` — email Google đăng nhập, chỉ người (seed: `<id>@example.com`, `DEV_LOGIN_EMAIL` thay cho `hieu`); `isTechLead Boolean` (F15.4, ADR-021) — quyền quản trị, seed chỉ `hieu` |
 | `AgentConfig` (`agent_configs`) | `memberId` | Cấu hình có cấu trúc của agent (F13.5): `model`, `mcpServers String[]`, `docsWritePermission` enum `DocsWritePermission` (`read_only` / `append_review` / `append_edit_spec`), `maxConcurrentTasks` (mặc định 2), `canProposeFeatures`, `canAssignTo String[]` (member id agent), `extra Json?` (dòng hiển thị khác: token tuần này, embedding). Dòng hiển thị ở panel dựng lại bằng `lib/agentConfig.ts`; seed chuyển từ mảng hiển thị cũ bằng `parseLegacyConfig` |
 | `AgentToken` (`agent_tokens`) | `id` cuid | Token MCP của agent (F15.5): `name`, `tokenHash` (SHA-256, unique — **không lưu token gốc**), `lastFour` (nhận diện trong danh sách), `createdAt`, `lastUsedAt?`, `revokedAt?` (thu hồi = đặt thời điểm, giữ dòng để xem lịch sử). Xác thực: `lib/auth/agentToken.ts` `verifyAgentToken` |

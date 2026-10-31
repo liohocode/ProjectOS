@@ -22,6 +22,12 @@ describe("can (F15.4)", () => {
     expect(can(lead, "doc.edit", p3)).toBe(false); // tech lead nhưng không thuộc p3
   });
 
+  it("sprint (F21.3): tech lead hoặc người tạo dự án", () => {
+    expect(can(lead, "sprint.manage", p1)).toBe(true);
+    expect(can(dev, "sprint.manage", p1)).toBe(false);
+    expect(can(dev, "sprint.manage", p2)).toBe(true);
+  });
+
   it("thêm/gỡ thành viên, lưu trữ: tech lead thuộc dự án", () => {
     expect(can(lead, "member.manage", p1)).toBe(true);
     expect(can(dev, "member.manage", p2)).toBe(false); // người tạo nhưng không phải tech lead

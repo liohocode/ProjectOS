@@ -6,8 +6,8 @@ import type { ProposedFeature } from "@/lib/types";
 import Link from "next/link";
 import { useCan } from "@/components/auth/PermissionsProvider";
 import { useUrlDialog } from "@/components/ui/urlDialog";
-import { NEW_FEATURE_PARAM } from "./featureDialogParam";
-import type { MemberOption } from "@/lib/types";
+import { NEW_FEATURE_PARAM, SPRINTS_PARAM } from "./featureDialogParam";
+import type { MemberOption, SprintOption } from "@/lib/types";
 import type { ActivityItem, Feature, Member, TaskDrawerInfo, TimelineRow } from "@/lib/types";
 import { FeatureSection } from "./FeatureSection";
 import { TimelineView } from "./TimelineView";
@@ -25,6 +25,7 @@ export function WorkScreen({
   projectAgents,
   proposals = [],
   projectMembers = [],
+  sprints = [],
 }: {
   features: Feature[];
   /** Đang áp bộ lọc "Lọc" (F14.3) — features đã lọc ở server. */
@@ -37,9 +38,12 @@ export function WorkScreen({
   proposals?: ProposedFeature[];
   /** Chọn người phụ trách feature (F21.1) */
   projectMembers?: MemberOption[];
+  /** Sprint của dự án (F21.3) — xếp task trong drawer */
+  sprints?: SprintOption[];
 }) {
   const canCreateFeature = useCan("feature.create");
   const { openHref: newFeatureHref } = useUrlDialog(NEW_FEATURE_PARAM);
+  const { openHref: sprintsHref } = useUrlDialog(SPRINTS_PARAM);
   const [closed, setClosed] = useState<Record<string, boolean>>({});
   const [railOpen, setRailOpen] = useState(true);
   // Task đang mở và view nằm trong URL (F14.1) — copy link là mở lại đúng chỗ.
@@ -80,6 +84,9 @@ export function WorkScreen({
               <i className="ph ph-plus" aria-hidden /> Feature mới
             </Link>
           )}
+          <Link href={sprintsHref} scroll={false} className="btn btn-secondary">
+            <i className="ph ph-calendar" aria-hidden /> Sprint
+          </Link>
           <div className="work-toolbar-spacer" />
           <button type="button" className="btn btn-secondary" onClick={() => setRailOpen((v) => !v)}>
             <i className="ph ph-activity" aria-hidden /> {railOpen ? "Ẩn activity" : "Activity feed"}
@@ -159,6 +166,7 @@ export function WorkScreen({
           feature={activeTask.feature}
           info={taskDrawerInfo[activeTask.task.id]}
           agents={projectAgents}
+          sprints={sprints}
           onClose={closeTask}
         />
       )}

@@ -6,7 +6,8 @@ import { RunningTime } from "@/components/ui/RunningTime";
 import { useCan } from "@/components/auth/PermissionsProvider";
 import { TaskReviewBox } from "./TaskReviewBox";
 import type { ActionResult } from "@/lib/actions/result";
-import type { Feature, Member, Task, TaskDrawerInfo } from "@/lib/types";
+import type { Feature, Member, SprintOption, Task, TaskDrawerInfo } from "@/lib/types";
+import { setTaskSprint } from "@/lib/actions/sprints";
 import { initials, nextStage, stageTagClass } from "./taskStyle";
 import { prLabel } from "@/lib/taskLinks";
 
@@ -15,12 +16,15 @@ export function TaskDrawer({
   feature,
   info,
   agents,
+  sprints = [],
   onClose,
 }: {
   task: Task;
   feature: Feature;
   info: TaskDrawerInfo | undefined;
   agents: Member[];
+  /** Sprint của dự án (F21.3) */
+  sprints?: SprintOption[];
   onClose: () => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -29,6 +33,7 @@ export function TaskDrawer({
   const [form, setForm] = useState<"edit" | "block" | null>(null);
   const [isPending, startTransition] = useTransition();
   const canReview = useCan("task.review");
+  const canWrite = useCan("task.write");
   const panelRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const closePicker = useCallback(() => setPickerOpen(false), []);
@@ -142,6 +147,26 @@ export function TaskDrawer({
           <div className="drawer-meta-row">
             <span className="drawer-meta-label">Hạn</span>
             <span>{task.due}</span>
+          </div>
+          <div className="drawer-meta-row">
+            <label className="drawer-meta-label" htmlFor="task-sprint">
+              Sprint
+            </label>
+            <select
+              id="task-sprint"
+              className="input drawer-select"
+              value={task.sprintId ?? ""}
+              disabled={isPending || !canWrite}
+              onChange={(e) => run(() => setTaskSprint(task.id, e.target.value || null))}
+            >
+              <option value="">Chưa xếp sprint</option>
+              {sprints.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                  {s.current ? " (hiện tại)" : ""}
+                </option>
+              ))}
+            </select>
           </div>
           {/* F22.4: liên kết code — agent báo qua MCP, người nhập ở "Sửa" */}
           {task.links.prUrl && (
