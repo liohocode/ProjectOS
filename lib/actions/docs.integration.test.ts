@@ -129,7 +129,7 @@ describe("createDoc (F12.5)", () => {
       agentWritten: false,
       authorId: await getCurrentUserId(),
       sections: [
-        { heading: "Bối cảnh", paras: ["Người mua cần thanh toán nhanh."] },
+        { heading: "Bối cảnh", paras: ["Người mua cần\nthanh toán nhanh."] },
         { heading: "Phạm vi", paras: ["Ví MoMo, ZaloPay."] },
       ],
     });

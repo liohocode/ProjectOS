@@ -150,3 +150,8 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 - Xác thực `Authorization: Bearer <token agent>` → `verifyAgentToken` (F15.5) **trước** khi dựng server; sai/thiếu/thu hồi → 401 + `WWW-Authenticate`. Chưa làm OAuth cho MCP (client như Claude Code nhận header tĩnh).
 - Tool là lớp vỏ mỏng (`lib/mcp/server.ts`), nghiệp vụ ở `lib/domain/*` (dùng chung với server action). Tên tool dạng `tasks_list` (không dấu chấm).
 **Hệ quả**: không có thông báo server → client (notifications, sampling) — chấp nhận được cho tool request/response. Đổi sang stateful sau này cần sticky session hoặc lưu phiên DB — ghi ADR mới khi đó.
+
+### ADR-023 — Hiển thị markdown: `react-markdown` + `remark-gfm`, không HTML thô (2026-10-31)
+**Bối cảnh**: F21.11 / F28 — mô tả task / feature và tài liệu kỹ thuật import từ `.md` có bảng, danh sách lồng nhau, code; trước đây đoạn tài liệu hiển thị chữ thường (`<p>`), bảng vỡ.
+**Quyết định**: component dùng chung `components/ui/Markdown.tsx` với **`react-markdown` 10.1.0 + `remark-gfm` 4.0.1** (pin cứng). Không bật `rehype-raw` → HTML thô trong nội dung (agent / người nhập) không được render. Link `http(s)` mở tab mới (`noopener noreferrer`). Lưu trữ giữ nguyên dạng sections `{ heading, paras[] }` (ADR không đổi mô hình dữ liệu): mỗi đoạn là một khối markdown; `markdownToSections` giữ xuống dòng + khối code.
+**Hệ quả**: chạy được cả server component (không cần JS phía client để hiển thị). Thêm ~40 KB phụ thuộc. Không hỗ trợ HTML nhúng / công thức — thêm plugin khi có nhu cầu (ADR mới).

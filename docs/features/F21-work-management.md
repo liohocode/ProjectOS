@@ -23,7 +23,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 | F21.4 | Lưu trữ task (ẩn khỏi list, giữ lịch sử) | S | — | Xong — 2026-10-31 |
 | F21.5 | Người bình luận trên task (drawer), dùng chung `TaskComment` | S | F16.4 | Xong — 2026-10-31 |
 | F21.6 | Acceptance criteria dạng checklist trên task (người + agent tick) | M | — | Xong — 2026-10-31 |
-| F21.11 | Hiển thị markdown (GFM: bảng, danh sách, code) dùng chung — mô tả task / feature, tài liệu | S | — | Chưa làm |
+| F21.11 | Hiển thị markdown (GFM: bảng, danh sách, code) dùng chung — mô tả task / feature, tài liệu | S | — | Xong — 2026-10-31 |
 | F21.7 | Mô tả task (markdown "Làm gì"), cỡ S / M / L, mã hiển thị (vd `F21.3`), nhãn "Cần quyết định" — UI + MCP `context_get` | M | F21.11 | Chưa làm |
 | F21.8 | Phụ thuộc giữa task: drawer thêm / bỏ, hiện task đang chặn; `tasks_claim` bị chặn khi phụ thuộc chưa Done | M | — | Chưa làm |
 | F21.9 | Trang chi tiết feature: mục tiêu, phạm vi, ghi chú quyết định (markdown), task, tài liệu, tiến độ | M | F21.11 | Chưa làm |
@@ -60,6 +60,11 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 - [x] Lead thêm tiêu chí, agent tick qua MCP (F24) / người tick trên UI (integration `lib/actions/criteria.integration.test.ts`, MCP `app/api/mcp/client.integration.test.ts`, e2e `task-criteria.spec.ts`)
 
 ## Quyết định / ghi chú
+- **F21.11 (2026-10-31)**: `components/ui/Markdown.tsx` (ADR-023: `react-markdown` + `remark-gfm`, không HTML thô). Đoạn tài liệu ở màn Docs hiển thị markdown; `markdownToSections` giữ xuống dòng / thụt lề / khối code (trước đây nối dòng bằng dấu cách làm vỡ bảng, danh sách). Mô tả task / feature dùng component này ở F21.7 / F21.9.
+
+### F21.11 — Markdown
+**Hoàn thành khi**:
+- [x] Tài liệu có bảng / danh sách / code hiển thị đúng; HTML thô không chạy (unit `components/ui/Markdown.test.ts`, `lib/markdownSections.test.ts`, e2e `markdown-doc.spec.ts`)
 - **Mở rộng 2026-10-31** (Lio: hoàn thiện feature & task trước, rồi đưa kế hoạch `.md` lên web — F28): thêm F21.7–F21.11 — những gì file feature `.md` đang có mà DB chưa có (mô tả task, cỡ, phụ thuộc, mô tả / ghi chú feature, markdown).
 - **F21.4 (2026-10-31)**: migration chỉ thêm `Task.archivedAt?`. Quyền `task.write` (lưu trữ là ẩn, không xoá). Nút "Lưu trữ" ở drawer → khung xác nhận; task lưu trữ bị loại khỏi list, badge / đếm, timeline (% feature), inbox, MCP `tasks_list` / `context_get`; `tasks_claim` / `tasks_update_status` trả "đã được lưu trữ". Deep link `?task=` vẫn mở drawer (page tải `getArchivedTask`), có banner + "Khôi phục". Không lưu trữ được task đang chạy. Chưa có danh sách task đã lưu trữ (mở bằng link / tìm kiếm — thêm khi cần).
 - **F21.6 (2026-10-31)**: migration chỉ thêm bảng `task_criteria` (`position` để giữ thứ tự, `doneAt` / `doneById` ghi ai tick). Tối đa 20 tiêu chí / task, 300 ký tự. Người (`task.write`) thêm / sửa / xoá / tick ở mục "Tiêu chí hoàn thành" của drawer (tick hiện ngay bằng `useOptimistic`); tick ghi sự kiện rail. MCP: tool mới `criteria_check(taskId, criterionId, done)` — chỉ task đang giao cho agent; `tasks_list` trả `criteria { done, total }`, `context_get` trả danh sách đầy đủ có id. Chưa chặn chuyển Review khi còn tiêu chí chưa đạt — đó là F22.3. Seed: T-396 có 3 tiêu chí (2 đạt). Sửa kèm: test F21.5 bình luận lên T-405 làm mất mục "đang chạy" của T-405 trong feed rv-web khi chạy song song với `aggregates.integration.test.ts` → chuyển sang task rv-app.
