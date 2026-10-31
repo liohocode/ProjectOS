@@ -10,6 +10,7 @@
 // | Tạo / sửa / giao / chuyển stage task, tạo tài liệu               | Thành viên dự án                     |
 // | Duyệt / trả lại task ở Review; đưa task của agent sang Done (F22.2) | Tech lead, người tạo dự án         |
 // | Tạo sprint, đặt sprint hiện tại (F21.3)                         | Tech lead, người tạo dự án           |
+// | Gắn / thu hồi API key của dự án / feature (F29.2, ADR-025)       | Tech lead                            |
 // Hành động gắn dự án luôn yêu cầu là thành viên dự án đó (kể cả tech lead) — như quyền xem (F15.3).
 
 export type PermissionAction =
@@ -27,7 +28,8 @@ export type PermissionAction =
   | "doc.create"
   | "task.write"
   | "task.review"
-  | "sprint.manage";
+  | "sprint.manage"
+  | "credential.manage";
 
 export interface Actor {
   id: string;
@@ -60,6 +62,7 @@ export function can(actor: Actor, action: PermissionAction, project?: ProjectRef
       return actor.isTechLead || project.createdById === actor.id;
     case "project.archive":
     case "member.manage":
+    case "credential.manage":
       return actor.isTechLead;
     default:
       return true;
@@ -82,6 +85,7 @@ const DENIED: Record<PermissionAction, string> = {
   "task.write": "Chỉ thành viên dự án được thao tác task",
   "task.review": "Chỉ tech lead hoặc người tạo dự án được duyệt / trả lại task",
   "sprint.manage": "Chỉ tech lead hoặc người tạo dự án được tạo / đổi sprint hiện tại",
+  "credential.manage": "Chỉ tech lead được gắn / thu hồi API key",
 };
 
 export const deniedMessage = (action: PermissionAction): string => DENIED[action];

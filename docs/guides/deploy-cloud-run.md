@@ -28,6 +28,7 @@ Hoặc không qua compose: `docker build -t meridian .` rồi `docker run -p 808
 | `DATABASE_URL` | Secret Manager (pooled URL) | Cloud Run |
 | `DATABASE_URL_DIRECT` | Secret Manager (direct URL; `meridian-deploy` được đọc riêng secret này) | `prisma migrate deploy` trong workflow |
 | `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Secret Manager | Cloud Run |
+| `MERIDIAN_ENCRYPTION_KEY` (F29.2, ADR-025) | Secret Manager — **chưa tạo**, xem HANDOFF; thiếu thì chỉ khoá tính năng gắn API key | Cloud Run (sẽ thêm vào `--set-secrets` khi secret có) |
 | `BETTER_AUTH_URL`, `DATABASE_POOL_MAX` | biến thường trong workflow | Cloud Run |
 
 Server kiểm tra lúc khởi động (`lib/env.ts`): thiếu biến bắt buộc → dừng với danh sách biến thiếu (xem log Cloud Run).

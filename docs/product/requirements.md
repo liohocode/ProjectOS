@@ -119,7 +119,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-DF-03 | Màn Roadmap: tiến độ theo phase, quyết định đang mở, việc nên nhận tiếp | ✅ (F28.4) | F28 |
 | FR-DF-04 | DB là nguồn sự thật của kế hoạch; agent nhận / đóng task qua MCP; `.md` chỉ là bản export | ⬜ | F28 |
 | FR-DF-05 | Meridian dùng chính Meridian để quản lý việc phát triển (dogfooding) | ⬜ | F28 |
-| FR-RUN-01 | Gắn API key cho dự án / feature, lưu mã hoá, chỉ hiện 4 ký tự cuối | ⬜ | F29 |
+| FR-RUN-01 | Gắn API key cho dự án / feature, lưu mã hoá, chỉ hiện 4 ký tự cuối | ✅ F29.2 — màn Roadmap, AES-256-GCM (ADR-025); production chờ secret khoá chủ | F29 |
 | FR-RUN-02 | Chạy agent cho task / feature trực tiếp từ web | ⬜ | F29 |
 | FR-RUN-03 | Theo dõi lượt chạy (trạng thái, log, PR) và huỷ trên web | ⬜ | F29 |
 | FR-RUN-04 | Token / chi phí thật của từng lượt chạy | ⬜ | F29 |

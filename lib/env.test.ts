@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { checkEnv } from "./env";
 
 const DB = "postgresql://u:p@localhost:5432/meridian";
-const prod = { DATABASE_URL: DB, BETTER_AUTH_SECRET: "x".repeat(32), BETTER_AUTH_URL: "https://meridian.example.run.app" };
+const KEY = Buffer.alloc(32, 7).toString("base64");
+const prod = { DATABASE_URL: DB, BETTER_AUTH_SECRET: "x".repeat(32), BETTER_AUTH_URL: "https://meridian.example.run.app", MERIDIAN_ENCRYPTION_KEY: KEY };
 
 describe("checkEnv (F19.5)", () => {
   it("thiếu DATABASE_URL hoặc sai dạng → lỗi rõ ràng", () => {
@@ -24,5 +25,11 @@ describe("checkEnv (F19.5)", () => {
     expect(checkEnv({ ...prod, GOOGLE_CLIENT_ID: "id" }, true).ok).toBe(false);
     expect(checkEnv(prod, true)).toMatchObject({ ok: true, warnings: [expect.stringContaining("Đăng nhập bằng Google")] });
     expect(checkEnv({ ...prod, GOOGLE_CLIENT_ID: "id", GOOGLE_CLIENT_SECRET: "s" }, true)).toEqual({ ok: true, warnings: [] });
+  });
+
+  it("thiếu / sai MERIDIAN_ENCRYPTION_KEY chỉ cảnh báo (F29.2)", () => {
+    const google = { GOOGLE_CLIENT_ID: "id", GOOGLE_CLIENT_SECRET: "s" };
+    expect(checkEnv({ ...prod, ...google, MERIDIAN_ENCRYPTION_KEY: "ngan" }, true)).toEqual({ ok: true, warnings: [expect.stringContaining("gắn API key bị khoá")] });
+    expect(checkEnv({ ...prod, ...google, MERIDIAN_ENCRYPTION_KEY: undefined }, true).ok).toBe(true);
   });
 });

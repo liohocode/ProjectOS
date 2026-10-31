@@ -347,3 +347,17 @@ export interface ProposedTask {
   assignee: string | null;
   when: string;
 }
+
+/** API key đang dùng của dự án / feature (F29.2) — không bao giờ chứa key. */
+export interface ApiCredentialView {
+  id: string;
+  /** Tên hiển thị của nhà cung cấp, vd "Anthropic" */
+  provider: string;
+  label: string;
+  last4: string;
+  /** null = key của cả dự án */
+  featureId: string | null;
+  featureName: string | null;
+  createdBy: string;
+  when: string;
+}

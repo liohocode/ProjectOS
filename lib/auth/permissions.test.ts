@@ -28,6 +28,12 @@ describe("can (F15.4)", () => {
     expect(can(dev, "sprint.manage", p2)).toBe(true);
   });
 
+  it("API key (F29.2): chỉ tech lead, kể cả người tạo dự án cũng không", () => {
+    expect(can(lead, "credential.manage", p1)).toBe(true);
+    expect(can(dev, "credential.manage", p1)).toBe(false);
+    expect(can(dev, "credential.manage", p2)).toBe(false);
+  });
+
   it("thêm/gỡ thành viên, lưu trữ: tech lead thuộc dự án", () => {
     expect(can(lead, "member.manage", p1)).toBe(true);
     expect(can(dev, "member.manage", p2)).toBe(false); // người tạo nhưng không phải tech lead

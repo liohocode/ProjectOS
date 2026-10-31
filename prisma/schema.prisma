@@ -116,6 +116,8 @@ model Project {
   events   ActivityEvent[]
 
   @@map("projects")
+  /// F29.2: API key gắn cho dự án / feature (mã hoá — ADR-025)
+  apiCredentials ApiCredential[]
 }
 
 model Sprint {
@@ -172,6 +174,7 @@ model Member {
   taskTransitions   TaskTransition[] @relation("TransitionActor")
   criteriaDone      TaskCriterion[]  @relation("CriterionDoneBy")
   proposedTasks     TaskProposal[]   @relation("TaskProposer")
+  apiCredentials    ApiCredential[]  @relation("CredentialCreator")
 
   @@map("members")
 }
@@ -291,6 +294,8 @@ model Feature {
   tasks Task[]
   /// F24.2: task agent đề xuất cho feature này, chờ lead duyệt
   taskProposals TaskProposal[]
+  /// F29.2: API key riêng của feature (ghi đè key của dự án)
+  apiCredentials ApiCredential[]
   docs  Doc[]
 
   @@index([projectId])
@@ -699,4 +704,33 @@ model AuthVerification {
 
   @@index([identifier])
   @@map("auth_verifications")
+}
+
+/// API key gắn cho dự án (mặc định) hoặc feature (ghi đè) để chạy agent từ web (F29.2, ADR-025).
+/// Key mã hoá AES-256-GCM (`lib/crypto/secretBox.ts`), khoá chủ MERIDIAN_ENCRYPTION_KEY; chỉ lưu thêm 4 ký tự cuối để nhận diện.
+/// Mỗi phạm vi (dự án / feature) + provider chỉ một key đang dùng: thêm key mới thu hồi key cũ. Thu hồi = giữ dòng, đặt revokedAt.
+model ApiCredential {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// null = key của cả dự án
+  featureId   String?
+  feature     Feature?  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  /// "anthropic"
+  provider    String
+  label       String
+  ciphertext  String
+  iv          String
+  authTag     String
+  /// Phiên bản khoá chủ đã dùng — để xoay khoá sau này
+  keyVersion  Int       @default(1)
+  last4       String
+  createdById String?
+  createdBy   Member?   @relation("CredentialCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+  revokedById String?
+
+  @@index([projectId, featureId])
+  @@map("api_credentials")
 }
