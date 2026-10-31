@@ -34,7 +34,8 @@ describe("parseFeatureMd (F28.2) trên kế hoạch thật", () => {
     const f29 = parsed.find((f) => f!.code === "F29")!;
     expect(f29.phase).toBe("8b");
     expect(f29.tasks.find((t) => t.code === "F29.1")).toMatchObject({ stage: "Done", needsDecision: true });
-    expect(f29.tasks.find((t) => t.code === "F29.2")).toMatchObject({ stage: "TA", status: "Chờ", blocked: null, dependsOn: ["F29.1"] });
+    // Task cuối của feature (đổi khi F29 làm tới F29.6).
+    expect(f29.tasks.find((t) => t.code === "F29.6")).toMatchObject({ stage: "TA", status: "Chờ", blocked: null, dependsOn: ["F29.5"] });
   });
 
   it("tổng số task khớp con số tổng của ROADMAP", () => {

@@ -829,6 +829,13 @@ img { display: block; max-width: 100%; }
 .roadmap-empty { font-size: 12.5px; margin: 0; }
 .roadmap-dod { grid-column: 1 / -1; }
 .roadmap-dod-edit { margin-left: auto; height: 24px; }
+.apikey-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.apikey-item { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; font-size: 13px; }
+.apikey-label { font-weight: 500; }
+.apikey-meta { font-size: 11.5px; margin-right: auto; }
+.apikey-form { margin-top: var(--space-3); }
+.apikey-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--color-neutral-400); }
+.apikey-hint { margin: 0; font-size: 11.5px; }
 .roadmap-dod-list { margin: 0; padding-left: var(--space-5); font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
 .roadmap-picks, .roadmap-features { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .roadmap-pick, .roadmap-feature { display: flex; align-items: center; gap: var(--space-2); padding: 5px var(--space-2); border-radius: var(--radius-sm); font-size: 13px; color: inherit; text-decoration: none; min-width: 0; }

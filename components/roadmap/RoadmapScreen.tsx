@@ -2,6 +2,8 @@ import Link from "next/link";
 import { phaseTitle, type PhaseProgress, type TaskPick } from "@/lib/roadmap";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DodEditor } from "./DodEditor";
+import { ApiKeysPanel } from "./ApiKeysPanel";
+import type { ApiCredentialView } from "@/lib/types";
 import { stageTagClass } from "@/components/work/taskStyle";
 
 const pct = (done: number, total: number) => (total ? Math.round((done / total) * 100) : 0);
@@ -13,12 +15,17 @@ export function RoadmapScreen({
   decisions,
   next,
   doneDefinition = [],
+  credentials = [],
+  encryptionReady = false,
 }: {
   projectId: string;
   groups: PhaseProgress[];
   decisions: TaskPick[];
   next: TaskPick[];
   doneDefinition?: string[];
+  /** F29.2: API key đang gắn (không có key) + server có khoá mã hoá chưa */
+  credentials?: ApiCredentialView[];
+  encryptionReady?: boolean;
 }) {
   const done = groups.reduce((s, g) => s + g.done, 0);
   const total = groups.reduce((s, g) => s + g.total, 0);
@@ -76,6 +83,12 @@ export function RoadmapScreen({
           {pickList(decisions, "Không có quyết định nào đang chờ.")}
         </section>
         <DodEditor projectId={projectId} items={doneDefinition} />
+        <ApiKeysPanel
+          projectId={projectId}
+          credentials={credentials}
+          features={groups.flatMap((g) => g.features.map(({ id, name }) => ({ id, name })))}
+          encryptionReady={encryptionReady}
+        />
       </div>
 
       {groups.map((g) => (

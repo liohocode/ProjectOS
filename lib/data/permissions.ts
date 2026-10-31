@@ -20,6 +20,7 @@ const ACTIONS: PermissionAction[] = [
   "task.write",
   "task.review",
   "sprint.manage",
+  "credential.manage",
 ];
 
 /** Actor của ma trận quyền (F15.4) — null nếu member không còn. */

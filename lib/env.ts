@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ENCRYPTION_KEY_ENV, parseMasterKey } from "@/lib/crypto/secretBox";
 
 // Kiểm tra biến môi trường lúc server khởi động (F19.5) — gọi từ instrumentation.ts.
 // Production thiếu biến bắt buộc → container dừng ngay với thông báo rõ ràng, thay vì lỗi khó hiểu ở request đầu tiên.
@@ -36,6 +37,8 @@ export function checkEnv(env: Record<string, string | undefined>, production: bo
   if (errors.length) return { ok: false, errors };
 
   const warnings = env.GOOGLE_CLIENT_ID ? [] : ["GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET chưa đặt — nút “Đăng nhập bằng Google” bị khoá"];
+  // F29.2 (ADR-025): thiếu / sai khoá chủ chỉ khoá tính năng gắn API key, không chặn cả app.
+  if (!parseMasterKey(env[ENCRYPTION_KEY_ENV])) warnings.push(`${ENCRYPTION_KEY_ENV} chưa đặt hoặc không phải base64 32 byte (openssl rand -base64 32) — gắn API key bị khoá`);
   return { ok: true, warnings };
 }
 

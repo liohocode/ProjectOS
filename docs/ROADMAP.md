@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-31 · Tổng: **128/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 33/65 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-31 · Tổng: **129/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 34/65 (đã chốt F23.1, F25.1).
 
 ## Điều chỉnh ưu tiên (Lio, 2026-10-31)
 1. **Hoàn thiện Feature & Task trước** (Phase 7): mô tả task, cỡ, phụ thuộc, trang chi tiết feature, markdown, DoD, lịch sử block, agent đề xuất task — đủ để chứa toàn bộ kế hoạch đang nằm trong `.md`.
@@ -61,7 +61,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 8b — Chạy agent từ web (ưu tiên 3)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F29](features/F29-run-agents-on-web.md) | Gắn API key cho dự án / feature, nút "Chạy với agent", theo dõi lượt chạy + chi phí trên web | F28, F22.4, F24.5 | Chưa bắt đầu — F29.1 đã chốt (ADR-024, ADR-025) | 1/6 |
+| [F29](features/F29-run-agents-on-web.md) | Gắn API key cho dự án / feature, nút "Chạy với agent", theo dõi lượt chạy + chi phí trên web | F28, F22.4, F24.5 | Đang làm — F29.1 chốt (ADR-024, ADR-025), F29.2 API key xong (production chờ secret) | 2/6 |
 
 ### Phase 8 — Agent & effort
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -89,7 +89,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F29.2](features/F29-run-agents-on-web.md) API key mã hoá (ADR-025) | Mở đầu chạy agent từ web — cần Lio thêm secret `MERIDIAN_ENCRYPTION_KEY` khi deploy |
+| [F29.3](features/F29-run-agents-on-web.md) `AgentRun` + nút "Chạy với agent" | Tiếp F29.2 — lượt chạy dùng key đã gắn |
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Khuyến nghị |
@@ -136,6 +136,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 - 2026-10-30 — **Review + lập lại kế hoạch**: giai đoạn 1 (MVP) 94/103; giai đoạn 2 "data foundation" gồm F20–F27 (45 task, F27 skills hub do người dùng bổ sung) — dùng thật, quản lý công việc, chất lượng, token AI, hỗ trợ coding agent, mobile, API.
 - 2026-10-31 — **F21 xong**: feature CRUD, % tiến độ từ task, sprint, lưu trữ task, người bình luận, acceptance criteria (+ cổng vào Review F22.3). Cùng ngày: inbox "Cần tôi xử lý" (F25.2), liên kết PR (F22.4), quy ước agent + CLAUDE.md mẫu (F24.5).
 - 2026-10-31 — **Điều chỉnh ưu tiên** (Lio): hoàn thiện feature & task (F21.7–F21.11) → đưa kế hoạch + tài liệu kỹ thuật lên web, DB là nguồn sự thật (F28 mới) → gắn API key + chạy agent từ web (F29 mới, chờ quyết định F29.1). F24.7, F27.1 hoãn; F20.3 thay bằng F28.
+- 2026-10-31 — **F29.2 xong**: tech lead gắn / thu hồi API key Anthropic cho dự án / feature ở màn Roadmap (AES-256-GCM, chỉ hiện 4 ký tự cuối). Production cần Lio tạo secret `MERIDIAN_ENCRYPTION_KEY` (lệnh trong HANDOFF).
 - 2026-10-31 — **F24.2 + F24.6**: agent đề xuất task qua MCP `tasks_create` (lead duyệt ở trang feature / inbox), gắn tài liệu spec vào task (`context_get` trả trước). Phần feature & task Lio yêu cầu đã đủ; tiếp theo F29.
 - 2026-10-31 — **F28.5 xong**: kế hoạch + 11 tài liệu kỹ thuật đã import lên production (dự án `meridian`, giao cho Lio). Xem tiến độ ở màn Roadmap trên web; `.md` vẫn là nguồn tới F28.6.
 - 2026-10-31 — **F21 xong 11/11** (mở rộng): markdown, mô tả / cỡ / mã task, phụ thuộc, trang chi tiết feature, lưu trữ feature + thứ tự ưu tiên — đủ chỗ chứa kế hoạch `.md` cho F28.

@@ -46,6 +46,8 @@ export default defineConfig({
       BETTER_AUTH_URL: E2E_BASE_URL,
       GOOGLE_CLIENT_ID: E2E_GOOGLE_CLIENT_ID,
       GOOGLE_CLIENT_SECRET: "e2e-google-client-secret",
+      // F29.2: khoá chủ mã hoá API key — giá trị giả cố định chỉ cho e2e.
+      MERIDIAN_ENCRYPTION_KEY: "ZTJlLW1lcmlkaWFuLWVuY3J5cHRpb24ta2V5LTMyYnk=",
     },
   },
 });
