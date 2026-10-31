@@ -188,6 +188,10 @@ function shortReason(text: string): string {
  */
 export async function importDocs(projectId: string, docs: PlanDoc[], authorId: string, dryRun = false): Promise<{ created: number; updated: number }> {
   const result = { created: 0, updated: 0 };
+  // Dry-run lần đầu: importPlan đã rollback nên dự án chưa có — chỉ đếm, không ghi (ghi sẽ vi phạm khoá ngoại).
+  if (dryRun && !(await prisma.project.findUnique({ where: { id: projectId }, select: { id: true } }))) {
+    return { created: docs.length, updated: 0 };
+  }
   try {
     await prisma.$transaction(
       async (tx) => {
