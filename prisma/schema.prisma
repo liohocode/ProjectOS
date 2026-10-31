@@ -320,6 +320,9 @@ model Task {
   comments    TaskComment[]
   transitions TaskTransition[]
   criteria    TaskCriterion[]
+  /// F21.8: task này phụ thuộc (chờ) các task kia / các task đang chờ task này
+  dependsOn   TaskDependency[] @relation("DependentTask")
+  blocking    TaskDependency[] @relation("PrerequisiteTask")
 
   @@index([featureId])
   @@index([sprintId])
@@ -345,6 +348,19 @@ model TaskTransition {
 
   @@index([taskId, at])
   @@map("task_transitions")
+}
+
+/// Phụ thuộc giữa task (F21.8): `taskId` chỉ nên bắt đầu khi `dependsOnId` đã Done. Cùng dự án, không vòng.
+model TaskDependency {
+  taskId      String
+  task        Task     @relation("DependentTask", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOnId String
+  dependsOn   Task     @relation("PrerequisiteTask", fields: [dependsOnId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@id([taskId, dependsOnId])
+  @@index([dependsOnId])
+  @@map("task_dependencies")
 }
 
 /// Acceptance criteria của task (F21.6) — checklist người / agent tick; nền cho Definition of Done (F22.3).

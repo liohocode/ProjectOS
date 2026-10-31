@@ -10,6 +10,7 @@ import { recordTaskCreated, transitionTask } from "@/lib/domain/taskTransitions"
 import { reviewTask, type ReviewDecision } from "@/lib/domain/taskReview";
 import { commentOnTask } from "@/lib/domain/tasks";
 import { reviewGateBlocker } from "@/lib/domain/taskCriteria";
+import { addDependency, removeDependency } from "@/lib/domain/taskDependencies";
 import { parseTaskLinks } from "@/lib/taskLinks";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
@@ -342,6 +343,24 @@ export async function setTaskArchived(taskId: string, archived: boolean): Promis
   await prisma.task.update({ where: { id: id.data }, data: { archivedAt: archived ? new Date() : null } });
   await recordActivity(archived ? "ph-archive" : "ph-arrow-counter-clockwise", `${archived ? "Lưu trữ" : "Khôi phục"} ${id.data}`, {
     event: { projectId, type: "task", tone: "ok", taskId: id.data },
+  });
+  revalidateTaskViews();
+  return ok();
+}
+
+/** Thêm / bỏ phụ thuộc giữa hai task cùng dự án (F21.8) — thành viên dự án; không cho tạo vòng. */
+export async function setTaskDependency(taskId: string, dependsOnId: string, add: boolean): Promise<ActionResult> {
+  const ids = z.object({ taskId: taskIdSchema, dependsOnId: taskIdSchema }).safeParse({ taskId, dependsOnId });
+  if (!ids.success) return fail(ids.error.issues[0].message);
+  const projectId = await findTaskProject(ids.data.taskId);
+  if (!projectId) return fail(`Không tìm thấy task ${ids.data.taskId}`);
+  const denied = await authorize("task.write", projectId);
+  if (denied) return fail(denied);
+
+  const result = add ? await addDependency(ids.data.taskId, ids.data.dependsOnId) : await removeDependency(ids.data.taskId, ids.data.dependsOnId);
+  if (!result.ok) return fail(result.error);
+  await recordActivity("ph-link", `${add ? "Thêm" : "Bỏ"} phụ thuộc ${ids.data.taskId} → ${ids.data.dependsOnId}`, {
+    event: { projectId, type: "task", tone: "ok", taskId: ids.data.taskId },
   });
   revalidateTaskViews();
   return ok();

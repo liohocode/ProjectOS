@@ -5,6 +5,7 @@ import { formatDue, parseTaskStatus, TASK_STATUS_LABEL, toIsoDate } from "@/lib/
 import { DEFAULT_AGENT_CONFIG } from "@/lib/agentConfig";
 import { transitionTask } from "./taskTransitions";
 import { reviewGateBlocker } from "./taskCriteria";
+import { dependencyBlocker } from "./taskDependencies";
 
 // Nghiệp vụ task dùng chung cho MCP tool (agent, F16). Không có "use server"; nơi gọi tự xác thực danh tính.
 
@@ -40,6 +41,8 @@ export interface AgentTaskView {
   code: string | null;
   size: "S" | "M" | "L" | null;
   needsDecision: boolean;
+  /** F21.8: task phụ thuộc chưa Done — còn thì chưa claim được */
+  waitingOn: string[];
 }
 
 const MAX_TASKS = 200;
@@ -89,6 +92,7 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
       code: true,
       size: true,
       needsDecision: true,
+      dependsOn: { where: { dependsOn: { stage: { not: "Done" }, archivedAt: null } }, select: { dependsOnId: true }, orderBy: { dependsOnId: "asc" } },
       assignee: { select: { name: true } },
       feature: { select: { id: true, name: true, projectId: true } },
       transitions: { where: { note: { not: null }, fromStage: "Review" }, orderBy: { at: "desc" }, take: 1, select: { note: true, at: true } },
@@ -115,6 +119,7 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
     code: t.code,
     size: t.size,
     needsDecision: t.needsDecision,
+    waitingOn: t.dependsOn.map((d) => d.dependsOnId),
   }));
 }
 
@@ -149,6 +154,9 @@ export async function claimTask(agentId: string, taskId: string, now: Date = new
     const projectId = task.feature.projectId;
     if (task.stage === "Done") return { ok: false, reason: `${taskId} đã Done`, projectId };
     if (task.blocked) return { ok: false, reason: `${taskId} đang bị block: ${task.blocked}`, projectId };
+    // F21.8: chưa bắt đầu được khi task phụ thuộc chưa Done.
+    const waiting = await dependencyBlocker(taskId);
+    if (waiting) return { ok: false, reason: waiting, projectId };
     if (task.runningSince && task.assigneeId !== agentId) {
       return { ok: false, reason: `${taskId} đang được ${task.assignee.name} chạy`, projectId };
     }

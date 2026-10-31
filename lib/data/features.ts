@@ -8,8 +8,12 @@ import { featureProgress } from "@/lib/featureProgress";
 
 export const UNASSIGNED_OWNER = "Chưa giao";
 
+const REF = { select: { id: true, title: true, stage: true } } as const;
+
 const TASK_INCLUDE = {
   assignee: true,
+  dependsOn: { where: { dependsOn: { archivedAt: null } }, orderBy: { dependsOnId: "asc" }, select: { dependsOn: REF } },
+  blocking: { where: { task: { archivedAt: null } }, orderBy: { taskId: "asc" }, select: { task: REF } },
   criteria: {
     orderBy: [{ position: "asc" }, { id: "asc" }],
     select: { id: true, text: true, doneAt: true, doneBy: { select: { name: true } } },
@@ -38,6 +42,8 @@ function toTask(t: TaskRow, now: Date): Task {
     links: { prUrl: t.prUrl, branch: t.branch, commitSha: t.commitSha },
     sprintId: t.sprintId,
     criteria: t.criteria.map((c) => ({ id: c.id, text: c.text, done: c.doneAt !== null, doneBy: c.doneBy?.name ?? null })),
+    dependsOn: t.dependsOn.map(({ dependsOn: d }) => ({ ...d, done: d.stage === "Done" })),
+    blocking: t.blocking.map(({ task: d }) => ({ ...d, done: d.stage === "Done" })),
     ...(t.archivedAt && { archived: true as const }),
     ...(t.description && { description: t.description }),
     ...(t.size && { size: t.size }),

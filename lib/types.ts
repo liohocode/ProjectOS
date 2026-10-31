@@ -29,6 +29,14 @@ export interface TaskCriterionView {
   doneBy: string | null;
 }
 
+/** Tham chiếu ngắn tới task khác (F21.8). */
+export interface TaskRef {
+  id: string;
+  title: string;
+  stage: TaskStage;
+  done: boolean;
+}
+
 export interface Task {
   id: string;
   stage: TaskStage;
@@ -62,6 +70,9 @@ export interface Task {
   size?: "S" | "M" | "L";
   code?: string;
   needsDecision?: true;
+  /** F21.8: task này phụ thuộc (done = đã Done) / các task đang chờ task này */
+  dependsOn: TaskRef[];
+  blocking: TaskRef[];
 }
 
 export interface Feature {

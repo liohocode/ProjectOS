@@ -110,7 +110,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-AG-13 | Template tài liệu: PRD, tech spec, ADR, runbook | ⬜ | F24 |
 | FR-AG-14 | Quy ước làm việc chuẩn (CLAUDE.md mẫu) cho repo dùng Meridian | 🟡 mẫu + guide (F24.5); chờ thử trên repo thật (F24.7) | F24 |
 | FR-PM-07 | Task có mô tả (markdown), cỡ, mã hiển thị, nhãn "Cần quyết định" | ✅ (F21.7) | F21 |
-| FR-PM-08 | Phụ thuộc giữa task; không nhận task khi phụ thuộc chưa xong | ⬜ | F21 |
+| FR-PM-08 | Phụ thuộc giữa task; không nhận task khi phụ thuộc chưa xong | ✅ (F21.8) | F21 |
 | FR-PM-09 | Trang chi tiết feature: mục tiêu, phạm vi, ghi chú quyết định, task, tài liệu | ⬜ | F21 |
 | FR-PM-10 | Lưu trữ feature, sắp xếp ưu tiên feature / task | ⬜ | F21 |
 | FR-PM-11 | Nội dung mô tả / tài liệu hiển thị markdown (bảng, danh sách, code) | ✅ tài liệu (F21.11); mô tả task / feature ở F21.7 / F21.9 | F21 |

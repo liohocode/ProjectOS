@@ -20,6 +20,13 @@ export function TaskRow({ task, onOpen }: { task: Task; onOpen: () => void }) {
             <span>{task.blocked}</span>
           </>
         )}
+        {/* F21.8: còn phụ thuộc chưa xong */}
+        {!task.blocked && !task.running && task.stage !== "Done" && task.dependsOn.some((d) => !d.done) && (
+          <>
+            <i className="ph ph-link" aria-hidden />
+            <span>chờ {task.dependsOn.filter((d) => !d.done).map((d) => d.id).join(", ")}</span>
+          </>
+        )}
         {!task.blocked && task.running && (
           <>
             <i className="ph ph-circle-notch" aria-hidden />
