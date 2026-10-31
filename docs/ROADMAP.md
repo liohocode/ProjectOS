@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-31 · Tổng: **115/168 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 20/65 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-31 · Tổng: **116/168 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 21/65 (đã chốt F23.1, F25.1).
 
 ## Điều chỉnh ưu tiên (Lio, 2026-10-31)
 1. **Hoàn thiện Feature & Task trước** (Phase 7): mô tả task, cỡ, phụ thuộc, trang chi tiết feature, markdown, DoD, lịch sử block, agent đề xuất task — đủ để chứa toàn bộ kế hoạch đang nằm trong `.md`.
@@ -50,7 +50,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 7 — Quản lý công việc & chất lượng
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F21](features/F21-work-management.md) | Feature CRUD, tiến độ tính từ task, sprint, lưu trữ task, bình luận, acceptance criteria; **mở rộng**: mô tả / cỡ / phụ thuộc task, trang chi tiết feature, markdown | F11, F16.6 | Đang làm — mở rộng F21.8–F21.10 (ưu tiên 1) | 8/11 |
+| [F21](features/F21-work-management.md) | Feature CRUD, tiến độ tính từ task, sprint, lưu trữ task, bình luận, acceptance criteria; **mở rộng**: mô tả / cỡ / phụ thuộc task, trang chi tiết feature, markdown | F11, F16.6 | Đang làm — mở rộng F21.9–F21.10 (ưu tiên 1) | 9/11 |
 | [F22](features/F22-process-quality.md) | Lịch sử trạng thái, cổng review của người, Definition of Done, liên kết PR, chỉ số chất lượng | F16.4, F21.6 | Đang làm — còn DoD theo dự án (F22.6), lịch sử block (F22.7) | 5/7 |
 
 ### Phase 7b — Kế hoạch Meridian trên web (ưu tiên 2)
@@ -89,7 +89,8 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F21.8](features/F21-work-management.md) Phụ thuộc giữa task | Cột "Phụ thuộc" của kế hoạch; chặn claim sai thứ tự |
+| [F21.10](features/F21-work-management.md) Lưu trữ feature, sắp xếp ưu tiên | Hoàn tất F21 |
+| [F22.7](features/F22-process-quality.md) Lịch sử block + thời gian bị block | Hoàn tất chỉ số chất lượng |
 | [F21.9](features/F21-work-management.md) Trang chi tiết feature | Mục tiêu / phạm vi / ghi chú quyết định của feature trên web |
 
 ## Quyết định đang mở (cần người dùng chốt)

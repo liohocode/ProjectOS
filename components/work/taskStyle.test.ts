@@ -16,6 +16,8 @@ const baseTask: Task = {
   links: { prUrl: null, branch: null, commitSha: null },
   sprintId: null,
   criteria: [],
+  dependsOn: [],
+  blocking: [],
   dueIso: "2026-01-01",
 };
 

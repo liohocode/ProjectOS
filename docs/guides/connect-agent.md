@@ -26,7 +26,7 @@ Luồng làm một task (quy ước đầy đủ + CLAUDE.md mẫu cho repo: [`a
 | Tool | Server | Tham số | Làm gì |
 |---|---|---|---|
 | `tasks_list` | core | `projectId?`, `stage?` (BA/TA/Dev/Review/Done), `assigneeId?` (`"me"` = chính agent) | Task trong các dự án agent thuộc về (tối đa 200) |
-| `tasks_claim` | core | `taskId` | Nhận task: giao cho agent, "Đang chạy" |
+| `tasks_claim` | core | `taskId` | Nhận task: giao cho agent, "Đang chạy" — bị chặn khi task còn phụ thuộc chưa Done (`waitingOn` trong `tasks_list`) |
 | `context_get` | core | `taskId` | **Một lệnh đủ ngữ cảnh**: task (kèm `lastReturn`), feature, acceptance criteria, tài liệu của feature (đầy đủ, tối đa 5 — cần `meridian-docs`), bình luận, lịch sử trạng thái |
 | `tasks_update_status` | core | `taskId`, `stage?` (BA/TA/Dev/Review), `status?` (Đang làm/Chờ/Chờ review), `prUrl?`, `branch?`, `commit?` (chuỗi rỗng = xoá) | Báo tiến độ task **của mình** và liên kết code (hiện trong drawer); đổi trạng thái = nhả task, chỉ báo liên kết thì không |
 | `tasks_comment` | core | `taskId`, `body` | Bình luận — hiện ở mục "Bình luận" của task |

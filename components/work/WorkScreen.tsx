@@ -171,6 +171,7 @@ export function WorkScreen({
           info={taskDrawerInfo[activeTask.task.id]}
           agents={projectAgents}
           sprints={sprints}
+          projectTasks={allTasks.map(({ id, title, stage }) => ({ id, title, stage, done: stage === "Done" }))}
           onClose={closeTask}
         />
       )}

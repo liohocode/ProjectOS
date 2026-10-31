@@ -818,6 +818,14 @@ img { display: block; max-width: 100%; }
 .drawer-comment > div { min-width: 0; flex: 1; }
 .drawer-comment-head { display: flex; align-items: baseline; gap: var(--space-2); font-size: 12px; color: var(--color-neutral-300); }
 .drawer-comment-body { white-space: pre-wrap; overflow-wrap: anywhere; text-wrap: pretty; }
+/* F21.8: phụ thuộc giữa task */
+.dep-label { font-size: 11.5px; color: var(--color-neutral-500); margin: var(--space-1) 0; }
+.dep-list { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.dep-item { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; }
+.dep-link { display: flex; align-items: center; gap: var(--space-2); flex: 1; min-width: 0; color: inherit; text-decoration: none; padding: 2px 0; }
+.dep-link:hover .dep-title { color: var(--color-accent-200); }
+.dep-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dep-item.is-done .dep-title { color: var(--color-neutral-500); text-decoration: line-through; }
 /* F21.6: acceptance criteria trong drawer */
 .criteria-list { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .criteria-item { display: flex; align-items: flex-start; gap: var(--space-2); font-size: 13px; padding: 3px 0; }
