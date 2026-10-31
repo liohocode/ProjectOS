@@ -325,11 +325,15 @@ async function main() {
 
   const log = await getMcpLog();
   const seededAt = new Date();
+  // Giờ trong dữ liệu mẫu ("14:32:08") là của hôm nay; nếu mốc muộn nhất còn ở tương lai thì dời **cả nhóm** lùi vừa đủ
+  // để mốc đó nằm 1 phút trước lúc seed — nhật ký không bao giờ ở tương lai, thứ tự giữa các dòng giữ nguyên và vẫn trong
+  // 24 giờ qua. (Trước đây lùi từng dòng một ngày nên seed chạy giữa hai mốc — vd 14:26 giữa 14:21 và 14:31 — đảo thứ tự,
+  // làm test log phiên chạy F17.4 hỏng tuỳ giờ trong ngày.)
+  const today = (clock: string) => new Date(`${seededAt.toDateString()} ${clock}`);
+  const latest = Math.max(...log.map((e) => today(e.at).getTime()));
+  const shiftMs = latest > seededAt.getTime() ? latest - seededAt.getTime() + 60_000 : 0;
   for (const entry of log) {
-    // Giờ trong dữ liệu mẫu ("14:32:08") là của hôm nay; chạy seed trước giờ đó (vd sau nửa đêm) thì lùi về hôm qua —
-    // nhật ký không bao giờ nằm ở tương lai (trước đây làm lẫn vào các truy vấn / test lọc theo thời gian).
-    const at = new Date(`${seededAt.toDateString()} ${entry.at}`);
-    if (at > seededAt) at.setDate(at.getDate() - 1);
+    const at = new Date(today(entry.at).getTime() - shiftMs);
     await prisma.mcpLogEntry.create({
       data: {
         at,
