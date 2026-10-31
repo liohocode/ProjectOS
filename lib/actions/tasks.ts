@@ -8,6 +8,7 @@ import { authorize } from "@/lib/auth/authorize";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { recordTaskCreated, transitionTask } from "@/lib/domain/taskTransitions";
 import { reviewTask, type ReviewDecision } from "@/lib/domain/taskReview";
+import { parseTaskLinks } from "@/lib/taskLinks";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
 
@@ -193,13 +194,15 @@ export async function setTaskBlocked(taskId: string, block: { short: string; ful
   return ok();
 }
 
+// F22.4: liên kết code — kiểm tra chi tiết bằng parseTaskLinks (dùng chung với MCP); chuỗi rỗng = xoá.
+const linkSchema = z.string().max(500).nullable();
 const taskPatchSchema = z
-  .object({ title: titleSchema, estimatePoints: estimateSchema, dueDate: dueDateSchema })
+  .object({ title: titleSchema, estimatePoints: estimateSchema, dueDate: dueDateSchema, prUrl: linkSchema, branch: linkSchema, commitSha: linkSchema })
   .partial()
   .refine((patch) => Object.keys(patch).length > 0, "Không có gì để cập nhật");
 export type TaskPatch = z.input<typeof taskPatchSchema>;
 
-/** Sửa nhanh tiêu đề / ước lượng / hạn (field không có trong patch giữ nguyên). */
+/** Sửa nhanh tiêu đề / ước lượng / hạn / liên kết code (field không có trong patch giữ nguyên). */
 export async function updateTask(taskId: string, patch: TaskPatch): Promise<ActionResult> {
   const input = z.object({ taskId: taskIdSchema, patch: taskPatchSchema }).safeParse({ taskId, patch });
   if (!input.success) return fail(input.error.issues[0].message);
@@ -208,16 +211,27 @@ export async function updateTask(taskId: string, patch: TaskPatch): Promise<Acti
   if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
   const denied = await authorize("task.write", projectId);
   if (denied) return fail(denied);
-  const { title, estimatePoints, dueDate } = input.data.patch;
+  const { title, estimatePoints, dueDate, prUrl, branch, commitSha } = input.data.patch;
+  const links = parseTaskLinks({ prUrl, branch, commitSha });
+  if (!links.ok) return fail(links.error);
+  // Chỉ ghi nhận liên kết thật sự đổi (form gửi lại cả giá trị cũ).
+  const current = await prisma.task.findUniqueOrThrow({ where: { id: input.data.taskId }, select: { prUrl: true, branch: true, commitSha: true } });
+  const linkChanges = Object.fromEntries(Object.entries(links.links).filter(([k, v]) => current[k as keyof typeof current] !== v));
   await prisma.task.update({
     where: { id: input.data.taskId },
     data: {
       ...(title !== undefined && { title }),
       ...(estimatePoints !== undefined && { estimatePoints }),
       ...(dueDate !== undefined && { dueDate: toDueDate(dueDate) }),
+      ...linkChanges,
     },
   });
-  const changed = [title !== undefined && "tiêu đề", estimatePoints !== undefined && "ước lượng", dueDate !== undefined && "hạn"].filter(Boolean);
+  const changed = [
+    title !== undefined && "tiêu đề",
+    estimatePoints !== undefined && "ước lượng",
+    dueDate !== undefined && "hạn",
+    Object.keys(linkChanges).length > 0 && "liên kết",
+  ].filter(Boolean);
   await recordActivity("ph-pencil-simple", `Sửa ${input.data.taskId} (${changed.join(", ")})`, {
     event: { projectId, type: "task", tone: "ok", taskId: input.data.taskId },
   });

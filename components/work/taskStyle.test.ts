@@ -13,6 +13,7 @@ const baseTask: Task = {
   est: "1đ",
   due: "01/01",
   estimatePoints: 1,
+  links: { prUrl: null, branch: null, commitSha: null },
   dueIso: "2026-01-01",
 };
 

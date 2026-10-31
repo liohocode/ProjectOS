@@ -188,6 +188,8 @@ async function main() {
               blocked: t.blocked,
               blockedFull: t.blockedFull,
               runningSince: t.running ? parseRunning(t.running, new Date()) : null,
+              prUrl: t.prUrl ?? null,
+              branch: t.branch ?? null,
             })),
           },
         },

@@ -1,5 +1,6 @@
 import type { SectionDiff } from "@/lib/diffSections";
 import type { AgentConfigValues } from "@/lib/agentConfig";
+import type { TaskLinks } from "@/lib/taskLinks";
 
 export type ScreenId = "inbox" | "portfolio" | "docs" | "work" | "team" | "mcp";
 
@@ -37,6 +38,8 @@ export interface Task {
   running?: string;
   /** ISO — thời điểm bắt đầu chạy, để client tự tăng "chạy N phút" (F17.5) */
   runningSince?: string;
+  /** Liên kết code (F22.4) — PR, branch, commit */
+  links: TaskLinks;
 }
 
 export interface Feature {

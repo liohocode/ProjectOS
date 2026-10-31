@@ -98,7 +98,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-QA-01 | Lưu lịch sử chuyển stage / trạng thái của mọi task | ✅ `TaskTransition` từ web + MCP (F22.1) | F22 |
 | FR-QA-02 | Task do agent làm phải qua cổng review của người (duyệt / trả lại kèm lý do) | ✅ (F22.2) | F22 |
 | FR-QA-03 | Definition of Done theo dự án, áp khi chuyển Review / Done | ⬜ | F22 |
-| FR-QA-04 | Task liên kết PR / branch / commit | ⬜ | F22 |
+| FR-QA-04 | Task liên kết PR / branch / commit | ✅ agent báo qua MCP, người nhập ở drawer (F22.4) | F22 |
 | FR-QA-05 | Chỉ số chất lượng: cycle time, tỉ lệ trả lại, thời gian bị block | ⬜ | F22 |
 | FR-TK-01 | Ghi nhận token AI theo task / phiên / agent / dự án | ⬜ | F23 |
 | FR-TK-02 | Ước tính chi phí theo bảng giá model | ⬜ | F23 |
