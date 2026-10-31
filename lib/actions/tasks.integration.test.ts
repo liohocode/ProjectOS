@@ -114,6 +114,9 @@ describe("createTask", () => {
 
     const task = await prisma.task.findUniqueOrThrow({ where: { id: result.taskId } });
     expect(task).toMatchObject({ stage: "BA", status: "Cho", assigneeId: "nam", estimatePoints: 3 });
+    // F21.3: task mới vào sprint hiện tại của dự án.
+    const project = await prisma.project.findUniqueOrThrow({ where: { id: "rv-web" } });
+    expect(task.sprintId).toBe(project.currentSprintId);
     expect(task.dueDate?.toISOString().slice(0, 10)).toBe("2026-11-02");
   });
 

@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { Project } from "@/lib/types";
+import type { Project, SprintOption } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { formatSprintLabel } from "@/lib/sprint";
 
@@ -13,6 +13,7 @@ function toProject(row: ProjectRow): Project {
     status: row.status,
     desc: row.desc,
     sprint: row.currentSprint ? formatSprintLabel(row.currentSprint) : "Chưa có sprint",
+    currentSprintId: row.currentSprintId,
     archived: row.archivedAt !== null,
   };
 }
@@ -35,4 +36,13 @@ export const getProjectsByMember = cache(async (memberId: string): Promise<Proje
     orderBy: { id: "asc" },
   });
   return rows.map(toProject);
+});
+
+/** Sprint của dự án, mới trước (F21.3). */
+export const getSprintsByProject = cache(async (projectId: string): Promise<SprintOption[]> => {
+  const [rows, project] = await Promise.all([
+    prisma.sprint.findMany({ where: { projectId }, orderBy: [{ startDate: "desc" }, { id: "asc" }] }),
+    prisma.project.findUnique({ where: { id: projectId }, select: { currentSprintId: true } }),
+  ]);
+  return rows.map((s) => ({ id: s.id, name: s.name, label: formatSprintLabel(s), current: s.id === project?.currentSprintId }));
 });

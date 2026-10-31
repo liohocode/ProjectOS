@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatSprintLabel, parseSprintLabel } from "./sprint";
+import { formatSprintLabel, parseSprintInput, parseSprintLabel } from "./sprint";
 
 const utc = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d));
 
@@ -36,5 +36,23 @@ describe("formatSprintLabel", () => {
     for (const label of ["Sprint 14 · 12–26/08", "Sprint 9 · 11–25/08", "Sprint 22 · 18/08–01/09"]) {
       expect(formatSprintLabel(parseSprintLabel(label, 2026))).toBe(label);
     }
+  });
+});
+
+describe("parseSprintInput (F21.3)", () => {
+  it("hợp lệ → tên đã trim + ngày UTC", () => {
+    expect(parseSprintInput({ name: " Sprint 15 ", startDate: "2026-08-27", endDate: "2026-09-09" })).toEqual({
+      ok: true,
+      value: { name: "Sprint 15", startDate: utc(2026, 8, 27), endDate: utc(2026, 9, 9) },
+    });
+  });
+
+  it.each([
+    [{ name: "  ", startDate: "2026-08-27", endDate: "2026-09-09" }, "Nhập tên sprint"],
+    [{ name: "S", startDate: "", endDate: "2026-09-09" }, "Chọn ngày bắt đầu và kết thúc"],
+    [{ name: "S", startDate: "2026-09-10", endDate: "2026-09-09" }, "Ngày kết thúc phải sau ngày bắt đầu"],
+    [{ name: "S", startDate: "2026-01-01", endDate: "2026-12-31" }, "Sprint dài tối đa 60 ngày"],
+  ])("từ chối %o", (input, error) => {
+    expect(parseSprintInput(input)).toEqual({ ok: false, error });
   });
 });

@@ -6,7 +6,9 @@ import { getTeamByProject } from "@/lib/data/team";
 import { WorkScreen } from "@/components/work/WorkScreen";
 import { NewTaskDialog } from "@/components/work/NewTaskDialog";
 import { NewFeatureDialog } from "@/components/work/NewFeatureDialog";
-import { NEW_FEATURE_PARAM } from "@/components/work/featureDialogParam";
+import { NEW_FEATURE_PARAM, SPRINTS_PARAM } from "@/components/work/featureDialogParam";
+import { SprintDialog } from "@/components/work/SprintDialog";
+import { getProjectById, getSprintsByProject } from "@/lib/data/projects";
 import { filterFeatures, parseWorkFilter } from "@/lib/filters";
 
 export default async function WorkPage(props: PageProps<"/[project]/work">) {
@@ -15,12 +17,14 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
   const { new: newParam } = searchParams;
   const filter = parseWorkFilter(searchParams);
 
-  const [features, timeline, activity, projectTeam, proposals] = await Promise.all([
+  const [features, timeline, activity, projectTeam, proposals, sprints, project] = await Promise.all([
     getFeaturesByProject(projectId),
     getTimelineByProject(projectId),
     getActivityFeed(projectId),
     getTeamByProject(projectId),
     getProposedFeatures(projectId),
+    getSprintsByProject(projectId),
+    getProjectById(projectId),
   ]);
   const projectAgents = projectTeam.filter((m) => m.kind === "agent");
   const memberOptions = projectTeam.map(({ id, name, kind }) => ({ id, name, kind }));
@@ -36,7 +40,7 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
   return (
     <>
       <WorkScreen
-        features={filterFeatures(features, filter)}
+        features={filterFeatures(features, filter, project?.currentSprintId ?? null)}
         filtered={Object.values(filter).some((v) => v !== undefined)}
         timeline={timeline}
         activity={activity}
@@ -44,7 +48,10 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
         projectAgents={projectAgents}
         proposals={proposals}
         projectMembers={memberOptions}
+        sprints={sprints}
       />
+      {/* "Sprint" ở toolbar đặt ?sprints=1 (F21.3) */}
+      {searchParams[SPRINTS_PARAM] === "1" && <SprintDialog projectId={projectId} sprints={sprints} />}
       {/* "Feature mới" ở toolbar đặt ?newFeature=1 (F21.1) */}
       {searchParams[NEW_FEATURE_PARAM] === "1" && <NewFeatureDialog projectId={projectId} members={memberOptions} />}
       {/* "Task mới" ở header đặt ?new=1 (ADR-018) */}

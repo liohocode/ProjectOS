@@ -19,7 +19,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 |---|---|---|---|---|
 | F21.1 | Tạo / sửa feature: tên, owner, stage, kế hoạch (ngày bắt đầu/kết thúc) | M | — | Xong — 2026-10-31 |
 | F21.2 | % tiến độ feature tính từ task (bỏ đọc cột `pct` tĩnh) | S | — | Xong — 2026-10-31 |
-| F21.3 | Sprint: tạo, đặt sprint hiện tại, gán task vào sprint, lọc theo sprint | M | — | Chưa làm |
+| F21.3 | Sprint: tạo, đặt sprint hiện tại, gán task vào sprint, lọc theo sprint | M | — | Xong — 2026-10-31 |
 | F21.4 | Lưu trữ task (ẩn khỏi list, giữ lịch sử) | S | — | Chưa làm |
 | F21.5 | Người bình luận trên task (drawer), dùng chung `TaskComment` | S | F16.4 | Chưa làm |
 | F21.6 | Acceptance criteria dạng checklist trên task (người + agent tick) | M | — | Chưa làm |
@@ -37,7 +37,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 ### F21.3 — Sprint
 **Làm gì**: migration chỉ thêm `Task.sprintId?`. Màn work: chọn sprint (hiện tại / tất cả / chưa xếp), dialog tạo sprint + đặt làm hiện tại, gán task vào sprint ở drawer.
 **Hoàn thành khi**:
-- [ ] Tạo sprint mới, đặt hiện tại → header + timeline dùng sprint mới; lọc task theo sprint (e2e)
+- [x] Tạo sprint mới, đặt hiện tại → header + timeline dùng sprint mới; lọc task theo sprint (e2e `sprints.spec.ts`, integration `lib/actions/sprints.integration.test.ts`)
 
 ### F21.4 — Lưu trữ task
 **Làm gì**: `Task.archivedAt?`; drawer "Lưu trữ" (xác nhận); task lưu trữ không hiện ở list / MCP `tasks_list`, vẫn mở được qua deep link.
@@ -55,5 +55,6 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 - [ ] Lead thêm tiêu chí, agent tick qua MCP (F24) / người tick trên UI
 
 ## Quyết định / ghi chú
+- **F21.3 (2026-10-31)**: migration chỉ thêm `Task.sprintId?` (FK `SET NULL`, index). Quyền mới `sprint.manage` (tech lead / người tạo dự án) để tạo sprint + đặt hiện tại; xếp task vào sprint là `task.write`. Nút "Sprint" ở toolbar màn work mở dialog `?sprints=1` (ADR-018): danh sách sprint (mới trước), "Đặt làm hiện tại", form sprint mới (mặc định đặt hiện tại; tối đa 60 ngày). Drawer có ô chọn sprint. Bộ lọc "Lọc" thêm Sprint: hiện tại / chưa xếp / từng sprint (`?sprint=current|none|<id>`, mặc định không lọc → không ẩn task nào). Task mới tạo trên web vào sprint hiện tại. Seed: mọi task mẫu thuộc sprint hiện tại của dự án; **production không backfill** — task có sẵn là "chưa xếp" tới khi lead xếp. Chưa có sửa / xoá sprint (thêm khi cần).
 - **F21.1 (2026-10-31)**: ma trận quyền thêm `feature.create` (thành viên dự án) và `feature.manage` (tech lead / người tạo dự án — sửa). Nút "Feature mới" ở toolbar màn work (`?newFeature=1`, ADR-018) cho mọi thành viên; nút bút trên header feature cho người có quyền sửa. `createFeature` / `updateFeature` ở `lib/domain/features.ts` dùng chung dãy mã `FEAT-n` với feature agent đề xuất; kiểm tra người phụ trách thuộc dự án, kế hoạch đủ 2 ngày và đúng thứ tự. Ghi sự kiện rail. Chưa có xoá / lưu trữ feature (thêm task nếu cần).
 - **F21.2 (2026-10-31)**: `lib/featureProgress.ts` — trọng số story point, task chưa ước lượng tính 1 điểm, feature không có task = 0%. Dùng ở list theo feature, timeline (nhãn "Dev · n%") và trung bình portfolio. Cột `Feature.pct` giữ nguyên nhưng không đọc (đánh dấu CŨ trong schema). **Hệ quả với dữ liệu mẫu**: % hiển thị đổi (vd FEAT-118 62% → 29%) vì giờ phản ánh task thật. Sửa kèm: seed nhật ký MCP mẫu không còn tạo mốc thời gian ở tương lai khi chạy seed sau nửa đêm.

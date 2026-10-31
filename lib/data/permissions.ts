@@ -19,6 +19,7 @@ const ACTIONS: PermissionAction[] = [
   "doc.create",
   "task.write",
   "task.review",
+  "sprint.manage",
 ];
 
 /** Actor của ma trận quyền (F15.4) — null nếu member không còn. */

@@ -11,7 +11,7 @@ import {
 
 const task = (id: string, over: Partial<Task> = {}): Task => ({
   id, stage: "Dev", assigneeId: "nam", title: id, who: "Nam", kind: "human", status: "Đang làm",
-  est: "1đ", due: "—", estimatePoints: 1, dueIso: null, links: { prUrl: null, branch: null, commitSha: null }, ...over,
+  est: "1đ", due: "—", estimatePoints: 1, dueIso: null, links: { prUrl: null, branch: null, commitSha: null }, sprintId: null, ...over,
 });
 const feature = (id: string, tasks: Task[]): Feature => ({
   id,
@@ -62,6 +62,21 @@ describe("filterFeatures", () => {
     expect(ids({ running: true })).toEqual(["T-4"]);
     expect(ids({ who: "nam", blocked: true })).toEqual(["T-3"]);
     expect(filterFeatures(features, { stage: "BA" })).toEqual([]);
+  });
+});
+
+describe("filterFeatures theo sprint (F21.3)", () => {
+  const features = [feature("F1", [task("T-1", { sprintId: "s14" }), task("T-2", { sprintId: "s13" }), task("T-3")])];
+  const ids = (sprint: string, current: string | null) => filterFeatures(features, { sprint }, current).flatMap((x) => x.tasks.map((t) => t.id));
+
+  it("sprint hiện tại / chưa xếp / sprint cụ thể", () => {
+    expect(ids("current", "s14")).toEqual(["T-1"]);
+    expect(ids("none", "s14")).toEqual(["T-3"]);
+    expect(ids("s13", "s14")).toEqual(["T-2"]);
+  });
+
+  it("dự án chưa có sprint hiện tại → 'hiện tại' không khớp task chưa xếp", () => {
+    expect(ids("current", null)).toEqual([]);
   });
 });
 

@@ -144,6 +144,7 @@ async function main() {
 
   console.log(`Seeding ${projects.length} projects...`);
   const sprintStartByProject = new Map<string, Date>();
+  const sprintIdByProject = new Map<string, string>();
   for (const p of projects) {
     // Dữ liệu mẫu gốc lưu sprint dạng nhãn hiển thị, không có năm — gán năm 2026 (năm của dữ liệu mẫu).
     // Sprint cần project tồn tại trước, project lại trỏ ngược về sprint hiện tại → 3 bước.
@@ -152,6 +153,7 @@ async function main() {
     const created = await prisma.sprint.create({ data: { ...parseSprintLabel(sprint, 2026), projectId: p.id } });
     await prisma.project.update({ where: { id: p.id }, data: { currentSprintId: created.id } });
     sprintStartByProject.set(p.id, created.startDate);
+    sprintIdByProject.set(p.id, created.id);
   }
 
   console.log("Seeding project members (alloc)...");
@@ -190,6 +192,8 @@ async function main() {
               runningSince: t.running ? parseRunning(t.running, new Date()) : null,
               prUrl: t.prUrl ?? null,
               branch: t.branch ?? null,
+              // F21.3: dữ liệu mẫu chỉ có một sprint / dự án → mọi task thuộc sprint hiện tại.
+              sprintId: sprintIdByProject.get(p.id) ?? null,
             })),
           },
         },
