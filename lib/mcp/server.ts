@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { appendDocForAgent, readDocForAgent, searchDocsForAgent } from "@/lib/domain/agentDocs";
 import { proposeFeature } from "@/lib/domain/features";
 import { getTaskContext } from "@/lib/domain/taskContext";
+import { checkCriterionByAgent } from "@/lib/domain/taskCriteria";
 import { AGENT_STAGES, AGENT_STATUSES, claimTask, commentOnTask, listTasksForMember, updateTaskByAgent } from "@/lib/domain/tasks";
 import { prisma } from "@/lib/prisma";
 import { recordToolCall, type ToolCallRecord } from "./audit";
@@ -218,6 +219,35 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
             projectId: result.projectId,
             taskId: result.ok ? taskId : null,
             ...(result.ok && { event: { type: "task", tone: "ok", text: `Bình luận ${taskId}: ${body.slice(0, 120)}`, taskId } }),
+          },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "criteria_check",
+    {
+      title: "Tick acceptance criterion",
+      description:
+        "Đánh dấu một acceptance criterion của task đang giao cho agent là đã đạt (done: true) hoặc chưa (done: false). Lấy id tiêu chí từ context_get. Tick khi đã kiểm chứng (test / chạy thử), trước khi đẩy Review.",
+      inputSchema: {
+        taskId: z.string().trim().min(1).describe("Mã task, vd T-405"),
+        criterionId: z.string().trim().min(1).describe("Id tiêu chí (từ context_get → criteria[].id)"),
+        done: z.boolean().describe("true = đã đạt, false = bỏ tick"),
+      },
+    },
+    async ({ taskId, criterionId, done }) =>
+      logged(agent, policy, "criteria_check", async () => {
+        const result = await checkCriterionByAgent(agent.memberId, taskId, criterionId, done);
+        if (result.ok) revalidatePath("/[project]", "layout");
+        return {
+          value: result.ok ? json({ checked: true, done }) : { ...json({ checked: false, reason: result.reason }), isError: true },
+          log: {
+            target: `${taskId} ${done ? "✓" : "✗"} ${criterionId}`,
+            result: result.ok ? "OK" : "BiChan",
+            projectId: result.projectId,
+            taskId: result.ok ? taskId : null,
+            ...(result.ok && { event: { type: "task", tone: "ok", text: `${taskId} ${done ? "đạt" : "bỏ tick"}: ${result.text.slice(0, 120)}`, taskId } }),
           },
         };
       }),

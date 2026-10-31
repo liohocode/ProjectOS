@@ -22,7 +22,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 | F21.3 | Sprint: tạo, đặt sprint hiện tại, gán task vào sprint, lọc theo sprint | M | — | Xong — 2026-10-31 |
 | F21.4 | Lưu trữ task (ẩn khỏi list, giữ lịch sử) | S | — | Chưa làm |
 | F21.5 | Người bình luận trên task (drawer), dùng chung `TaskComment` | S | F16.4 | Xong — 2026-10-31 |
-| F21.6 | Acceptance criteria dạng checklist trên task (người + agent tick) | M | — | Chưa làm |
+| F21.6 | Acceptance criteria dạng checklist trên task (người + agent tick) | M | — | Xong — 2026-10-31 |
 
 ### F21.1 — Feature CRUD
 **Làm gì**: nút "Feature mới" (màn work, `?newFeature=1`) + "Sửa" trên header feature. Mã `FEAT-n` dùng chung với F16.6. Action `createFeature` / `updateFeature` (quyền: thành viên dự án tạo; sửa owner/kế hoạch: tech lead / người tạo dự án — thêm `feature.manage` vào ma trận).
@@ -52,9 +52,10 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 ### F21.6 — Acceptance criteria
 **Làm gì**: model `TaskCriterion(id, taskId, text, doneAt?, doneById?)`; drawer hiện checklist, thêm/sửa/tick; MCP `tasks_list` trả số tiêu chí đã đạt, F24.1 trả đầy đủ.
 **Hoàn thành khi**:
-- [ ] Lead thêm tiêu chí, agent tick qua MCP (F24) / người tick trên UI
+- [x] Lead thêm tiêu chí, agent tick qua MCP (F24) / người tick trên UI (integration `lib/actions/criteria.integration.test.ts`, MCP `app/api/mcp/client.integration.test.ts`, e2e `task-criteria.spec.ts`)
 
 ## Quyết định / ghi chú
+- **F21.6 (2026-10-31)**: migration chỉ thêm bảng `task_criteria` (`position` để giữ thứ tự, `doneAt` / `doneById` ghi ai tick). Tối đa 20 tiêu chí / task, 300 ký tự. Người (`task.write`) thêm / sửa / xoá / tick ở mục "Tiêu chí hoàn thành" của drawer (tick hiện ngay bằng `useOptimistic`); tick ghi sự kiện rail. MCP: tool mới `criteria_check(taskId, criterionId, done)` — chỉ task đang giao cho agent; `tasks_list` trả `criteria { done, total }`, `context_get` trả danh sách đầy đủ có id. Chưa chặn chuyển Review khi còn tiêu chí chưa đạt — đó là F22.3. Seed: T-396 có 3 tiêu chí (2 đạt). Sửa kèm: test F21.5 bình luận lên T-405 làm mất mục "đang chạy" của T-405 trong feed rv-web khi chạy song song với `aggregates.integration.test.ts` → chuyển sang task rv-app.
 - **F21.5 (2026-10-31)**: action `addTaskComment` (quyền `task.write`) dùng lại `commentOnTask` của MCP (cùng kiểm tra: không trống, tối đa 4000 ký tự, task thuộc dự án của người viết). Ô bình luận cuối mục "Bình luận" của drawer (Ctrl/⌘+Enter để gửi); mục luôn hiện với người có quyền kể cả khi chưa có bình luận. Ghi sự kiện rail "Bình luận T-…". Chưa có sửa / xoá bình luận.
 - **F21.3 (2026-10-31)**: migration chỉ thêm `Task.sprintId?` (FK `SET NULL`, index). Quyền mới `sprint.manage` (tech lead / người tạo dự án) để tạo sprint + đặt hiện tại; xếp task vào sprint là `task.write`. Nút "Sprint" ở toolbar màn work mở dialog `?sprints=1` (ADR-018): danh sách sprint (mới trước), "Đặt làm hiện tại", form sprint mới (mặc định đặt hiện tại; tối đa 60 ngày). Drawer có ô chọn sprint. Bộ lọc "Lọc" thêm Sprint: hiện tại / chưa xếp / từng sprint (`?sprint=current|none|<id>`, mặc định không lọc → không ẩn task nào). Task mới tạo trên web vào sprint hiện tại. Seed: mọi task mẫu thuộc sprint hiện tại của dự án; **production không backfill** — task có sẵn là "chưa xếp" tới khi lead xếp. Chưa có sửa / xoá sprint (thêm khi cần).
 - **F21.1 (2026-10-31)**: ma trận quyền thêm `feature.create` (thành viên dự án) và `feature.manage` (tech lead / người tạo dự án — sửa). Nút "Feature mới" ở toolbar màn work (`?newFeature=1`, ADR-018) cho mọi thành viên; nút bút trên header feature cho người có quyền sửa. `createFeature` / `updateFeature` ở `lib/domain/features.ts` dùng chung dãy mã `FEAT-n` với feature agent đề xuất; kiểm tra người phụ trách thuộc dự án, kế hoạch đủ 2 ngày và đúng thứ tự. Ghi sự kiện rail. Chưa có xoá / lưu trữ feature (thêm task nếu cần).

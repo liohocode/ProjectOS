@@ -191,15 +191,18 @@ describe("addTaskComment (F21.5)", () => {
     await prisma.taskComment.deleteMany({ where: { body: { startsWith: "IT người:" } } });
   });
 
+  // Task rv-app, không dùng T-405: sự kiện "Bình luận" mới sẽ thay mục "đang chạy" của T-405 trong feed rv-web
+  // mà aggregates.integration.test.ts kiểm tra (các file test chạy song song).
   it("người bình luận xen kẽ với agent, đúng thứ tự; chặn trống / người ngoài dự án", async () => {
-    await prisma.taskComment.create({ data: { taskId: "T-405", authorId: "agent-atlas", body: "IT người: agent hỏi trước" } });
-    expect(await addTaskComment("T-405", "  IT người: lead trả lời  ")).toEqual({ ok: true });
-    const rows = await prisma.taskComment.findMany({ where: { taskId: "T-405", body: { startsWith: "IT người:" } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] });
+    const taskId = (await prisma.task.findFirstOrThrow({ where: { feature: { projectId: "rv-app" } }, orderBy: { id: "asc" } })).id;
+    await prisma.taskComment.create({ data: { taskId, authorId: "agent-atlas", body: "IT người: agent hỏi trước" } });
+    expect(await addTaskComment(taskId, "  IT người: lead trả lời  ")).toEqual({ ok: true });
+    const rows = await prisma.taskComment.findMany({ where: { taskId, body: { startsWith: "IT người:" } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] });
     expect(rows.map((r) => [r.authorId, r.body])).toEqual([
       ["agent-atlas", "IT người: agent hỏi trước"],
       ["hieu", "IT người: lead trả lời"],
     ]);
-    expect(await addTaskComment("T-405", "   ")).toEqual({ ok: false, error: "Bình luận trống" });
+    expect(await addTaskComment(taskId, "   ")).toEqual({ ok: false, error: "Bình luận trống" });
 
     vi.mocked(getSessionMemberId).mockResolvedValue("nam");
     try {

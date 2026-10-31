@@ -15,6 +15,7 @@ const baseTask: Task = {
   estimatePoints: 1,
   links: { prUrl: null, branch: null, commitSha: null },
   sprintId: null,
+  criteria: [],
   dueIso: "2026-01-01",
 };
 

@@ -166,6 +166,7 @@ model Member {
   proposedFeatures  Feature[]        @relation("FeatureProposer")
   activityEvents    ActivityEvent[]  @relation("ActivityActor")
   taskTransitions   TaskTransition[] @relation("TransitionActor")
+  criteriaDone      TaskCriterion[]  @relation("CriterionDoneBy")
 
   @@map("members")
 }
@@ -304,6 +305,7 @@ model Task {
   sessions    McpSession[]
   comments    TaskComment[]
   transitions TaskTransition[]
+  criteria    TaskCriterion[]
 
   @@index([featureId])
   @@index([sprintId])
@@ -329,6 +331,24 @@ model TaskTransition {
 
   @@index([taskId, at])
   @@map("task_transitions")
+}
+
+/// Acceptance criteria của task (F21.6) — checklist người / agent tick; nền cho Definition of Done (F22.3).
+model TaskCriterion {
+  id        String    @id @default(cuid())
+  taskId    String
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  text      String
+  /// Thứ tự hiển thị (tăng dần)
+  position  Int
+  /// null = chưa đạt
+  doneAt    DateTime?
+  doneById  String?
+  doneBy    Member?   @relation("CriterionDoneBy", fields: [doneById], references: [id], onDelete: SetNull)
+  createdAt DateTime  @default(now())
+
+  @@index([taskId, position])
+  @@map("task_criteria")
 }
 
 /// Bình luận trên task (F16.4) — agent ghi qua MCP `tasks_comment`, hiện ở mục "Bình luận" của task drawer.

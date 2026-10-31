@@ -30,6 +30,8 @@ export interface SeedTask {
   /** Liên kết code (F22.4) */
   prUrl?: string;
   branch?: string;
+  /** Acceptance criteria (F21.6); done = người / agent thực hiện đã tick */
+  criteria?: { text: string; done?: boolean }[];
 }
 
 export interface SeedFeature {

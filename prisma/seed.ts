@@ -194,6 +194,13 @@ async function main() {
               branch: t.branch ?? null,
               // F21.3: dữ liệu mẫu chỉ có một sprint / dự án → mọi task thuộc sprint hiện tại.
               sprintId: sprintIdByProject.get(p.id) ?? null,
+              criteria: t.criteria && {
+                create: t.criteria.map((c, i) => ({
+                  text: c.text,
+                  position: i + 1,
+                  ...(c.done && { doneAt: new Date(), doneById: resolveMemberId(members, t.who) }),
+                })),
+              },
             })),
           },
         },

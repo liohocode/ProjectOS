@@ -14,7 +14,7 @@ Agent lấy đủ ngữ cảnh trong **một lệnh**, tự chia task / đề xu
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F24.1 | Tool `context_get(taskId)`: task + feature + acceptance criteria + tài liệu liên quan + bình luận + lý do trả lại | M | F21.6 | Xong — 2026-10-31 (chưa có acceptance criteria — thêm khi F21.6 xong) |
+| F24.1 | Tool `context_get(taskId)`: task + feature + acceptance criteria + tài liệu liên quan + bình luận + lý do trả lại | M | F21.6 | Xong — 2026-10-31 (acceptance criteria thêm ở F21.6) |
 | F24.2 | Tool `tasks_create` (TA agent chia task) — tạo task "đề xuất", lead duyệt như feature đề xuất | M | F21.1 | Chưa làm |
 | F24.3 | Tool `docs_create` — đề xuất tài liệu mới, lead duyệt mới xuất hiện | S | — | Chưa làm |
 | F24.4 | Template tài liệu (PRD, Tech spec, ADR, Runbook) khi tạo tài liệu — UI + MCP | S | — | Chưa làm |

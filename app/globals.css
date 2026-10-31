@@ -811,6 +811,20 @@ img { display: block; max-width: 100%; }
 .drawer-comment > div { min-width: 0; flex: 1; }
 .drawer-comment-head { display: flex; align-items: baseline; gap: var(--space-2); font-size: 12px; color: var(--color-neutral-300); }
 .drawer-comment-body { white-space: pre-wrap; overflow-wrap: anywhere; text-wrap: pretty; }
+/* F21.6: acceptance criteria trong drawer */
+.criteria-list { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.criteria-item { display: flex; align-items: flex-start; gap: var(--space-2); font-size: 13px; padding: 3px 0; }
+.criteria-check { display: flex; align-items: flex-start; gap: var(--space-2); flex: 1; min-width: 0; cursor: pointer; }
+.criteria-check input { margin-top: 3px; flex: none; }
+.criteria-text { overflow-wrap: anywhere; }
+.criteria-item.is-done .criteria-text { color: var(--color-neutral-500); text-decoration: line-through; }
+.criteria-by { font-size: 11px; color: var(--color-neutral-500); white-space: nowrap; margin-top: 2px; }
+.criteria-actions { display: flex; gap: 2px; flex: none; opacity: 0.6; }
+.criteria-item:hover .criteria-actions, .criteria-actions:focus-within { opacity: 1; }
+.icon-btn { background: none; border: none; color: var(--color-neutral-400); cursor: pointer; padding: 2px 4px; border-radius: var(--radius-sm); font-size: 13px; }
+.icon-btn:hover:not(:disabled) { color: var(--color-text); background: var(--color-surface); }
+.criteria-add, .criteria-edit { display: flex; gap: var(--space-2); }
+.criteria-add .input, .criteria-edit .input { flex: 1; min-width: 0; }
 .drawer-comment-form { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
 .drawer-comment-form textarea { width: 100%; resize: vertical; }
 .drawer-footer { display: flex; gap: var(--space-2); margin-top: var(--space-6); }
