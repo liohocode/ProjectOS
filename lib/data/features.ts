@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { Feature, ProposedFeature, Task } from "@/lib/types";
+import type { Feature, ProjectPhaseView, ProposedFeature, Task } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning, toIsoDate } from "@/lib/taskFormat";
@@ -55,8 +55,13 @@ function toTask(t: TaskRow, now: Date): Task {
 /** Thứ tự ưu tiên (F21.10): `position` nhỏ trước, chưa đặt xếp cuối theo id. */
 export const PRIORITY_ORDER = [{ position: { sort: "asc", nulls: "last" } }, { id: "asc" }] satisfies Prisma.FeatureOrderByWithRelationInput[];
 
+const FEATURE_REF = { select: { id: true, name: true, stage: true } } as const;
+
 const FEATURE_INCLUDE = {
   owner: true,
+  phase: { select: { id: true, code: true, name: true } },
+  dependsOn: { orderBy: { dependsOnId: "asc" }, select: { dependsOn: FEATURE_REF } },
+  blocking: { where: { feature: { archivedAt: null, status: "active" } }, orderBy: { featureId: "asc" }, select: { feature: FEATURE_REF } },
   tasks: {
     // Task lưu trữ (F21.4) không vào list; mở bằng deep link qua getArchivedTask.
     where: { archivedAt: null },
@@ -80,6 +85,9 @@ function toFeature(row: Prisma.FeatureGetPayload<{ include: typeof FEATURE_INCLU
     pct: featureProgress(row.tasks),
     docs: row._count.docs,
     tasks: row.tasks.map((t) => toTask(t, now)),
+    phase: row.phase,
+    dependsOn: row.dependsOn.map((d) => d.dependsOn),
+    blocking: row.blocking.map((d) => d.feature),
     ...(row.archivedAt && { archived: true as const }),
   };
 }
@@ -150,4 +158,13 @@ export const getFeatureDetail = cache(async (projectId: string, featureId: strin
   const feature = toFeature(row, new Date());
   const docs = await prisma.doc.findMany({ where: { featureId }, select: { id: true, title: true }, orderBy: { title: "asc" } });
   return { feature, goal: row.goal, scope: row.scope, notes: row.notes, docs };
+});
+
+/** Phase của kế hoạch dự án theo thứ tự (F28.1). */
+export const getPhasesByProject = cache(async (projectId: string): Promise<ProjectPhaseView[]> => {
+  return prisma.projectPhase.findMany({
+    where: { projectId },
+    orderBy: [{ position: "asc" }, { code: "asc" }],
+    select: { id: true, code: true, name: true, goal: true, position: true },
+  });
 });

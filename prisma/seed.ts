@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { FEATURE_DEPENDENCIES, PHASES_BY_PROJECT } from "./seed-data/phases";
 import { PrismaClient, type Prisma } from "../lib/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 // Nguồn dữ liệu seed: bản sao mock GỐC (chụp từ git HEAD trước khi lib/data/*
@@ -224,6 +225,15 @@ async function main() {
       });
     }
   }
+
+  console.log("Seeding phases + feature dependencies (F28.1)...");
+  for (const [projectId, phases] of Object.entries(PHASES_BY_PROJECT)) {
+    for (const [i, ph] of phases.entries()) {
+      const created = await prisma.projectPhase.create({ data: { projectId, code: ph.code, name: ph.name, goal: ph.goal ?? null, position: i + 1 } });
+      await prisma.feature.updateMany({ where: { id: { in: ph.features } }, data: { phaseId: created.id } });
+    }
+  }
+  await prisma.featureDependency.createMany({ data: FEATURE_DEPENDENCIES.map(([featureId, dependsOnId]) => ({ featureId, dependsOnId })) });
 
   console.log("Seeding timeline (kế hoạch feature + feature chưa giao)...");
   for (const p of projects) {

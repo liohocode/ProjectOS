@@ -1,9 +1,9 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { getSessionMemberId } from "@/lib/auth/session";
-import { getFeatureDetail, getFeaturesByProject } from "@/lib/data/features";
+import { getFeatureDetail, getFeaturesByProject, getPhasesByProject } from "@/lib/data/features";
 import { getTimelineByProject } from "@/lib/data/timeline";
-import { createFeature, updateFeature, updateFeatureContent } from "./features";
+import { createFeature, setFeatureDependency, setFeaturePhase, updateFeature, updateFeatureContent } from "./features";
 
 // F21.1 — tạo / sửa feature. Trung Hiếu (tech lead) mặc định; Nam là thành viên thường của rv-web.
 const startedAt = new Date();
@@ -77,5 +77,31 @@ describe("nội dung trang chi tiết feature (F21.9)", () => {
     } finally {
       vi.mocked(getSessionMemberId).mockResolvedValue("hieu");
     }
+  });
+});
+
+describe("phase + phụ thuộc feature (F28.1)", () => {
+  afterAll(async () => {
+    const phase = await prisma.projectPhase.findFirstOrThrow({ where: { projectId: "rv-web", code: "2" } });
+    await prisma.feature.update({ where: { id: "FEAT-119" }, data: { phaseId: phase.id } });
+    await prisma.featureDependency.deleteMany({ where: { featureId: "FEAT-124" } });
+  });
+
+  it("seed có phase theo thứ tự; feature hiện phase + phụ thuộc hai chiều", async () => {
+    expect((await getPhasesByProject("rv-web")).map((p) => p.code)).toEqual(["1", "2"]);
+    const features = await getFeaturesByProject("rv-web");
+    expect(features.find((f) => f.id === "FEAT-118")).toMatchObject({ phase: { code: "1" }, blocking: [{ id: "FEAT-120" }] });
+    expect(features.find((f) => f.id === "FEAT-120")?.dependsOn.map((d) => d.id)).toEqual(["FEAT-118"]);
+  });
+
+  it("đổi phase, thêm phụ thuộc; chặn vòng, khác dự án, phase dự án khác", async () => {
+    const phase1 = await prisma.projectPhase.findFirstOrThrow({ where: { projectId: "rv-web", code: "1" } });
+    expect(await setFeaturePhase("FEAT-119", phase1.id)).toEqual({ ok: true });
+    expect((await getFeaturesByProject("rv-web")).find((f) => f.id === "FEAT-119")?.phase?.code).toBe("1");
+    expect(await setFeaturePhase("FEAT-301", phase1.id)).toEqual({ ok: false, error: "Không tìm thấy phase" });
+
+    expect(await setFeatureDependency("FEAT-124", "FEAT-120", true)).toEqual({ ok: true });
+    expect(await setFeatureDependency("FEAT-118", "FEAT-124", true)).toMatchObject({ ok: false, error: expect.stringContaining("sẽ tạo vòng") });
+    expect(await setFeatureDependency("FEAT-124", "FEAT-301", true)).toMatchObject({ ok: false, error: expect.stringContaining("Không tìm thấy feature") });
   });
 });

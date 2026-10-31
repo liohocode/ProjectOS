@@ -8,6 +8,7 @@ import { createFeature as createFeatureDomain, reviewFeatureProposal, updateFeat
 import { fail, ok, type ActionResult } from "./result";
 import { PRIORITY_ORDER } from "@/lib/data/features";
 import { moveInList, type Direction } from "@/lib/reorder";
+import { wouldCreateCycle } from "@/lib/taskDeps";
 import { recordActivity } from "./_activity";
 
 // Duyệt / từ chối feature agent đề xuất (F16.6) — tech lead hoặc người tạo dự án (`feature.review`).
@@ -162,6 +163,53 @@ export async function moveFeature(featureId: string, dir: Direction): Promise<Ac
   const next = moveInList(rows.map((r) => r.id), id.data, dir);
   if (!next) return ok();
   await prisma.$transaction(next.map((fid, i) => prisma.feature.update({ where: { id: fid }, data: { position: i + 1 } })));
+  revalidatePath("/[project]", "layout");
+  return ok();
+}
+
+/** Gắn feature vào phase của kế hoạch (F28.1) — null = bỏ khỏi phase; feature.manage. */
+export async function setFeaturePhase(featureId: string, phaseId: string | null): Promise<ActionResult> {
+  const id = featureIdSchema.safeParse(featureId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const projectId = await projectOf(id.data);
+  if (!projectId) return fail("Không tìm thấy feature");
+  const denied = await authorize("feature.manage", projectId);
+  if (denied) return fail(denied);
+  if (phaseId) {
+    const phase = await prisma.projectPhase.findUnique({ where: { id: phaseId }, select: { projectId: true } });
+    if (!phase || phase.projectId !== projectId) return fail("Không tìm thấy phase");
+  }
+  await prisma.feature.update({ where: { id: id.data }, data: { phaseId } });
+  revalidatePath("/[project]", "layout");
+  return ok();
+}
+
+/** Thêm / bỏ phụ thuộc giữa hai feature cùng dự án (F28.1) — không vòng; feature.manage. */
+export async function setFeatureDependency(featureId: string, dependsOnId: string, add: boolean): Promise<ActionResult> {
+  const ids = z.object({ featureId: featureIdSchema, dependsOnId: featureIdSchema }).safeParse({ featureId, dependsOnId });
+  if (!ids.success) return fail(ids.error.issues[0].message);
+  const projectId = await projectOf(ids.data.featureId);
+  if (!projectId) return fail("Không tìm thấy feature");
+  const denied = await authorize("feature.manage", projectId);
+  if (denied) return fail(denied);
+
+  if (!add) {
+    await prisma.featureDependency.deleteMany({ where: ids.data });
+  } else {
+    if (ids.data.featureId === ids.data.dependsOnId) return fail("Feature không phụ thuộc chính nó");
+    if ((await projectOf(ids.data.dependsOnId)) !== projectId) return fail(`Không tìm thấy feature ${ids.data.dependsOnId} trong dự án`);
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`meridian:feature-deps:${projectId}`}))`;
+      const edges = await tx.featureDependency.findMany({ where: { feature: { projectId } }, select: { featureId: true, dependsOnId: true } });
+      if (edges.some((e) => e.featureId === ids.data.featureId && e.dependsOnId === ids.data.dependsOnId)) return null;
+      if (wouldCreateCycle(edges.map((e) => [e.featureId, e.dependsOnId] as const), ids.data.featureId, ids.data.dependsOnId)) {
+        return `Không thêm được: ${ids.data.dependsOnId} đang (gián tiếp) phụ thuộc ${ids.data.featureId} — sẽ tạo vòng`;
+      }
+      await tx.featureDependency.create({ data: ids.data });
+      return null;
+    });
+    if (result) return fail(result);
+  }
   revalidatePath("/[project]", "layout");
   return ok();
 }

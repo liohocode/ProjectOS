@@ -75,6 +75,22 @@ export interface Task {
   blocking: TaskRef[];
 }
 
+/** Tham chiếu ngắn tới feature khác (F28.1). */
+export interface FeatureRef {
+  id: string;
+  name: string;
+  stage: TaskStage;
+}
+
+/** Phase của kế hoạch dự án (F28.1). */
+export interface ProjectPhaseView {
+  id: string;
+  code: string;
+  name: string;
+  goal: string | null;
+  position: number;
+}
+
 export interface Feature {
   id: string;
   name: string;
@@ -91,6 +107,10 @@ export interface Feature {
   docs: number;
   tasks: Task[];
   /** Lưu trữ (F21.10) — chỉ có ở trang chi tiết mở bằng link */
+  /** F28.1: phase của kế hoạch; feature phụ thuộc / đang chờ feature này */
+  phase: { id: string; code: string; name: string } | null;
+  dependsOn: FeatureRef[];
+  blocking: FeatureRef[];
   archived?: true;
 }
 
