@@ -112,7 +112,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-PM-07 | Task có mô tả (markdown), cỡ, mã hiển thị, nhãn "Cần quyết định" | ✅ (F21.7) | F21 |
 | FR-PM-08 | Phụ thuộc giữa task; không nhận task khi phụ thuộc chưa xong | ✅ (F21.8) | F21 |
 | FR-PM-09 | Trang chi tiết feature: mục tiêu, phạm vi, ghi chú quyết định, task, tài liệu | ✅ (F21.9) | F21 |
-| FR-PM-10 | Lưu trữ feature, sắp xếp ưu tiên feature / task | ⬜ | F21 |
+| FR-PM-10 | Lưu trữ feature, sắp xếp ưu tiên feature / task | ✅ (F21.10) | F21 |
 | FR-PM-11 | Nội dung mô tả / tài liệu hiển thị markdown (bảng, danh sách, code) | ✅ tài liệu (F21.11); mô tả task / feature ở F21.7 / F21.9 | F21 |
 | FR-DF-01 | Kế hoạch dự án (phase, feature, task, tiêu chí, phụ thuộc) import được từ `.md` vào DB, chạy lại không nhân đôi | ⬜ | F28 |
 | FR-DF-02 | Tài liệu kỹ thuật (yêu cầu, ADR, data model, hướng dẫn) lưu DB, xem / sửa trên web | ⬜ | F28 |

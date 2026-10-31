@@ -67,6 +67,7 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
       archivedAt: null,
       ...(filter.taskId && { id: filter.taskId }),
       feature: {
+        archivedAt: null,
         project: { members: { some: { memberId } } },
         ...(filter.projectId && { projectId: filter.projectId }),
       },
@@ -146,11 +147,11 @@ export async function claimTask(agentId: string, taskId: string, now: Date = new
         runningSince: true,
         archivedAt: true,
         assignee: { select: { name: true } },
-        feature: { select: { projectId: true, project: { select: { members: { where: { memberId: agentId }, select: { memberId: true } } } } } },
+        feature: { select: { projectId: true, archivedAt: true, project: { select: { members: { where: { memberId: agentId }, select: { memberId: true } } } } } },
       },
     });
     if (!task || task.feature.project.members.length === 0) return { ok: false, reason: `Không tìm thấy task ${taskId} trong dự án của bạn`, projectId: null };
-    if (task.archivedAt) return { ok: false, reason: `${taskId} đã được lưu trữ`, projectId: task.feature.projectId };
+    if (task.archivedAt || task.feature.archivedAt) return { ok: false, reason: `${taskId} đã được lưu trữ`, projectId: task.feature.projectId };
     const projectId = task.feature.projectId;
     if (task.stage === "Done") return { ok: false, reason: `${taskId} đã Done`, projectId };
     if (task.blocked) return { ok: false, reason: `${taskId} đang bị block: ${task.blocked}`, projectId };

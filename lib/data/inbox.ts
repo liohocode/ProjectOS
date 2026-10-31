@@ -8,7 +8,7 @@ import { toDocRevision } from "./docs";
 // Inbox "Cần tôi xử lý" (F25.2): mọi việc chờ người xử lý của một dự án ở một chỗ.
 // Chỉ task của feature đang chạy (feature đề xuất / bị từ chối không vào list chính — F16.6).
 
-const activeTasks = (projectId: string) => ({ feature: { projectId, status: "active" as const }, archivedAt: null });
+const activeTasks = (projectId: string) => ({ feature: { projectId, status: "active" as const, archivedAt: null }, archivedAt: null });
 
 /** Đếm cho badge sidebar — không tải danh sách. */
 export const getInboxCounts = cache(async (projectId: string): Promise<InboxCounts> => {

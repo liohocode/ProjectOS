@@ -13,7 +13,7 @@ export const getTimelineByProject = cache(async (projectId: string): Promise<Tim
     include: {
       currentSprint: true,
       features: {
-        where: { status: "active" },
+        where: { status: "active", archivedAt: null },
         include: { owner: true, tasks: { where: { archivedAt: null }, select: { stage: true, estimatePoints: true } } },
         orderBy: { id: "asc" },
       },
