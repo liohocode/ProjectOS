@@ -4,6 +4,7 @@ import type { TaskStage } from "@/lib/generated/prisma/enums";
 import { formatDue, parseTaskStatus, TASK_STATUS_LABEL, toIsoDate } from "@/lib/taskFormat";
 import { DEFAULT_AGENT_CONFIG } from "@/lib/agentConfig";
 import { transitionTask } from "./taskTransitions";
+import { reviewGateBlocker } from "./taskCriteria";
 
 // Nghiệp vụ task dùng chung cho MCP tool (agent, F16). Không có "use server"; nơi gọi tự xác thực danh tính.
 
@@ -169,6 +170,7 @@ async function findOwnTask(agentId: string, taskId: string) {
     select: {
       title: true,
       assigneeId: true,
+      stage: true,
       runningSince: true,
       feature: { select: { projectId: true, project: { select: { members: { where: { memberId: agentId }, select: { memberId: true } } } } } },
     },
@@ -190,6 +192,11 @@ export async function updateTaskByAgent(
   if (!task) return { ok: false, reason: `Không tìm thấy task ${taskId} trong dự án của bạn`, projectId: null };
   const projectId = task.feature.projectId;
   if (task.assigneeId !== agentId) return { ok: false, reason: `${taskId} không giao cho bạn — dùng tasks_claim trước`, projectId };
+  // F22.3: vào Review cần mọi acceptance criterion đạt (agent tick bằng criteria_check).
+  if (change.stage === "Review" && task.stage !== "Review") {
+    const blocked = await reviewGateBlocker(taskId);
+    if (blocked) return { ok: false, reason: blocked, projectId };
+  }
   const links = parseTaskLinks(change.links ?? {});
   if (!links.ok) return { ok: false, reason: links.error, projectId };
   const hasLinks = Object.keys(links.links).length > 0;

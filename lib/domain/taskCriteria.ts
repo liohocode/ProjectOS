@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { reviewBlockReason } from "@/lib/reviewGate";
 
 // Acceptance criteria của task (F21.6): checklist người thêm / sửa / tick trên UI, agent tick qua MCP `criteria_check`.
 // Không có "use server"; nơi gọi tự xác thực + kiểm tra quyền (server action: task.write; MCP: task giao cho agent).
@@ -73,4 +74,14 @@ export async function checkCriterionByAgent(
   await checkCriterion(criterionId, done, agentId);
   const { text } = await prisma.taskCriterion.findUniqueOrThrow({ where: { id: criterionId }, select: { text: true } });
   return { ok: true, text, projectId: found.projectId };
+}
+
+/** Cổng vào Review (F22.3): mọi acceptance criterion (F21.6) phải đạt. Task không có tiêu chí → không chặn. */
+export async function reviewGateBlocker(taskId: string): Promise<string | null> {
+  const pending = await prisma.taskCriterion.findMany({
+    where: { taskId, doneAt: null },
+    orderBy: [{ position: "asc" }, { id: "asc" }],
+    select: { text: true },
+  });
+  return reviewBlockReason(pending.map((c) => c.text));
 }
