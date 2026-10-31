@@ -3,7 +3,8 @@
 // | Hành động                                                        | Ai được làm                          |
 // |------------------------------------------------------------------|--------------------------------------|
 // | Duyệt / từ chối revision, sửa trực tiếp tài liệu                 | Tech lead, người tạo dự án           |
-// | Duyệt / từ chối feature agent đề xuất (F16.6)                    | Tech lead, người tạo dự án           |
+// | Duyệt / từ chối feature agent đề xuất (F16.6), sửa feature (F21.1) | Tech lead, người tạo dự án          |
+// | Tạo feature (F21.1)                                              | Thành viên dự án                     |
 // | Tạo dự án, quản lý MCP server, sửa cấu hình agent (toàn tổ chức) | Tech lead                            |
 // | Thêm / gỡ thành viên, lưu trữ dự án                              | Tech lead                            |
 // | Tạo / sửa / giao / chuyển stage task, tạo tài liệu               | Thành viên dự án                     |
@@ -18,6 +19,8 @@ export type PermissionAction =
   | "doc.review"
   | "doc.edit"
   | "feature.review"
+  | "feature.create"
+  | "feature.manage"
   | "doc.create"
   | "task.write";
 
@@ -46,6 +49,7 @@ export function can(actor: Actor, action: PermissionAction, project?: ProjectRef
     case "doc.review":
     case "doc.edit":
     case "feature.review":
+    case "feature.manage":
       return actor.isTechLead || project.createdById === actor.id;
     case "project.archive":
     case "member.manage":
@@ -64,6 +68,8 @@ const DENIED: Record<PermissionAction, string> = {
   "doc.review": "Chỉ tech lead hoặc người tạo dự án được duyệt / từ chối revision",
   "doc.edit": "Chỉ tech lead hoặc người tạo dự án được sửa trực tiếp tài liệu",
   "feature.review": "Chỉ tech lead hoặc người tạo dự án được duyệt feature đề xuất",
+  "feature.create": "Chỉ thành viên dự án được tạo feature",
+  "feature.manage": "Chỉ tech lead hoặc người tạo dự án được sửa feature",
   "doc.create": "Chỉ thành viên dự án được tạo tài liệu",
   "task.write": "Chỉ thành viên dự án được thao tác task",
 };

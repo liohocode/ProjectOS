@@ -13,6 +13,8 @@ const ACTIONS: PermissionAction[] = [
   "doc.review",
   "doc.edit",
   "feature.review",
+  "feature.create",
+  "feature.manage",
   "doc.create",
   "task.write",
 ];

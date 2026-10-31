@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { TaskStage } from "@/lib/generated/prisma/enums";
 
 // Feature do agent đề xuất (F16.6, FR-AG-04). Agent (BA, `canProposeFeatures` — kiểm ở governance F16.7) tạo feature
 // trạng thái `proposed`; lead duyệt → `active` (vào list chính / timeline) hoặc từ chối → `rejected` (giữ lịch sử).
@@ -63,4 +64,68 @@ export async function reviewFeatureProposal(
   });
   if (count === 0) return { ok: false, error: "Feature không còn chờ duyệt" };
   return { ok: true, projectId: feature.projectId, name: feature.name };
+}
+
+export interface FeatureFields {
+  name: string;
+  stage: TaskStage;
+  /** null = chưa giao */
+  ownerId: string | null;
+  /** "YYYY-MM-DD"; cả hai null = chưa lên kế hoạch */
+  plannedStart: string | null;
+  plannedEnd: string | null;
+}
+
+const toDate = (iso: string | null) => (iso ? new Date(`${iso}T00:00:00Z`) : null);
+
+/** Kiểm tra chung cho tạo / sửa: owner thuộc dự án, kế hoạch đủ 2 ngày và đúng thứ tự. */
+async function checkFields(projectId: string, f: FeatureFields): Promise<string | null> {
+  if (!f.name.trim() || f.name.trim().length > 120) return "Tên feature 1–120 ký tự";
+  if (Boolean(f.plannedStart) !== Boolean(f.plannedEnd)) return "Kế hoạch cần cả ngày bắt đầu và kết thúc";
+  if (f.plannedStart && f.plannedEnd && f.plannedStart > f.plannedEnd) return "Ngày kết thúc phải sau ngày bắt đầu";
+  if (f.ownerId) {
+    const member = await prisma.projectMember.findUnique({ where: { projectId_memberId: { projectId, memberId: f.ownerId } } });
+    if (!member) return "Người phụ trách không thuộc dự án";
+  }
+  return null;
+}
+
+/** Lead / thành viên tạo feature trực tiếp (F21.1) — `active` ngay, cùng dãy mã FEAT-n với feature agent đề xuất. */
+export async function createFeature(projectId: string, f: FeatureFields): Promise<{ ok: true; featureId: string } | { ok: false; error: string }> {
+  const invalid = await checkFields(projectId, f);
+  if (invalid) return { ok: false, error: invalid };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const id = await nextFeatureId();
+    try {
+      await prisma.feature.create({
+        data: {
+          id,
+          projectId,
+          name: f.name.trim(),
+          stage: f.stage,
+          ownerId: f.ownerId,
+          pct: 0,
+          plannedStart: toDate(f.plannedStart),
+          plannedEnd: toDate(f.plannedEnd),
+        },
+      });
+      return { ok: true, featureId: id };
+    } catch (e) {
+      if ((e as { code?: unknown }).code !== "P2002") throw e;
+    }
+  }
+  return { ok: false, error: "Không cấp được mã feature, thử lại" };
+}
+
+/** Sửa tên, stage, người phụ trách, kế hoạch (F21.1) — chỉ feature đang hoạt động. */
+export async function updateFeature(featureId: string, f: FeatureFields): Promise<{ ok: true; projectId: string } | { ok: false; error: string }> {
+  const feature = await prisma.feature.findUnique({ where: { id: featureId }, select: { projectId: true, status: true } });
+  if (!feature || feature.status !== "active") return { ok: false, error: "Không tìm thấy feature" };
+  const invalid = await checkFields(feature.projectId, f);
+  if (invalid) return { ok: false, error: invalid };
+  await prisma.feature.update({
+    where: { id: featureId },
+    data: { name: f.name.trim(), stage: f.stage, ownerId: f.ownerId, plannedStart: toDate(f.plannedStart), plannedEnd: toDate(f.plannedEnd) },
+  });
+  return { ok: true, projectId: feature.projectId };
 }

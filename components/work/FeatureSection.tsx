@@ -1,4 +1,10 @@
-import type { Feature } from "@/lib/types";
+"use client";
+
+import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCan } from "@/components/auth/PermissionsProvider";
+import { FeatureDialog } from "./FeatureDialog";
+import type { Feature, MemberOption } from "@/lib/types";
 import { TaskRow } from "./TaskRow";
 import { initials, stageTagClass } from "./taskStyle";
 
@@ -7,12 +13,18 @@ export function FeatureSection({
   open,
   onToggle,
   onOpenTask,
+  members,
 }: {
   feature: Feature;
+  /** Thành viên dự án — chọn người phụ trách khi sửa (F21.1) */
+  members: MemberOption[];
   open: boolean;
   onToggle: () => void;
   onOpenTask: (taskId: string) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const canEdit = useCan("feature.manage");
+  const projectId = usePathname().split("/")[1];
   return (
     <section className="feature-section" id={`feature-${feature.id}`}>
       <div className="frow">
@@ -38,7 +50,13 @@ export function FeatureSection({
         >
           {feature.ownerKind ? initials(feature.owner) : <i className="ph ph-user" aria-hidden />}
         </span>
+        {canEdit && (
+          <button type="button" className="btn btn-ghost btn-icon frow-edit" aria-label={`Sửa ${feature.id}`} title="Sửa feature" onClick={() => setEditing(true)}>
+            <i className="ph ph-pencil-simple" aria-hidden />
+          </button>
+        )}
       </div>
+      {editing && <FeatureDialog projectId={projectId} feature={feature} members={members} onClose={() => setEditing(false)} />}
       {open && feature.tasks.length === 0 && (
         <div className="trow-empty">
           Chưa có task{feature.ownerKind ? "" : " · chưa giao cho ai"}

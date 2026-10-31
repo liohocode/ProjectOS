@@ -26,6 +26,9 @@ export const getFeaturesByProject = cache(async (projectId: string): Promise<Fea
     stage: row.stage,
     owner: row.owner?.name ?? UNASSIGNED_OWNER,
     ownerKind: row.owner?.kind ?? null,
+    ownerId: row.ownerId,
+    plannedStart: toIsoDate(row.plannedStart),
+    plannedEnd: toIsoDate(row.plannedEnd),
     // F21.2: tính từ task (cột `Feature.pct` cũ không còn đọc).
     pct: featureProgress(row.tasks),
     docs: row._count.docs,

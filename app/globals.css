@@ -636,6 +636,7 @@ img { display: block; max-width: 100%; }
   overflow: hidden;
   margin-bottom: var(--space-6);
 }
+.frow-edit { width: 26px; height: 26px; flex: none; }
 .frow-caret {
   background: none;
   border: none;

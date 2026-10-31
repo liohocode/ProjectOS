@@ -137,7 +137,7 @@ Mỗi quyết định: bối cảnh → quyết định → hệ quả. Thêm qu
 - "Tech lead" là cờ **`Member.isTechLead`**, không suy từ `Member.role` (chuỗi tự do — ai tạo thành viên cũng gõ được "Tech lead" và tự cấp quyền). Migration chuyển dữ liệu một lần: người có `role = 'Tech lead'` → `true` (production giữ nguyên quyền của tech lead mẫu). Thêm `Project.createdById` để biết "người tạo dự án".
 - `lib/auth/permissions.ts`: `can(actor, action, project?)` thuần (không DB) — dùng lại được cho UI theo quyền (F15.6). `lib/auth/authorize.ts`: `authorize(action, projectId?)` nạp actor từ session + dự án, trả `null` hoặc thông báo lỗi; gọi ở đầu mọi action ghi trong `lib/actions/*` (sau khi xác định dự án của tài nguyên).
 - Hành động gắn dự án luôn yêu cầu thuộc dự án (kể cả tech lead); không thuộc / không tồn tại → "Không tìm thấy dự án" (không lộ dự án, như layout F15.3). Lưu trữ dự án (F13.7, ngoài ma trận gốc) xếp chung nhóm tech lead.
-**Bổ sung (F16.6)**: hành động `feature.review` (duyệt feature agent đề xuất) — cùng nhóm với duyệt revision: tech lead hoặc người tạo dự án.
+**Bổ sung (F16.6, F21.1)**: `feature.review` (duyệt feature agent đề xuất) và `feature.manage` (sửa feature) — cùng nhóm với duyệt revision: tech lead hoặc người tạo dự án; `feature.create` — mọi thành viên dự án.
 **Hệ quả**: mỗi action ghi thêm 1–2 query nhỏ. Agent gọi qua MCP (F16) sẽ cần nhánh actor riêng (token F15.5 + `AgentConfig`), không dùng `isTechLead`. Chưa có UI gán/bỏ tech lead — sửa qua DB (ghi vào F15.6 nếu cần).
 
 ### ADR-022 — MCP server: `@modelcontextprotocol/sdk`, Streamable HTTP stateless trong Route Handler (2026-10-30)

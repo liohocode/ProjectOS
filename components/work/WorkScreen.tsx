@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { ProposedFeatures } from "./ProposedFeatures";
 import type { ProposedFeature } from "@/lib/types";
+import Link from "next/link";
+import { useCan } from "@/components/auth/PermissionsProvider";
+import { useUrlDialog } from "@/components/ui/urlDialog";
+import { NEW_FEATURE_PARAM } from "./featureDialogParam";
+import type { MemberOption } from "@/lib/types";
 import type { ActivityItem, Feature, Member, TaskDrawerInfo, TimelineRow } from "@/lib/types";
 import { FeatureSection } from "./FeatureSection";
 import { TimelineView } from "./TimelineView";
@@ -19,6 +24,7 @@ export function WorkScreen({
   taskDrawerInfo,
   projectAgents,
   proposals = [],
+  projectMembers = [],
 }: {
   features: Feature[];
   /** Đang áp bộ lọc "Lọc" (F14.3) — features đã lọc ở server. */
@@ -29,7 +35,11 @@ export function WorkScreen({
   projectAgents: Member[];
   /** Feature agent đề xuất chờ duyệt (F16.6) */
   proposals?: ProposedFeature[];
+  /** Chọn người phụ trách feature (F21.1) */
+  projectMembers?: MemberOption[];
 }) {
+  const canCreateFeature = useCan("feature.create");
+  const { openHref: newFeatureHref } = useUrlDialog(NEW_FEATURE_PARAM);
   const [closed, setClosed] = useState<Record<string, boolean>>({});
   const [railOpen, setRailOpen] = useState(true);
   // Task đang mở và view nằm trong URL (F14.1) — copy link là mở lại đúng chỗ.
@@ -63,6 +73,11 @@ export function WorkScreen({
             </label>
           </div>
           <span className="work-toolbar-sprint">{allTasks.length} task</span>
+          {canCreateFeature && (
+            <Link href={newFeatureHref} scroll={false} className="btn btn-secondary">
+              <i className="ph ph-plus" aria-hidden /> Feature mới
+            </Link>
+          )}
           <div className="work-toolbar-spacer" />
           <button type="button" className="btn btn-secondary" onClick={() => setRailOpen((v) => !v)}>
             <i className="ph ph-activity" aria-hidden /> {railOpen ? "Ẩn activity" : "Activity feed"}
@@ -104,6 +119,7 @@ export function WorkScreen({
                 open={!closed[feature.id]}
                 onToggle={() => setClosed((c) => ({ ...c, [feature.id]: !c[feature.id] }))}
                 onOpenTask={openTask}
+                members={projectMembers}
               />
             ))}
           </div>
