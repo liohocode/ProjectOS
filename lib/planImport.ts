@@ -150,6 +150,11 @@ export function parseFeatureMd(md: string): PlanFeature | null {
     }
   }
 
+  // Feature "Hoãn" (vd F18): task chưa xong của nó coi như bị chặn cùng lý do — không lọt vào "việc nên nhận tiếp".
+  if (/^hoãn/i.test(statusText)) {
+    for (const t of tasks) if (t.stage !== "Done" && !t.blocked) t.blocked = `Feature hoãn: ${statusText.replace(/\*\*/g, "")}`.slice(0, 200);
+  }
+
   const code = head[1];
   return {
     code,

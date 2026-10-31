@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-31 · Tổng: **121/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 26/65 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-31 · Tổng: **122/169 task xong** · Giai đoạn 1 (MVP) gần xong 95/104 · Giai đoạn 2: 27/65 (đã chốt F23.1, F25.1).
 
 ## Điều chỉnh ưu tiên (Lio, 2026-10-31)
 1. **Hoàn thiện Feature & Task trước** (Phase 7): mô tả task, cỡ, phụ thuộc, trang chi tiết feature, markdown, DoD, lịch sử block, agent đề xuất task — đủ để chứa toàn bộ kế hoạch đang nằm trong `.md`.
@@ -56,7 +56,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 7b — Kế hoạch Meridian trên web (ưu tiên 2)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F28](features/F28-plan-on-web.md) | Import kế hoạch + tài liệu kỹ thuật `.md` → DB (dự án `meridian`), màn Roadmap, làm việc qua MCP thay vì sửa `.md` | F21.7–F21.11 | Đang làm — phase + phụ thuộc feature (F28.1), import `.md` (F28.2) | 2/6 |
+| [F28](features/F28-plan-on-web.md) | Import kế hoạch + tài liệu kỹ thuật `.md` → DB (dự án `meridian`), màn Roadmap, làm việc qua MCP thay vì sửa `.md` | F21.7–F21.11 | Đang làm — phase + phụ thuộc feature (F28.1), import `.md` (F28.2), màn Roadmap (F28.4) | 3/6 |
 
 ### Phase 8b — Chạy agent từ web (ưu tiên 3)
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -90,7 +90,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | Task | Vì sao |
 |---|---|
 | [F28.3](features/F28-plan-on-web.md) Tài liệu kỹ thuật → Doc | Yêu cầu, ADR, data model trên web |
-| [F28.4](features/F28-plan-on-web.md) Màn Roadmap | Xem tiến độ theo phase, việc nên nhận tiếp |
+| [F28.5](features/F28-plan-on-web.md) Import lên production + đổi quy trình | Kế hoạch Meridian chạy trên web thật (Lio đã duyệt) |
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Khuyến nghị |

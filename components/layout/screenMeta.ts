@@ -27,6 +27,11 @@ export const SCREEN_META: Record<ScreenId, ScreenMeta> = {
     searchPlaceholder: "Tìm feature, task, docs…",
     primary: { label: "Dự án mới", dialog: true, permission: "project.create" },
   },
+  roadmap: {
+    kicker: "Roadmap",
+    title: "Kế hoạch theo phase",
+    searchPlaceholder: "Tìm feature, task, docs…",
+  },
   docs: {
     kicker: "Module 1",
     title: "Docs gắn feature và kho tri thức",
@@ -57,6 +62,7 @@ export const NAV_ITEMS: { id: ScreenId; label: string; icon: string }[] = [
   { id: "inbox", label: "Cần tôi xử lý", icon: "ph-tray" },
   { id: "portfolio", label: "Tất cả dự án", icon: "ph-squares-four" },
   { id: "docs", label: "Docs dự án", icon: "ph-files" },
+  { id: "roadmap", label: "Roadmap", icon: "ph-flag-banner" },
   { id: "work", label: "Feature & Task", icon: "ph-list-dashes" },
   { id: "team", label: "Dev & AI agents", icon: "ph-users-three" },
   { id: "mcp", label: "MCP", icon: "ph-plugs-connected" },

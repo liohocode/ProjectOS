@@ -111,7 +111,11 @@ describe("features & tasks", () => {
         getMemberCountByProject(projectId),
         getTeamByProject(projectId),
       ]);
-      expect(counts).toEqual({ total: tasks.length, blocked: tasks.filter((t) => t.blocked).length });
+      expect(counts).toEqual({
+        total: tasks.length,
+        blocked: tasks.filter((t) => t.blocked).length,
+        decisions: tasks.filter((t) => t.needsDecision && t.stage !== "Done").length,
+      });
       expect(memberCount).toBe(team.length);
     }
   });

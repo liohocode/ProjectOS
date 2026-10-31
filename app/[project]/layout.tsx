@@ -49,6 +49,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   const navCounts: Record<ScreenId, number> = {
     inbox: inboxCount,
     portfolio: projects.length,
+    roadmap: taskCounts.decisions,
     docs: docCount,
     work: taskCounts.total,
     team: memberCount,
@@ -57,6 +58,7 @@ export default async function ProjectLayout(props: LayoutProps<"/[project]">) {
   const navAlerts: Record<ScreenId, number> = {
     inbox: inboxCount,
     portfolio: 0,
+    roadmap: taskCounts.decisions,
     docs: pendingRevisions,
     work: taskCounts.blocked,
     team: 0,
