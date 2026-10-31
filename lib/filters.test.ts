@@ -13,7 +13,19 @@ const task = (id: string, over: Partial<Task> = {}): Task => ({
   id, stage: "Dev", assigneeId: "nam", title: id, who: "Nam", kind: "human", status: "Đang làm",
   est: "1đ", due: "—", estimatePoints: 1, dueIso: null, ...over,
 });
-const feature = (id: string, tasks: Task[]): Feature => ({ id, name: id, stage: "Dev", owner: "Nam", ownerKind: "human", pct: 0, docs: 0, tasks });
+const feature = (id: string, tasks: Task[]): Feature => ({
+  id,
+  name: id,
+  stage: "Dev",
+  owner: "Nam",
+  ownerKind: "human",
+  ownerId: "nam",
+  plannedStart: null,
+  plannedEnd: null,
+  pct: 0,
+  docs: 0,
+  tasks,
+});
 
 describe("parse*Filter", () => {
   it("đọc tiêu chí hợp lệ từ searchParams (object hoặc URLSearchParams), bỏ giá trị lạ", () => {

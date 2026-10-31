@@ -5,6 +5,8 @@ import { getTaskDrawerInfo } from "@/lib/data/taskDrawer";
 import { getTeamByProject } from "@/lib/data/team";
 import { WorkScreen } from "@/components/work/WorkScreen";
 import { NewTaskDialog } from "@/components/work/NewTaskDialog";
+import { NewFeatureDialog } from "@/components/work/NewFeatureDialog";
+import { NEW_FEATURE_PARAM } from "@/components/work/featureDialogParam";
 import { filterFeatures, parseWorkFilter } from "@/lib/filters";
 
 export default async function WorkPage(props: PageProps<"/[project]/work">) {
@@ -21,6 +23,7 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
     getProposedFeatures(projectId),
   ]);
   const projectAgents = projectTeam.filter((m) => m.kind === "agent");
+  const memberOptions = projectTeam.map(({ id, name, kind }) => ({ id, name, kind }));
 
   const taskIds = features.flatMap((f) => f.tasks.map((t) => t.id));
   const drawerEntries = await Promise.all(
@@ -40,7 +43,10 @@ export default async function WorkPage(props: PageProps<"/[project]/work">) {
         taskDrawerInfo={taskDrawerInfo}
         projectAgents={projectAgents}
         proposals={proposals}
+        projectMembers={memberOptions}
       />
+      {/* "Feature mới" ở toolbar đặt ?newFeature=1 (F21.1) */}
+      {searchParams[NEW_FEATURE_PARAM] === "1" && <NewFeatureDialog projectId={projectId} members={memberOptions} />}
       {/* "Task mới" ở header đặt ?new=1 (ADR-018) */}
       {newParam === "1" && (
         <NewTaskDialog projectId={projectId} features={features.map(({ id, name }) => ({ id, name }))} members={projectTeam} />

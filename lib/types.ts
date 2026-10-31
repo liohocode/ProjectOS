@@ -46,6 +46,11 @@ export interface Feature {
   /** Tên owner; "Chưa giao" khi feature đã lên kế hoạch nhưng chưa giao cho ai */
   owner: string;
   ownerKind: MemberKind | null;
+  /** Giá trị gốc để sửa (F21.1) */
+  ownerId: string | null;
+  /** "YYYY-MM-DD" — kế hoạch cho timeline (F21.1); null = chưa lên kế hoạch */
+  plannedStart: string | null;
+  plannedEnd: string | null;
   pct: number;
   docs: number;
   tasks: Task[];
