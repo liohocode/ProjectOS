@@ -8,6 +8,7 @@ const ACTIONS: PermissionAction[] = [
   "project.create",
   "mcpServer.manage",
   "agent.configure",
+  "org.members",
   "project.archive",
   "member.manage",
   "doc.review",

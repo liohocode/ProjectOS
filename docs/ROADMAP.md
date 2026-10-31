@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **101/148 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 6/45 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **102/148 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 7/45 (đã chốt F23.1, F25.1).
 
 ## Mục tiêu giai đoạn 2 (người dùng chốt 2026-10-30)
 Meridian là **data foundation cho các dự án của công ty**: quản lý tiến độ, công việc và coding agent; quy trình đảm bảo **chất lượng** và kiểm soát **effort / AI token**; người thật theo dõi trạng thái và review chi tiết; hỗ trợ coding agent làm việc qua MCP; tài liệu feature / task / kỹ thuật; người quản lý làm việc được trên **mobile**; Meridian **tạo, quản lý và cung cấp skills dùng chung đồng nhất** cho mọi coding agent.
@@ -39,7 +39,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 6 — Dùng thật nội bộ
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F20](features/F20-go-live.md) | Backup, quản trị thành viên / tech lead, onboarding dự án thật (lưu trữ dự án mẫu) | F19 | Đang làm — backup hằng đêm chạy (F20.1) | 1/5 |
+| [F20](features/F20-go-live.md) | Backup, quản trị thành viên / tech lead, onboarding dự án thật (lưu trữ dự án mẫu) | F19 | Đang làm — backup hằng đêm, quản trị thành viên / tech lead | 2/5 |
 
 ### Phase 7 — Quản lý công việc & chất lượng
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -76,7 +76,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 |---|---|
 | [F22.2](features/F22-process-quality.md) Cổng review của người | Lõi đảm bảo chất lượng việc agent làm |
 | [F21.3](features/F21-work-management.md) Sprint | Lead quản lý sprint |
-| [F20.2](features/F20-go-live.md) Quản trị thành viên / tech lead | Cần cho onboarding dự án thật |
+| [F20.3](features/F20-go-live.md) Hướng dẫn onboarding dự án thật | Lio bắt đầu dùng thật |
 
 ## Quyết định đang mở (cần người dùng chốt)
 | Câu hỏi | Chặn | Khuyến nghị |

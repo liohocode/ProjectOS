@@ -24,7 +24,7 @@ test.describe("thành viên thường", () => {
     await expect(page.getByRole("button", { name: "Thêm thành viên" })).toBeDisabled();
     await page.locator(".member-list").getByText("Atlas", { exact: true }).click();
     await expect(page.getByRole("button", { name: "Gỡ khỏi dự án" })).toHaveCount(0);
-    await expect(page.locator(".team-aside").getByRole("button", { name: "Sửa" })).toHaveCount(0);
+    await expect(page.locator(".team-aside").getByRole("button", { name: "Sửa", exact: true })).toHaveCount(0);
 
     await page.goto("/rv-web/mcp");
     await expect(page.getByRole("button", { name: "Kết nối server" })).toBeDisabled();

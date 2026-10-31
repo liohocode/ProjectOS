@@ -87,7 +87,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | Mã | Yêu cầu | TT | Feature |
 |---|---|---|---|
 | FR-OR-01 | Có backup DB production định kỳ và cách khôi phục đã thử | ⬜ | F20 |
-| FR-OR-02 | Tech lead quản trị thành viên (hồ sơ, email đăng nhập, quyền tech lead) trên UI | ⬜ | F20 |
+| FR-OR-02 | Tech lead quản trị thành viên (hồ sơ, email đăng nhập, quyền tech lead) trên UI | ✅ (F20.2) | F20 |
 | FR-OR-03 | Dự án thật chạy song song dự án mẫu đã lưu trữ | ⬜ | F20 |
 | FR-PM-01 | Lead tạo / sửa feature (owner, stage, kế hoạch) | ✅ tạo (thành viên) / sửa (tech lead, người tạo dự án) (F21.1); agent đề xuất + lead duyệt (F16.6) | F21 |
 | FR-PM-02 | % tiến độ feature / dự án tính từ task thật | ✅ trọng số story point (F21.2) | F21 |

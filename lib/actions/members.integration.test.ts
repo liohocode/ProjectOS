@@ -1,8 +1,9 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getSessionMemberId } from "@/lib/auth/session";
 import { getTeam, getTeamByProject } from "@/lib/data/team";
-import { addProjectMember, createMember, loadMemberActivity, removeProjectMember, updateAgentConfig } from "./members";
+import { addProjectMember, createMember, loadMemberActivity, removeProjectMember, updateAgentConfig, updateMember } from "./members";
 
 // crm seed: không có agent-vega → dùng để thử "Từ tổ chức".
 afterAll(async () => {
@@ -172,5 +173,46 @@ describe("removeProjectMember (F13.7)", () => {
     } finally {
       await prisma.feature.update({ where: { id: feature.id }, data: { ownerId: feature.ownerId } });
     }
+  });
+});
+
+describe("updateMember (F20.2)", () => {
+  const profile = (m: { name: string; handle: string; role: string; skills: string[]; email: string | null; isTechLead: boolean }) => ({
+    name: m.name,
+    handle: m.handle,
+    role: m.role,
+    skills: m.skills.join(", "),
+    email: m.email ?? "",
+    isTechLead: m.isTechLead,
+  });
+
+  it("cấp tech lead cho người khác → người đó có quyền quản trị; bỏ lại được khi còn tech lead khác", async () => {
+    const nam = await prisma.member.findUniqueOrThrow({ where: { id: "nam" } });
+    try {
+      expect(await updateMember("nam", { ...profile(nam), isTechLead: true, role: "Backend lead (IT)" })).toEqual({ ok: true });
+      expect(await prisma.member.findUniqueOrThrow({ where: { id: "nam" } })).toMatchObject({ isTechLead: true, role: "Backend lead (IT)" });
+      expect(await updateMember("nam", { ...profile(nam), isTechLead: false })).toEqual({ ok: true });
+    } finally {
+      await prisma.member.update({ where: { id: "nam" }, data: { isTechLead: nam.isTechLead, role: nam.role } });
+    }
+  });
+
+  it("chặn: bỏ tech lead cuối cùng, email trùng, agent có email, người không phải tech lead", async () => {
+    const hieu = await prisma.member.findUniqueOrThrow({ where: { id: "hieu" } });
+    const nam = await prisma.member.findUniqueOrThrow({ where: { id: "nam" } });
+    const atlas = await prisma.member.findUniqueOrThrow({ where: { id: "agent-atlas" } });
+    expect(await updateMember("hieu", { ...profile(hieu), isTechLead: false })).toEqual({ ok: false, error: "Tổ chức phải còn ít nhất một tech lead" });
+    expect(await updateMember("nam", { ...profile(nam), email: hieu.email! })).toEqual({ ok: false, error: "Email này đã thuộc một thành viên khác" });
+    expect(await updateMember("agent-atlas", { ...profile(atlas), email: "atlas@example.com" })).toEqual({
+      ok: false,
+      error: "Agent không có email đăng nhập / quyền tech lead",
+    });
+    vi.mocked(getSessionMemberId).mockResolvedValue("nam");
+    try {
+      expect(await updateMember("nam", { ...profile(nam), isTechLead: true })).toEqual({ ok: false, error: "Chỉ tech lead được sửa hồ sơ / quyền thành viên" });
+    } finally {
+      vi.mocked(getSessionMemberId).mockResolvedValue("hieu");
+    }
+    expect((await prisma.member.findUniqueOrThrow({ where: { id: "hieu" } })).isTechLead).toBe(true);
   });
 });

@@ -10,6 +10,7 @@ import { MemberLogDialog } from "./MemberLogDialog";
 import { AgentConfigDialog } from "./AgentConfigDialog";
 import { RemoveMemberDialog } from "./RemoveMemberDialog";
 import { AgentTokensSection } from "./AgentTokensSection";
+import { MemberProfileDialog } from "./MemberProfileDialog";
 import { useCan } from "@/components/auth/PermissionsProvider";
 
 export function MemberPanel({
@@ -37,6 +38,8 @@ export function MemberPanel({
   const projectId = usePathname().split("/")[1];
   const canManageMembers = useCan("member.manage");
   const canConfigure = useCan("agent.configure");
+  const canEditProfile = useCan("org.members");
+  const [editingProfile, setEditingProfile] = useState(false);
   return (
     <aside className="team-aside">
       <div className="panel-header">
@@ -47,9 +50,16 @@ export function MemberPanel({
           <div className="panel-header-name">{member.name}</div>
           <div className="panel-header-sub">
             {member.handle} · {member.role}
+            {member.isTechLead && <span className="tag tag-accent nowrap panel-header-tag">Tech lead</span>}
           </div>
         </div>
+        {canEditProfile && (
+          <button type="button" className="btn btn-ghost btn-icon panel-header-edit" aria-label={`Sửa hồ sơ ${member.name}`} title="Sửa hồ sơ" onClick={() => setEditingProfile(true)}>
+            <i className="ph ph-pencil-simple" aria-hidden />
+          </button>
+        )}
       </div>
+      {editingProfile && <MemberProfileDialog member={member} onClose={() => setEditingProfile(false)} />}
 
       {member.kind === "agent" && member.config && (
         <div className="panel-section">

@@ -43,6 +43,8 @@ function toMember(row: MemberRow, names: Map<string, string>): Member {
     handle: row.handle,
     kind: row.kind,
     role: row.role,
+    email: row.email,
+    isTechLead: row.isTechLead,
     skills: row.skills,
     current: row.current,
     status: MEMBER_STATUS_LABEL[row.status],

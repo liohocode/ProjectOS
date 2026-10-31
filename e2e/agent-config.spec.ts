@@ -26,7 +26,7 @@ test("panel hiển thị cấu hình; sửa model + quyền ghi docs → reload 
   await expect(aside).toContainText("claude-sonnet-4.5");
   await expect(aside).toContainText("Append (chờ review)");
 
-  await aside.getByRole("button", { name: "Sửa" }).click();
+  await aside.getByRole("button", { name: "Sửa", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Cấu hình Atlas" });
   await expect(dialog.getByLabel("Model")).toHaveValue("claude-sonnet-4.5");
   await dialog.getByLabel("Model").fill("claude-opus-4.5");
