@@ -22,7 +22,7 @@ Chuyển kế hoạch đang nằm trong `.md` (ROADMAP, file feature, yêu cầu
 | F28.2 | Script `scripts/import-plan.ts`: đọc `docs/features/*.md` + ROADMAP → upsert dự án `meridian` (feature, task, mô tả, cỡ, phụ thuộc, tiêu chí "Hoàn thành khi", trạng thái, ghi chú quyết định); `--dry-run`, chạy lại không nhân đôi | M | F28.1, F21.8 | Xong — 2026-10-31 |
 | F28.3 | Import tài liệu kỹ thuật (requirements, ADR, data model, overview, guides) thành Doc markdown, gắn feature khi có | S | F21.11 | Xong — 2026-10-31 |
 | F28.4 | Màn **Roadmap** của dự án: tiến độ theo phase / feature, quyết định đang mở (task "Cần quyết định"), "việc nên nhận tiếp" (task chưa làm có phụ thuộc đã xong) | M | F28.1 | Xong — 2026-10-31 |
-| F28.5 | Import lên production (dự án `meridian`) qua workflow `Import plan` (chạy tay, mặc định dry-run); chạy lại sau mỗi đợt sửa `.md` tới khi F28.6 xong | S | F28.2–F28.4 | Đang làm — Ali, 2026-10-31 (Lio đã duyệt ghi production) |
+| F28.5 | Import lên production (dự án `meridian`) qua workflow `Import plan` (chạy tay, mặc định dry-run); chạy lại sau mỗi đợt sửa `.md` tới khi F28.6 xong | S | F28.2–F28.4 | Xong — Ali, 2026-10-31 |
 | F28.6 | Chuyển nguồn sự thật sang DB: agent phát triển Meridian (Claude Code) nhận / đóng task qua MCP production; WORKFLOW / CLAUDE.md đổi theo; `.md` kế hoạch thành bản export tự sinh (`npm run plan:export`) — gộp F24.7 | M | F28.5 | Chặn — cần Lio: cho phép domain production trong mạng của môi trường cloud + tạo token MCP agent |
 
 ### F28.1 — Phase + phụ thuộc feature
@@ -44,7 +44,7 @@ Chuyển kế hoạch đang nằm trong `.md` (ROADMAP, file feature, yêu cầu
 
 ### F28.5 — Import production
 **Hoàn thành khi**:
-- [ ] Dự án `meridian` trên production có đủ phase / feature / task khớp ROADMAP; chạy lại không nhân đôi
+- [x] Dự án `meridian` trên production có đủ phase / feature / task khớp ROADMAP; chạy lại không nhân đôi (2026-10-31: workflow `Import plan` — 13 phase, 29 feature, 169 task, 131 tiêu chí, 50 + 138 phụ thuộc, 11 tài liệu; kiểm lại bằng SQL chỉ đọc trên Neon)
 
 ### F28.6 — Chuyển nguồn sự thật
 **Hoàn thành khi**:
