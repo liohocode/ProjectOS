@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { parseTaskStatus, TASK_STATUS_LABEL } from "@/lib/taskFormat";
 import { authorize } from "@/lib/auth/authorize";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { recordTaskCreated, transitionTask } from "@/lib/domain/taskTransitions";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
 
@@ -35,7 +37,7 @@ export async function updateTaskStage(taskId: string, stage: string): Promise<Ac
   if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
   const denied = await authorize("task.write", projectId);
   if (denied) return fail(denied);
-  await prisma.task.update({ where: { id: input.data.taskId }, data: { stage: input.data.stage } });
+  await transitionTask(prisma, input.data.taskId, await getCurrentUserId(), "web", { stage: input.data.stage });
   await recordActivity("ph-arrow-right", `Chuyển ${input.data.taskId} sang ${input.data.stage}`, {
     event: { projectId, type: "task", tone: "ok", taskId: input.data.taskId },
   });
@@ -51,7 +53,7 @@ export async function updateTaskStatus(taskId: string, status: string): Promise<
   if (!projectId) return fail(`Không tìm thấy task ${input.data.taskId}`);
   const denied = await authorize("task.write", projectId);
   if (denied) return fail(denied);
-  await prisma.task.update({ where: { id: input.data.taskId }, data: { status: parseTaskStatus(input.data.status) } });
+  await transitionTask(prisma, input.data.taskId, await getCurrentUserId(), "web", { status: parseTaskStatus(input.data.status) });
   await recordActivity("ph-check-circle", `Đổi trạng thái ${input.data.taskId} → ${input.data.status}`, {
     event: { projectId, type: "task", tone: input.data.status === "Chờ review" ? "review" : "ok", taskId: input.data.taskId },
   });
@@ -124,6 +126,7 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
   });
   if (!membership) return fail("Người/agent này không thuộc dự án");
 
+  const creatorId = await getCurrentUserId();
   const taskId = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('meridian:task-id'))`;
     const [{ max }] = await tx.$queryRaw<{ max: number }[]>`
@@ -141,6 +144,7 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
         dueDate: toDueDate(data.dueDate),
       },
     });
+    await recordTaskCreated(tx, id, creatorId, "web", data.stage, "Cho");
     return id;
   });
 

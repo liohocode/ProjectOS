@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { TaskStage } from "@/lib/generated/prisma/enums";
 import { formatDue, parseTaskStatus, TASK_STATUS_LABEL, toIsoDate } from "@/lib/taskFormat";
 import { DEFAULT_AGENT_CONFIG } from "@/lib/agentConfig";
+import { transitionTask } from "./taskTransitions";
 
 // Nghiệp vụ task dùng chung cho MCP tool (agent, F16). Không có "use server"; nơi gọi tự xác thực danh tính.
 
@@ -130,7 +131,7 @@ export async function claimTask(agentId: string, taskId: string, now: Date = new
       const limit = config?.maxConcurrentTasks ?? DEFAULT_AGENT_CONFIG.maxConcurrentTasks;
       if (running >= limit) return { ok: false, reason: `Đã chạy ${running}/${limit} task đồng thời — hoàn thành hoặc nhả task trước khi claim thêm`, projectId };
 
-      await tx.task.update({ where: { id: taskId }, data: { assigneeId: agentId, runningSince: now, status: "DangChay" } });
+      await transitionTask(tx, taskId, agentId, "mcp", { status: "DangChay" }, { assigneeId: agentId, runningSince: now });
       // Cột "Đang làm" ở màn team + hoạt động gần đây của agent (như giao task từ UI, F13.3).
       await tx.member.update({ where: { id: agentId }, data: { current: `${taskId} ${task.title}` } });
       await tx.memberActivity.create({ data: { memberId: agentId, icon: "ph-play", text: `Claim ${taskId} qua MCP`, at: now } });
@@ -184,14 +185,18 @@ export async function updateTaskByAgent(
     return { ok: false, reason: `Trạng thái không hợp lệ: ${change.status}`, projectId };
   }
 
-  await prisma.task.update({
-    where: { id: taskId },
-    data: {
+  await transitionTask(
+    prisma,
+    taskId,
+    agentId,
+    "mcp",
+    {
       ...(change.stage && { stage: change.stage as TaskStage }),
-      // Đổi trạng thái = rời "Đang chạy" → nhả task (không còn tính vào giới hạn task đồng thời).
-      ...(change.status && { status: parseTaskStatus(change.status), runningSince: null }),
+      ...(change.status && { status: parseTaskStatus(change.status) }),
     },
-  });
+    // Đổi trạng thái = rời "Đang chạy" → nhả task (không còn tính vào giới hạn task đồng thời).
+    change.status ? { runningSince: null } : {},
+  );
   const [view] = await listTasksForMemberTx(prisma, agentId, taskId);
   return { ok: true, task: view, projectId };
 }
