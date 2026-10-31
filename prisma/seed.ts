@@ -194,6 +194,17 @@ async function main() {
               branch: t.branch ?? null,
               // F21.3: dữ liệu mẫu chỉ có một sprint / dự án → mọi task thuộc sprint hiện tại.
               sprintId: sprintIdByProject.get(p.id) ?? null,
+              // F22.1 / F22.5: lịch sử mẫu (task khác không có — như task tạo trước F22.1).
+              transitions: t.history && {
+                create: t.history.map((h) => ({
+                  actorId: resolveMemberId(members, h.by ?? t.who),
+                  via: h.by || t.kind === "human" ? ("web" as const) : ("mcp" as const),
+                  fromStage: h.from,
+                  toStage: h.to,
+                  note: h.note ?? null,
+                  at: new Date(Date.now() - h.daysAgo * 86_400_000),
+                })),
+              },
               criteria: t.criteria && {
                 create: t.criteria.map((c, i) => ({
                   text: c.text,

@@ -18,7 +18,12 @@ const FEATURES_BY_PROJECT: Record<string, Feature[]> = {
           { text: "Khôi phục nháp khi mở lại form", done: true },
           { text: "Có test cho trường hợp mất mạng khi đang lưu" },
         ] },
-        { id: "T-390", stage: "Done", title: "Trang chi tiết tin — layout mới", who: "Trần Mỹ Linh", kind: "human", status: "Xong", est: "5đ", due: "18/08" },
+        { id: "T-390", stage: "Done", title: "Trang chi tiết tin — layout mới", who: "Trần Mỹ Linh", kind: "human", status: "Xong", est: "5đ", due: "18/08", history: [
+          { from: null, to: "BA", daysAgo: 12 },
+          { from: "BA", to: "Dev", daysAgo: 9 },
+          { from: "Dev", to: "Review", daysAgo: 6 },
+          { from: "Review", to: "Done", daysAgo: 5, by: "Trung Hiếu" },
+        ] },
       ],
     },
     {
@@ -43,7 +48,13 @@ const FEATURES_BY_PROJECT: Record<string, Feature[]> = {
       docs: 5,
       tasks: [
         { id: "T-399", stage: "Review", title: "Rate limit cho MCP server", who: "Nguyễn Nam", kind: "human", status: "Chờ review", est: "3đ", due: "20/08" },
-        { id: "T-388", stage: "Done", title: "Tool docs.append + luồng review", who: "Vega", kind: "agent", status: "Xong", est: "5đ", due: "18/08" },
+        { id: "T-388", stage: "Done", title: "Tool docs.append + luồng review", who: "Vega", kind: "agent", status: "Xong", est: "5đ", due: "18/08", history: [
+          { from: null, to: "Dev", daysAgo: 10 },
+          { from: "Dev", to: "Review", daysAgo: 8 },
+          { from: "Review", to: "Dev", daysAgo: 7, note: "Thiếu kiểm tra quyền ghi docs của agent", by: "Trung Hiếu" },
+          { from: "Dev", to: "Review", daysAgo: 6 },
+          { from: "Review", to: "Done", daysAgo: 5, by: "Trung Hiếu" },
+        ] },
         { id: "T-402", stage: "Dev", title: "Giới hạn quyền ghi theo role agent", who: "Vega", kind: "agent", status: "Chờ", est: "3đ", due: "24/08", blocked: "thiếu spec role", blockedFull: "Bị block: bảng phân quyền theo role agent chưa được người xác nhận trong MCP tool spec." },
       ],
     },
@@ -119,7 +130,11 @@ const FEATURES_BY_PROJECT: Record<string, Feature[]> = {
       docs: 3,
       tasks: [
         { id: "T-620", stage: "Review", title: "Validate và map cột CSV", who: "Atlas", kind: "agent", status: "Chờ review", est: "5đ", due: "21/08" },
-        { id: "T-624", stage: "Done", title: "Sinh test cho bộ mapping", who: "Atlas", kind: "agent", status: "Xong", est: "2đ", due: "19/08" },
+        { id: "T-624", stage: "Done", title: "Sinh test cho bộ mapping", who: "Atlas", kind: "agent", status: "Xong", est: "2đ", due: "19/08", history: [
+          { from: null, to: "Dev", daysAgo: 4 },
+          { from: "Dev", to: "Review", daysAgo: 3 },
+          { from: "Review", to: "Done", daysAgo: 2, by: "Trung Hiếu" },
+        ] },
       ],
     },
   ],

@@ -32,6 +32,8 @@ export interface SeedTask {
   branch?: string;
   /** Acceptance criteria (F21.6); done = người / agent thực hiện đã tick */
   criteria?: { text: string; done?: boolean }[];
+  /** Lịch sử chuyển stage mẫu (F22.1) — cho chỉ số chất lượng F22.5. `by` mặc định người thực hiện; note = lý do trả lại */
+  history?: { from: SeedTaskStage | null; to: SeedTaskStage; daysAgo: number; note?: string; by?: string }[];
 }
 
 export interface SeedFeature {

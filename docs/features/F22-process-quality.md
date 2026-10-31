@@ -19,7 +19,8 @@
 | F22.3 | Cổng vào Review: mọi acceptance criteria (F21.6) phải đạt — chặn ở UI + MCP | S | F21.6 | Xong — 2026-10-31 |
 | F22.6 | Definition of Done theo dự án: checklist mặc định (vd "Có test", "PR đã review", "Cập nhật tài liệu") người tick khi duyệt Done | M | F22.3 | Chưa làm |
 | F22.4 | Liên kết PR / branch / commit trên task (agent báo qua MCP, người nhập tay) | S | — | Xong — 2026-10-31 |
-| F22.5 | Chỉ số chất lượng: cycle time, số lần trả lại, thời gian bị block — theo dự án / agent / người | M | F22.1, F22.2 | Chưa làm |
+| F22.5 | Chỉ số chất lượng: cycle time, số lần trả lại — theo dự án / agent / người | M | F22.1, F22.2 | Xong — 2026-10-31 |
+| F22.7 | Lịch sử block (đặt / gỡ) + thời gian bị block trong chỉ số chất lượng; lọc chỉ số theo sprint | S | F22.5 | Chưa làm |
 
 ### F22.1 — Lịch sử chuyển trạng thái
 **Làm gì**: model `TaskTransition(taskId, actorId, from/to stage, from/to status, at, via: web|mcp)`; ghi ở mọi chỗ đổi stage/status (server action, `claimTask`, `updateTaskByAgent`). Nền cho F22.2, F22.5.
@@ -49,9 +50,10 @@
 ### F22.5 — Chỉ số chất lượng
 **Làm gì**: trang "Chất lượng" (hoặc mục trong Portfolio): cycle time trung vị (Dev → Done), tỉ lệ trả lại, tổng thời gian bị block — lọc theo dự án / sprint / agent / người. Tính từ `TaskTransition`.
 **Hoàn thành khi**:
-- [ ] Số liệu khớp dữ liệu transition mẫu (integration)
+- [x] Số liệu khớp dữ liệu transition mẫu (integration `lib/data/quality.integration.test.ts`, e2e `quality.spec.ts`)
 
 ## Quyết định / ghi chú
+- **F22.5 (2026-10-31)**: mục "Chất lượng — <dự án>" ở **Portfolio** cho dự án đang mở (không thêm màn mới): cycle time trung vị (lần đầu vào Dev → lần cuối vào Done, chỉ task đang Done), tỉ lệ task bị trả lại / task đã qua Review, tổng số lần trả lại (Review → Dev có lý do), bảng theo người / agent đang được giao. Hàm thuần `lib/qualityMetrics.ts`, đọc `lib/data/quality.ts` (task feature đang chạy, chưa lưu trữ). **Thời gian bị block chưa tính được** — `blocked` là cột trạng thái, không có lịch sử đặt / gỡ → tách F22.7 (kèm lọc theo sprint). Seed thêm lịch sử mẫu cho T-390, T-388 (1 lần trả lại), T-624.
 - **F22.3 (2026-10-31)**: tách F22.3 cũ thành cổng vào Review (làm ngay — chỉ dùng acceptance criteria F21.6, không cần cấu hình mới) và F22.6 (DoD theo dự án — cần model cấu hình dự án). Chặn khi stage **đổi sang** Review (task đã ở Review không bị chặn lại); task không có tiêu chí → không chặn. Lý do liệt kê tối đa 3 tiêu chí chưa đạt (`lib/reviewGate.ts`); kiểm tra ở `reviewGateBlocker` (`lib/domain/taskCriteria.ts`), gọi từ `updateTaskStage` (web) và `updateTaskByAgent` (MCP). Đổi riêng status sang "Chờ review" không bị chặn (không đổi stage).
 - **F22.4 (2026-10-31)**: ba cột thường `Task.prUrl` / `branch` / `commitSha` (migration chỉ thêm) thay vì JSON `links` — truy vấn / lọc dễ, một task một PR là đủ cho giai đoạn này (nhiều PR thì thêm bảng sau). Kiểm tra chung ở `lib/taskLinks.ts` (PR chỉ http(s), branch theo luật ref git rút gọn, commit hex 7–40 → chữ thường). MCP `tasks_update_status` nhận `prUrl?`, `branch?`, `commit?`; chỉ báo liên kết thì không ghi `TaskTransition` và không nhả task. Người nhập ở form "Sửa" trong drawer; drawer hiện PR dạng `owner/repo#số`. `tasks_list` / `context_get` trả `links`. Đọc trạng thái PR / CI tự động là F26.3.
 - **F22.2 (2026-10-31)**: quyền `task.review` (tech lead / người tạo dự án — chưa có "người được chỉ định review", thêm khi cần). `lib/domain/taskReview.ts`: Duyệt → Done + "Xong"; Trả lại → Dev + "Đang làm", lý do lưu ở `TaskTransition.note` (migration chỉ thêm cột) **và** bình luận "Trả lại sau review: …" để hiện trong drawer. Cả hai xoá `runningSince`. Chặn thêm: task giao cho **agent** chỉ sang Done qua người có `task.review` (kể cả nút "Chuyển stage"); task của người thì thành viên vẫn tự Done được. MCP `tasks_list` trả `lastReturn { reason, at }`. UI: danh sách "Chờ review" trên list màn work (mở drawer), khung "Review" trong drawer cho người có quyền. Inbox gom mọi việc chờ duyệt là F25.2.
