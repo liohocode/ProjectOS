@@ -2,7 +2,7 @@ import type { SectionDiff } from "@/lib/diffSections";
 import type { AgentConfigValues } from "@/lib/agentConfig";
 import type { TaskLinks } from "@/lib/taskLinks";
 
-export type ScreenId = "inbox" | "portfolio" | "docs" | "work" | "team" | "mcp";
+export type ScreenId = "inbox" | "portfolio" | "roadmap" | "docs" | "work" | "team" | "mcp";
 
 export interface Project {
   id: string;

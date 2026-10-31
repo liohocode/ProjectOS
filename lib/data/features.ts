@@ -109,12 +109,14 @@ export const getTasksByProject = cache(async (projectId: string): Promise<Task[]
 });
 
 /** Số task + số task bị block cho badge sidebar — đếm trong DB, không tải cả cây feature/task. */
-export const getTaskCountsByProject = cache(async (projectId: string): Promise<{ total: number; blocked: number }> => {
-  const [total, blocked] = await Promise.all([
+export const getTaskCountsByProject = cache(async (projectId: string): Promise<{ total: number; blocked: number; decisions: number }> => {
+  const [total, blocked, decisions] = await Promise.all([
     prisma.task.count({ where: { feature: { projectId, archivedAt: null }, archivedAt: null } }),
     prisma.task.count({ where: { feature: { projectId, archivedAt: null }, archivedAt: null, blocked: { not: null } } }),
+    // F28.4: quyết định đang mở — badge mục Roadmap.
+    prisma.task.count({ where: { feature: { projectId, archivedAt: null, status: "active" }, archivedAt: null, needsDecision: true, stage: { not: "Done" } } }),
   ]);
-  return { total, blocked };
+  return { total, blocked, decisions };
 });
 
 /** Feature agent đề xuất đang chờ lead duyệt (F16.6), cũ trước. */

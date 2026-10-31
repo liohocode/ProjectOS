@@ -25,6 +25,11 @@ describe("parseFeatureMd (F28.2) trên kế hoạch thật", () => {
     expect(f21.tasks.find((t) => t.code === "F21.11")?.stage).toBe("Done");
   });
 
+  it("F18 hoãn: task chưa xong bị chặn kèm lý do", () => {
+    const f18 = parsed.find((f) => f!.code === "F18")!;
+    expect(f18.tasks.filter((t) => t.stage !== "Done").every((t) => t.blocked?.startsWith("Feature hoãn") || t.blocked)).toBe(true);
+  });
+
   it("F29: task quyết định + task chưa làm", () => {
     const f29 = parsed.find((f) => f!.code === "F29")!;
     expect(f29.phase).toBe("8b");
