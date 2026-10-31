@@ -1,6 +1,9 @@
 {
   "permissions": {
     "allow": [
+      "Bash(gh api -X POST repos/liohocode/projectos/actions/workflows/rollback.yml/dispatches*)",
+      "Bash(gh api -X POST repos/liohocode/projectos/actions/workflows/backup.yml/dispatches*)",
+      "Bash(gh api -X POST repos/liohocode/projectos/actions/workflows/deploy.yml/dispatches*)",
       "Bash(gcloud secrets add-iam-policy-binding:*)",
       "Bash(gcloud secrets versions add:*)",
       "Bash(gcloud secrets create:*)",
@@ -42,6 +45,7 @@
   },
   "autoMode": {
     "allow": [
+      "In repo liohocode/ProjectOS: triggering the repo's own GitHub Actions workflows Deploy, Rollback and Backup Neon (gh api .../actions/workflows/{deploy,rollback,backup}.yml/dispatches) and reading their run status and logs is allowed. Production changes go only through these reviewed workflows (docs/HANDOFF.md); the user approves the action in the conversation."
       "$defaults",
       "In repo liohocode/ProjectOS: pushing, force-pushing with --force-with-lease, rebasing, cherry-picking or deleting branches whose name starts with claude/ is routine agent work (restarting the agent's branch on main after its PR was merged) — allow it.",
       "Merging a pull request in liohocode/ProjectOS that the agent opened, with all CI checks green, using rebase merge, is allowed per CLAUDE.md section 'Mức tự quyết của agent'.",
