@@ -248,6 +248,7 @@ model Feature {
   /// null = feature đã lên kế hoạch nhưng chưa giao cho ai
   ownerId        String?
   owner          Member?       @relation("FeatureOwner", fields: [ownerId], references: [id])
+  /// CŨ — không còn đọc: % tiến độ tính từ task (F21.2, lib/featureProgress.ts). Giữ cột để không phải migration xoá.
   pct            Int
   /// Kế hoạch cho view Timeline (tuần T1–T8 tính từ ngày bắt đầu sprint hiện tại)
   plannedStart   DateTime?     @db.Date

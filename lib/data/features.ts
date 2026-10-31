@@ -3,6 +3,7 @@ import type { Feature, ProposedFeature, Task } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { TASK_STATUS_LABEL, formatDue, formatEstimate, formatRunning, toIsoDate } from "@/lib/taskFormat";
 import { formatRelativeVi } from "@/lib/relativeTime";
+import { featureProgress } from "@/lib/featureProgress";
 
 export const UNASSIGNED_OWNER = "Chưa giao";
 
@@ -25,7 +26,8 @@ export const getFeaturesByProject = cache(async (projectId: string): Promise<Fea
     stage: row.stage,
     owner: row.owner?.name ?? UNASSIGNED_OWNER,
     ownerKind: row.owner?.kind ?? null,
-    pct: row.pct,
+    // F21.2: tính từ task (cột `Feature.pct` cũ không còn đọc).
+    pct: featureProgress(row.tasks),
     docs: row._count.docs,
     tasks: row.tasks.map(
       (t): Task => ({

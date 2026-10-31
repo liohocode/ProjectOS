@@ -2,6 +2,7 @@ import { cache } from "react";
 import type { TimelineRow } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { datesToWeeks } from "@/lib/timeline";
+import { featureProgress } from "@/lib/featureProgress";
 import { UNASSIGNED_OWNER } from "./features";
 
 // View Timeline: tuần T1–T8 tính từ ngày bắt đầu sprint hiện tại của dự án.
@@ -11,7 +12,11 @@ export const getTimelineByProject = cache(async (projectId: string): Promise<Tim
     where: { id: projectId },
     include: {
       currentSprint: true,
-      features: { where: { status: "active" }, include: { owner: true }, orderBy: { id: "asc" } },
+      features: {
+        where: { status: "active" },
+        include: { owner: true, tasks: { select: { stage: true, estimatePoints: true } } },
+        orderBy: { id: "asc" },
+      },
     },
   });
   if (!project?.currentSprint) return [];
@@ -29,7 +34,7 @@ export const getTimelineByProject = cache(async (projectId: string): Promise<Tim
         kind: f.owner?.kind ?? "none",
         start: span.start,
         len: span.len,
-        label: f.owner ? `${f.stage} · ${f.pct}%` : "Chưa bắt đầu",
+        label: f.owner ? `${f.stage} · ${featureProgress(f.tasks)}%` : "Chưa bắt đầu",
       },
     ];
   });
