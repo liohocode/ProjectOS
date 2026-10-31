@@ -52,25 +52,22 @@ function toTask(t: TaskRow, now: Date): Task {
   };
 }
 
-export const getFeaturesByProject = cache(async (projectId: string): Promise<Feature[]> => {
-  const rows = await prisma.feature.findMany({
-    // Feature agent đề xuất chờ duyệt / bị từ chối không vào list chính (F16.6).
-    where: { projectId, status: "active" },
-    include: {
-      owner: true,
-      tasks: {
-        // Task lưu trữ (F21.4) không vào list; mở bằng deep link qua getArchivedTask.
-        where: { archivedAt: null },
-        include: TASK_INCLUDE,
-        orderBy: { id: "asc" },
-      },
-      _count: { select: { docs: true } },
-    },
-    orderBy: { id: "asc" },
-  });
+/** Thứ tự ưu tiên (F21.10): `position` nhỏ trước, chưa đặt xếp cuối theo id. */
+export const PRIORITY_ORDER = [{ position: { sort: "asc", nulls: "last" } }, { id: "asc" }] satisfies Prisma.FeatureOrderByWithRelationInput[];
 
-  const now = new Date();
-  return rows.map((row) => ({
+const FEATURE_INCLUDE = {
+  owner: true,
+  tasks: {
+    // Task lưu trữ (F21.4) không vào list; mở bằng deep link qua getArchivedTask.
+    where: { archivedAt: null },
+    include: TASK_INCLUDE,
+    orderBy: [{ position: { sort: "asc", nulls: "last" } }, { id: "asc" }],
+  },
+  _count: { select: { docs: true } },
+} satisfies Prisma.FeatureInclude;
+
+function toFeature(row: Prisma.FeatureGetPayload<{ include: typeof FEATURE_INCLUDE }>, now: Date): Feature {
+  return {
     id: row.id,
     name: row.name,
     stage: row.stage,
@@ -83,7 +80,19 @@ export const getFeaturesByProject = cache(async (projectId: string): Promise<Fea
     pct: featureProgress(row.tasks),
     docs: row._count.docs,
     tasks: row.tasks.map((t) => toTask(t, now)),
-  }));
+    ...(row.archivedAt && { archived: true as const }),
+  };
+}
+
+export const getFeaturesByProject = cache(async (projectId: string): Promise<Feature[]> => {
+  const rows = await prisma.feature.findMany({
+    // Feature agent đề xuất chờ duyệt / bị từ chối (F16.6) và feature lưu trữ (F21.10) không vào list chính.
+    where: { projectId, status: "active", archivedAt: null },
+    include: FEATURE_INCLUDE,
+    orderBy: PRIORITY_ORDER,
+  });
+  const now = new Date();
+  return rows.map((row) => toFeature(row, now));
 });
 
 export const getTasksByProject = cache(async (projectId: string): Promise<Task[]> => {
@@ -94,8 +103,8 @@ export const getTasksByProject = cache(async (projectId: string): Promise<Task[]
 /** Số task + số task bị block cho badge sidebar — đếm trong DB, không tải cả cây feature/task. */
 export const getTaskCountsByProject = cache(async (projectId: string): Promise<{ total: number; blocked: number }> => {
   const [total, blocked] = await Promise.all([
-    prisma.task.count({ where: { feature: { projectId }, archivedAt: null } }),
-    prisma.task.count({ where: { feature: { projectId }, archivedAt: null, blocked: { not: null } } }),
+    prisma.task.count({ where: { feature: { projectId, archivedAt: null }, archivedAt: null } }),
+    prisma.task.count({ where: { feature: { projectId, archivedAt: null }, archivedAt: null, blocked: { not: null } } }),
   ]);
   return { total, blocked };
 });
@@ -135,11 +144,10 @@ export interface FeatureDetail {
 
 /** Trang chi tiết feature (F21.9) — feature đang chạy của dự án; null nếu không có. */
 export const getFeatureDetail = cache(async (projectId: string, featureId: string): Promise<FeatureDetail | null> => {
-  const feature = (await getFeaturesByProject(projectId)).find((f) => f.id === featureId);
-  if (!feature) return null;
-  const row = await prisma.feature.findUniqueOrThrow({
-    where: { id: featureId },
-    select: { goal: true, scope: true, notes: true, docs: { select: { id: true, title: true }, orderBy: { title: "asc" } } },
-  });
-  return { feature, goal: row.goal, scope: row.scope, notes: row.notes, docs: row.docs };
+  // Feature lưu trữ (F21.10) vẫn mở được bằng link để xem / khôi phục.
+  const row = await prisma.feature.findFirst({ where: { id: featureId, projectId, status: "active" }, include: FEATURE_INCLUDE });
+  if (!row) return null;
+  const feature = toFeature(row, new Date());
+  const docs = await prisma.doc.findMany({ where: { featureId }, select: { id: true, title: true }, orderBy: { title: "asc" } });
+  return { feature, goal: row.goal, scope: row.scope, notes: row.notes, docs };
 });

@@ -20,7 +20,7 @@ export interface ProjectQuality {
 
 export const getQualityByProject = cache(async (projectId: string): Promise<ProjectQuality> => {
   const tasks = await prisma.task.findMany({
-    where: { feature: { projectId, status: "active" }, archivedAt: null },
+    where: { feature: { projectId, status: "active", archivedAt: null }, archivedAt: null },
     select: {
       stage: true,
       assignee: { select: { id: true, name: true, kind: true } },

@@ -268,6 +268,9 @@ model Feature {
   goal           String?
   scope          String?
   notes          String?
+  /// F21.10: lưu trữ (ẩn feature + task của nó khỏi list / timeline / inbox / MCP) và thứ tự ưu tiên (nhỏ trước; null cuối, theo id)
+  archivedAt     DateTime?
+  position       Int?
   /// F16.6: agent đề xuất (features_propose), mô tả / lý do đề xuất, lý do từ chối
   proposedById   String?
   proposedBy     Member?       @relation("FeatureProposer", fields: [proposedById], references: [id], onDelete: SetNull)
@@ -315,6 +318,8 @@ model Task {
   size           TaskSize?
   code           String?
   needsDecision  Boolean    @default(false)
+  /// F21.10: thứ tự ưu tiên trong feature (nhỏ trước; null cuối, theo id)
+  position       Int?
   /// Lưu trữ (F21.4): khác null = ẩn khỏi list / timeline / inbox / MCP, vẫn mở được bằng deep link; giữ lịch sử
   archivedAt     DateTime?
   sprintId       String?

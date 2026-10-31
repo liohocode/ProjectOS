@@ -5,6 +5,8 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCan } from "@/components/auth/PermissionsProvider";
 import { FeatureDialog } from "./FeatureDialog";
+import { MoveButtons } from "./MoveButtons";
+import { moveFeature } from "@/lib/actions/features";
 import type { Feature, MemberOption } from "@/lib/types";
 import { TaskRow } from "./TaskRow";
 import { initials, stageTagClass } from "./taskStyle";
@@ -54,6 +56,7 @@ export function FeatureSection({
         >
           {feature.ownerKind ? initials(feature.owner) : <i className="ph ph-user" aria-hidden />}
         </span>
+        {canEdit && <MoveButtons label={feature.id} onMove={(dir) => moveFeature(feature.id, dir)} />}
         {canEdit && (
           <button type="button" className="btn btn-ghost btn-icon frow-edit" aria-label={`Sửa ${feature.id}`} title="Sửa feature" onClick={() => setEditing(true)}>
             <i className="ph ph-pencil-simple" aria-hidden />

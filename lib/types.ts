@@ -90,6 +90,8 @@ export interface Feature {
   pct: number;
   docs: number;
   tasks: Task[];
+  /** Lưu trữ (F21.10) — chỉ có ở trang chi tiết mở bằng link */
+  archived?: true;
 }
 
 export interface DocItem {

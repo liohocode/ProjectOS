@@ -5,7 +5,10 @@ import { useState, useTransition, type FormEvent } from "react";
 import { useCan } from "@/components/auth/PermissionsProvider";
 import { Field } from "@/components/ui/Field";
 import { Markdown } from "@/components/ui/Markdown";
-import { updateFeatureContent } from "@/lib/actions/features";
+import { setFeatureArchived, updateFeatureContent } from "@/lib/actions/features";
+import { moveTask } from "@/lib/actions/tasks";
+import type { ActionResult } from "@/lib/actions/result";
+import { MoveButtons } from "./MoveButtons";
 import type { FeatureDetail } from "@/lib/data/features";
 import { initials, stageTagClass } from "./taskStyle";
 
@@ -13,10 +16,21 @@ import { initials, stageTagClass } from "./taskStyle";
 export function FeatureDetailView({ projectId, detail }: { projectId: string; detail: FeatureDetail }) {
   const { feature, goal, scope, notes, docs } = detail;
   const canEdit = useCan("feature.manage");
+  const canWrite = useCan("task.write");
+  const [confirmArchive, setConfirmArchive] = useState(false);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const done = feature.tasks.filter((t) => t.stage === "Done").length;
+
+  function run(action: () => Promise<ActionResult>, onSuccess?: () => void) {
+    setError(null);
+    startTransition(async () => {
+      const result = await action();
+      if (result.ok) onSuccess?.();
+      else setError(result.error);
+    });
+  }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,12 +53,46 @@ export function FeatureDetailView({ projectId, detail }: { projectId: string; de
         <span className="trow-id nowrap">{feature.id}</span>
         <h4>{feature.name}</h4>
         <span className={stageTagClass(feature.stage)}>{feature.stage}</span>
-        {canEdit && !editing && (
-          <button type="button" className="btn btn-secondary feature-edit" onClick={() => setEditing(true)}>
-            <i className="ph ph-pencil-simple" aria-hidden /> Sửa nội dung
-          </button>
+        {canEdit && !editing && !feature.archived && (
+          <span className="feature-edit">
+            <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
+              <i className="ph ph-pencil-simple" aria-hidden /> Sửa nội dung
+            </button>{" "}
+            <button type="button" className="btn btn-secondary" onClick={() => setConfirmArchive(true)} disabled={isPending}>
+              <i className="ph ph-archive" aria-hidden /> Lưu trữ
+            </button>
+          </span>
         )}
       </div>
+      {feature.archived && (
+        <div className="drawer-warning drawer-archived" role="status">
+          <i className="ph ph-archive" aria-hidden /> Feature đã lưu trữ — feature và task của nó không hiện trong danh sách, timeline, inbox và MCP.
+          {canEdit && (
+            <button type="button" className="btn btn-secondary" disabled={isPending} onClick={() => run(() => setFeatureArchived(feature.id, false))}>
+              Khôi phục
+            </button>
+          )}
+        </div>
+      )}
+      {confirmArchive && !feature.archived && (
+        <div className="drawer-section" role="region" aria-label="Lưu trữ feature">
+          <div className="drawer-section-title">Lưu trữ {feature.id}?</div>
+          <p className="review-box-hint">Feature và {feature.tasks.length} task của nó sẽ ẩn khỏi danh sách, timeline, inbox và MCP; lịch sử giữ nguyên. Khôi phục được từ trang này.</p>
+          <div className="dialog-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setConfirmArchive(false)} disabled={isPending}>
+              Huỷ
+            </button>
+            <button type="button" className="btn btn-primary" disabled={isPending} onClick={() => run(() => setFeatureArchived(feature.id, true), () => setConfirmArchive(false))}>
+              Lưu trữ
+            </button>
+          </div>
+        </div>
+      )}
+      {error && !editing && (
+        <div className="drawer-warning" role="alert">
+          <i className="ph ph-warning-circle" aria-hidden /> {error}
+        </div>
+      )}
       <div className="feature-detail-meta">
         <span>
           <span className={`avatar ${feature.ownerKind ? `avatar-${feature.ownerKind}` : "avatar-none"}`} style={{ width: 18, height: 18, fontSize: 8 }}>
@@ -101,7 +149,8 @@ export function FeatureDetailView({ projectId, detail }: { projectId: string; de
         ) : (
           <ul className="feature-task-list">
             {feature.tasks.map((t) => (
-              <li key={t.id}>
+              <li key={t.id} className="feature-task-row">
+                {canWrite && !feature.archived && <MoveButtons label={t.id} onMove={(dir) => moveTask(t.id, dir)} />}
                 <Link href={`/${projectId}/work?task=${t.id}`} className="feature-task">
                   <span className="mono text-muted">{t.id}</span>
                   {t.code && <span className="mono text-muted">{t.code}</span>}

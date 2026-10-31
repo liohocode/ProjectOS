@@ -12,6 +12,7 @@ import { commentOnTask } from "@/lib/domain/tasks";
 import { reviewGateBlocker } from "@/lib/domain/taskCriteria";
 import { addDependency, removeDependency } from "@/lib/domain/taskDependencies";
 import { parseTaskLinks } from "@/lib/taskLinks";
+import { moveInList, type Direction } from "@/lib/reorder";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
 
@@ -143,7 +144,7 @@ export async function createTask(input: NewTaskInput): Promise<ActionResult<{ ta
   const data = parsed.data;
 
   const feature = await prisma.feature.findUnique({
-    where: { id: data.featureId, status: "active" },
+    where: { id: data.featureId, status: "active", archivedAt: null },
     // F21.3: task mới vào sprint hiện tại của dự án (đổi được ở drawer).
     select: { projectId: true, project: { select: { currentSprintId: true } } },
   });
@@ -362,6 +363,27 @@ export async function setTaskDependency(taskId: string, dependsOnId: string, add
   await recordActivity("ph-link", `${add ? "Thêm" : "Bỏ"} phụ thuộc ${ids.data.taskId} → ${ids.data.dependsOnId}`, {
     event: { projectId, type: "task", tone: "ok", taskId: ids.data.taskId },
   });
+  revalidateTaskViews();
+  return ok();
+}
+
+/** Đổi thứ tự ưu tiên task trong feature (F21.10) — thành viên dự án. */
+export async function moveTask(taskId: string, dir: Direction): Promise<ActionResult> {
+  const id = taskIdSchema.safeParse(taskId);
+  if (!id.success || (dir !== "up" && dir !== "down")) return fail("Thiếu mã task");
+  const task = await prisma.task.findUnique({ where: { id: id.data }, select: { featureId: true, feature: { select: { projectId: true } } } });
+  if (!task) return fail(`Không tìm thấy task ${id.data}`);
+  const denied = await authorize("task.write", task.feature.projectId);
+  if (denied) return fail(denied);
+
+  const rows = await prisma.task.findMany({
+    where: { featureId: task.featureId, archivedAt: null },
+    orderBy: [{ position: { sort: "asc", nulls: "last" } }, { id: "asc" }],
+    select: { id: true },
+  });
+  const next = moveInList(rows.map((r) => r.id), id.data, dir);
+  if (!next) return ok();
+  await prisma.$transaction(next.map((tid, i) => prisma.task.update({ where: { id: tid }, data: { position: i + 1 } })));
   revalidateTaskViews();
   return ok();
 }

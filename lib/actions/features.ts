@@ -6,6 +6,8 @@ import { authorize } from "@/lib/auth/authorize";
 import { prisma } from "@/lib/prisma";
 import { createFeature as createFeatureDomain, reviewFeatureProposal, updateFeature as updateFeatureDomain } from "@/lib/domain/features";
 import { fail, ok, type ActionResult } from "./result";
+import { PRIORITY_ORDER } from "@/lib/data/features";
+import { moveInList, type Direction } from "@/lib/reorder";
 import { recordActivity } from "./_activity";
 
 // Duyệt / từ chối feature agent đề xuất (F16.6) — tech lead hoặc người tạo dự án (`feature.review`).
@@ -123,6 +125,43 @@ export async function updateFeatureContent(featureId: string, input: FeatureCont
   await recordActivity("ph-note-pencil", `Sửa nội dung feature ${id.data}`, {
     event: { projectId, type: "feature", tone: "ok", featureId: id.data },
   });
+  revalidatePath("/[project]", "layout");
+  return ok();
+}
+
+/** Lưu trữ / khôi phục feature (F21.10) — ẩn feature + task của nó, giữ lịch sử; feature.manage. */
+export async function setFeatureArchived(featureId: string, archived: boolean): Promise<ActionResult> {
+  const id = featureIdSchema.safeParse(featureId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const feature = await prisma.feature.findUnique({ where: { id: id.data }, select: { projectId: true, name: true, archivedAt: true, status: true } });
+  if (!feature || feature.status !== "active") return fail("Không tìm thấy feature");
+  const denied = await authorize("feature.manage", feature.projectId);
+  if (denied) return fail(denied);
+  if (archived === (feature.archivedAt !== null)) return fail(archived ? "Feature đã được lưu trữ" : "Feature chưa được lưu trữ");
+  const running = archived ? await prisma.task.count({ where: { featureId: id.data, runningSince: { not: null }, archivedAt: null } }) : 0;
+  if (running > 0) return fail(`Feature còn ${running} task đang chạy — dừng trước khi lưu trữ`);
+
+  await prisma.feature.update({ where: { id: id.data }, data: { archivedAt: archived ? new Date() : null } });
+  await recordActivity(archived ? "ph-archive" : "ph-arrow-counter-clockwise", `${archived ? "Lưu trữ" : "Khôi phục"} feature ${id.data} ${feature.name}`, {
+    event: { projectId: feature.projectId, type: "feature", tone: "ok", featureId: id.data },
+  });
+  revalidatePath("/[project]", "layout");
+  return ok();
+}
+
+/** Đổi thứ tự ưu tiên feature trong dự án (F21.10) — feature.manage. Ghi lại position 1..n cho cả danh sách. */
+export async function moveFeature(featureId: string, dir: Direction): Promise<ActionResult> {
+  const id = featureIdSchema.safeParse(featureId);
+  if (!id.success || (dir !== "up" && dir !== "down")) return fail("Thiếu feature");
+  const projectId = await projectOf(id.data);
+  if (!projectId) return fail("Không tìm thấy feature");
+  const denied = await authorize("feature.manage", projectId);
+  if (denied) return fail(denied);
+
+  const rows = await prisma.feature.findMany({ where: { projectId, status: "active", archivedAt: null }, orderBy: PRIORITY_ORDER, select: { id: true } });
+  const next = moveInList(rows.map((r) => r.id), id.data, dir);
+  if (!next) return ok();
+  await prisma.$transaction(next.map((fid, i) => prisma.feature.update({ where: { id: fid }, data: { position: i + 1 } })));
   revalidatePath("/[project]", "layout");
   return ok();
 }

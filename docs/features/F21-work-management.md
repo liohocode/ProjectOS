@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Đang làm (mở rộng 2026-10-31) | 7 | F11, F16.6 | FR-PM-01…11 |
+| Xong | 7 | F11, F16.6 | FR-PM-01…11 |
 
 ## Mục tiêu
 Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian (hiện chỉ agent đề xuất được feature, sprint chỉ tạo lúc tạo dự án, % tiến độ feature là số tĩnh trong seed).
@@ -27,7 +27,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 | F21.7 | Mô tả task (markdown "Làm gì"), cỡ S / M / L, mã hiển thị (vd `F21.3`), nhãn "Cần quyết định" — UI + MCP `context_get` | M | F21.11 | Xong — 2026-10-31 |
 | F21.8 | Phụ thuộc giữa task: drawer thêm / bỏ, hiện task đang chặn; `tasks_claim` bị chặn khi phụ thuộc chưa Done | M | — | Xong — 2026-10-31 |
 | F21.9 | Trang chi tiết feature: mục tiêu, phạm vi, ghi chú quyết định (markdown), task, tài liệu, tiến độ | M | F21.11 | Xong — 2026-10-31 |
-| F21.10 | Lưu trữ feature; sắp xếp thứ tự ưu tiên feature / task | S | — | Chưa làm |
+| F21.10 | Lưu trữ feature; sắp xếp thứ tự ưu tiên feature / task | S | — | Xong — 2026-10-31 |
 
 ### F21.1 — Feature CRUD
 **Làm gì**: nút "Feature mới" (màn work, `?newFeature=1`) + "Sửa" trên header feature. Mã `FEAT-n` dùng chung với F16.6. Action `createFeature` / `updateFeature` (quyền: thành viên dự án tạo; sửa owner/kế hoạch: tech lead / người tạo dự án — thêm `feature.manage` vào ma trận).
@@ -60,6 +60,7 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 - [x] Lead thêm tiêu chí, agent tick qua MCP (F24) / người tick trên UI (integration `lib/actions/criteria.integration.test.ts`, MCP `app/api/mcp/client.integration.test.ts`, e2e `task-criteria.spec.ts`)
 
 ## Quyết định / ghi chú
+- **F21.10 (2026-10-31)**: migration chỉ thêm `Feature.archivedAt?`, `Feature.position?`, `Task.position?`. Lưu trữ feature (`feature.manage`, xác nhận ở trang chi tiết) ẩn feature + task của nó khỏi list, đếm, timeline, inbox, chỉ số chất lượng, MCP (`tasks_claim` báo "đã được lưu trữ"); trang chi tiết vẫn mở bằng link, có banner + "Khôi phục"; chặn khi còn task đang chạy. Tài liệu của feature lưu trữ vẫn ở màn Docs. Thứ tự: `position` nhỏ trước, chưa đặt xếp cuối theo id (`PRIORITY_ORDER`); nút ▲▼ ở header feature (màn work, `feature.manage`) và cạnh task ở trang chi tiết (`task.write`) — đổi chỗ với hàng xóm rồi ghi lại position 1..n (`lib/reorder.ts`). Sửa kèm seed: nhật ký MCP mẫu dời cả nhóm khi mốc muộn nhất ở tương lai (trước đây lùi từng dòng một ngày → đảo thứ tự tuỳ giờ chạy seed, test log phiên chạy F17.4 hỏng khoảng 14:21–14:32).
 - **F21.9 (2026-10-31)**: migration chỉ thêm `Feature.goal?` / `scope?` / `notes?` (markdown — ứng với "Mục tiêu", "Phạm vi", "Quyết định / ghi chú" của file feature `.md`, dùng cho import F28.2). Route `/[project]/work/features/[featureId]` (tên feature ở màn work là link): tiến độ, người phụ trách, kế hoạch, task (link mở drawer), tài liệu gắn feature. "Sửa nội dung" — quyền `feature.manage` (`updateFeatureContent`, rỗng = xoá). Seed: FEAT-118 có nội dung mẫu.
 - **F21.8 (2026-10-31)**: migration chỉ thêm bảng `task_dependencies` (khoá chính `taskId + dependsOnId`, cascade khi xoá task). Cùng dự án, không vòng (`lib/taskDeps.ts`, kiểm tra trong transaction có advisory lock theo dự án). Quyền `task.write`. Drawer mục "Phụ thuộc": task cần xong trước (bỏ được) + task đang chờ task này, link mở task đó; hàng task hiện "chờ T-…" khi còn phụ thuộc chưa Done. MCP: `tasks_claim` trả "đang chờ … xong trước", `tasks_list` trả `waitingOn`. Chỉ chặn **bắt đầu** (claim) — người vẫn chuyển stage tay được. Task đã lưu trữ không tính là đang chờ.
 - **F21.7 (2026-10-31)**: migration chỉ thêm `Task.description?` (markdown, ≤ 10.000 ký tự), `size?` (enum `TaskSize` S/M/L), `code?` (mã trong kế hoạch, vd `F21.3` — id vẫn `T-n`, dùng cho import F28.2), `needsDecision` (mặc định false). Sửa ở form "Sửa" của drawer (chuỗi rỗng = xoá), tạo task có mô tả + cỡ. Drawer: mã / cỡ / nhãn "Cần quyết định" ở đầu, mục "Mô tả" (markdown); hàng task hiện mã + nhãn. MCP: `tasks_list` trả `code`, `size`, `needsDecision`; `context_get` trả thêm `description`. Seed: T-396 có mô tả (bảng), T-418 cần quyết định. **Sửa test integration chập chờn tận gốc**: các file integration chạy tuần tự, nhưng nhiều file để lại `ActivityEvent` → feed rv-web (30 mục mới nhất) mất sự kiện seed khi `aggregates.integration.test.ts` chạy sau. `test/integration-env.ts` giờ xoá mọi sự kiện do file test tạo ra (afterAll chung) — chẩn đoán "chạy song song" ở F21.6 là sai.
@@ -76,6 +77,10 @@ Lead tự quản lý trọn vòng đời feature / sprint / task trên Meridian 
 ### F21.9 — Trang chi tiết feature
 **Hoàn thành khi**:
 - [x] Mở từ màn work, xem mục tiêu / phạm vi / ghi chú (markdown), task, tài liệu; tech lead sửa nội dung (integration `lib/actions/features.integration.test.ts`, e2e `feature-detail.spec.ts`)
+
+### F21.10 — Lưu trữ feature, thứ tự ưu tiên
+**Hoàn thành khi**:
+- [x] Lưu trữ / khôi phục feature (ẩn feature + task khỏi list / timeline / MCP); đưa feature / task lên xuống (integration `lib/actions/featureArchive.integration.test.ts`, e2e `feature-archive.spec.ts`)
 
 ### F21.11 — Markdown
 **Hoàn thành khi**:
