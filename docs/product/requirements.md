@@ -97,7 +97,7 @@ Nguồn: tài liệu mẫu "MCP tool spec" (seed) + spec màn MCP.
 | FR-PM-06 | Acceptance criteria dạng checklist trên task | ✅ người trong drawer, agent qua MCP `criteria_check` (F21.6) | F21 |
 | FR-QA-01 | Lưu lịch sử chuyển stage / trạng thái của mọi task | ✅ `TaskTransition` từ web + MCP (F22.1) | F22 |
 | FR-QA-02 | Task do agent làm phải qua cổng review của người (duyệt / trả lại kèm lý do) | ✅ (F22.2) | F22 |
-| FR-QA-03 | Definition of Done theo dự án, áp khi chuyển Review / Done | ⬜ | F22 |
+| FR-QA-03 | Definition of Done theo dự án, áp khi chuyển Review / Done | 🟡 vào Review cần đủ acceptance criteria (F22.3); DoD theo dự án — F22.6 | F22 |
 | FR-QA-04 | Task liên kết PR / branch / commit | ✅ agent báo qua MCP, người nhập ở drawer (F22.4) | F22 |
 | FR-QA-05 | Chỉ số chất lượng: cycle time, tỉ lệ trả lại, thời gian bị block | ⬜ | F22 |
 | FR-TK-01 | Ghi nhận token AI theo task / phiên / agent / dự án | ⬜ | F23 |

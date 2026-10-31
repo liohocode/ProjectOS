@@ -16,7 +16,8 @@
 |---|---|---|---|---|
 | F22.1 | Lịch sử chuyển stage / trạng thái task (`TaskTransition`) — ghi từ UI + MCP | S | — | Xong — 2026-10-31 |
 | F22.2 | Cổng review: task ở Review → người duyệt (Done) hoặc trả lại (về Dev + lý do) | M | F22.1 | Xong — 2026-10-31 |
-| F22.3 | Definition of Done theo dự án: checklist áp khi chuyển sang Review / Done | M | F21.6 | Chưa làm |
+| F22.3 | Cổng vào Review: mọi acceptance criteria (F21.6) phải đạt — chặn ở UI + MCP | S | F21.6 | Xong — 2026-10-31 |
+| F22.6 | Definition of Done theo dự án: checklist mặc định (vd "Có test", "PR đã review", "Cập nhật tài liệu") người tick khi duyệt Done | M | F22.3 | Chưa làm |
 | F22.4 | Liên kết PR / branch / commit trên task (agent báo qua MCP, người nhập tay) | S | — | Xong — 2026-10-31 |
 | F22.5 | Chỉ số chất lượng: cycle time, số lần trả lại, thời gian bị block — theo dự án / agent / người | M | F22.1, F22.2 | Chưa làm |
 
@@ -30,10 +31,15 @@
 **Hoàn thành khi**:
 - [x] Agent đẩy Review → lead trả lại kèm lý do → agent thấy lý do và làm lại → lead duyệt Done (integration `lib/domain/taskReview.integration.test.ts`, e2e `review-gate.spec.ts`)
 
-### F22.3 — Definition of Done
-**Làm gì**: cấu hình dự án: danh sách tiêu chí mặc định (vd "Có test", "PR đã review", "Cập nhật tài liệu"); chuyển sang Review cần mọi acceptance criteria (F21.6) đạt; Done cần DoD đạt (người tick khi duyệt).
+### F22.3 — Cổng vào Review
+**Làm gì**: chuyển sang Review cần mọi acceptance criteria (F21.6) đạt — server action `updateTaskStage` và MCP `tasks_update_status`.
 **Hoàn thành khi**:
-- [ ] Chuyển Review khi còn tiêu chí chưa đạt → bị chặn kèm lý do (UI + MCP)
+- [x] Chuyển Review khi còn tiêu chí chưa đạt → bị chặn kèm lý do (UI + MCP) (integration `lib/domain/reviewGate.integration.test.ts`, e2e `review-criteria-gate.spec.ts`)
+
+### F22.6 — Definition of Done theo dự án
+**Làm gì**: cấu hình dự án: danh sách tiêu chí mặc định (vd "Có test", "PR đã review", "Cập nhật tài liệu"); Done cần DoD đạt (người tick khi duyệt ở khung Review).
+**Hoàn thành khi**:
+- [ ] Duyệt Done khi còn mục DoD chưa tick → bị chặn; DoD sửa được theo dự án
 
 ### F22.4 — Liên kết PR
 **Làm gì**: `Task.links` (PR URL, branch, commit) — MCP `tasks_update_status` nhận `prUrl?`, `branch?`; drawer hiện link.
@@ -46,6 +52,7 @@
 - [ ] Số liệu khớp dữ liệu transition mẫu (integration)
 
 ## Quyết định / ghi chú
+- **F22.3 (2026-10-31)**: tách F22.3 cũ thành cổng vào Review (làm ngay — chỉ dùng acceptance criteria F21.6, không cần cấu hình mới) và F22.6 (DoD theo dự án — cần model cấu hình dự án). Chặn khi stage **đổi sang** Review (task đã ở Review không bị chặn lại); task không có tiêu chí → không chặn. Lý do liệt kê tối đa 3 tiêu chí chưa đạt (`lib/reviewGate.ts`); kiểm tra ở `reviewGateBlocker` (`lib/domain/taskCriteria.ts`), gọi từ `updateTaskStage` (web) và `updateTaskByAgent` (MCP). Đổi riêng status sang "Chờ review" không bị chặn (không đổi stage).
 - **F22.4 (2026-10-31)**: ba cột thường `Task.prUrl` / `branch` / `commitSha` (migration chỉ thêm) thay vì JSON `links` — truy vấn / lọc dễ, một task một PR là đủ cho giai đoạn này (nhiều PR thì thêm bảng sau). Kiểm tra chung ở `lib/taskLinks.ts` (PR chỉ http(s), branch theo luật ref git rút gọn, commit hex 7–40 → chữ thường). MCP `tasks_update_status` nhận `prUrl?`, `branch?`, `commit?`; chỉ báo liên kết thì không ghi `TaskTransition` và không nhả task. Người nhập ở form "Sửa" trong drawer; drawer hiện PR dạng `owner/repo#số`. `tasks_list` / `context_get` trả `links`. Đọc trạng thái PR / CI tự động là F26.3.
 - **F22.2 (2026-10-31)**: quyền `task.review` (tech lead / người tạo dự án — chưa có "người được chỉ định review", thêm khi cần). `lib/domain/taskReview.ts`: Duyệt → Done + "Xong"; Trả lại → Dev + "Đang làm", lý do lưu ở `TaskTransition.note` (migration chỉ thêm cột) **và** bình luận "Trả lại sau review: …" để hiện trong drawer. Cả hai xoá `runningSince`. Chặn thêm: task giao cho **agent** chỉ sang Done qua người có `task.review` (kể cả nút "Chuyển stage"); task của người thì thành viên vẫn tự Done được. MCP `tasks_list` trả `lastReturn { reason, at }`. UI: danh sách "Chờ review" trên list màn work (mở drawer), khung "Review" trong drawer cho người có quyền. Inbox gom mọi việc chờ duyệt là F25.2.
 - **F22.1 (2026-10-31)**: migration chỉ thêm `task_transitions` + enum `TransitionVia` (`web` / `mcp`). `lib/domain/taskTransitions.ts`: `transitionTask(db, taskId, actorId, via, change, extra)` — mọi đường đổi stage / trạng thái dùng chung (server action `updateTaskStage` / `updateTaskStatus`, MCP `claimTask` / `updateTaskByAgent`), chạy được trong transaction; chỉ ghi khi giá trị thật sự đổi, chỉ ghi phần đổi (stage hoặc status). Tạo task ghi dòng đầu (`from*` null). **Không** dựng lịch sử cho task có sẵn (production, dữ liệu mẫu) — số liệu F22.5 tính từ lúc có bảng; task cũ thiếu dòng tạo được coi là bắt đầu tại lần chuyển đầu tiên.

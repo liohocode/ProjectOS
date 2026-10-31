@@ -9,6 +9,7 @@ import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { recordTaskCreated, transitionTask } from "@/lib/domain/taskTransitions";
 import { reviewTask, type ReviewDecision } from "@/lib/domain/taskReview";
 import { commentOnTask } from "@/lib/domain/tasks";
+import { reviewGateBlocker } from "@/lib/domain/taskCriteria";
 import { parseTaskLinks } from "@/lib/taskLinks";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
@@ -46,6 +47,12 @@ export async function updateTaskStage(taskId: string, stage: string): Promise<Ac
     if (task?.stage !== "Done" && task?.assignee.kind === "agent" && (await authorize("task.review", projectId))) {
       return fail("Task của agent phải được tech lead / người tạo dự án duyệt mới sang Done");
     }
+  }
+  // F22.3: vào Review cần mọi acceptance criterion đạt.
+  if (input.data.stage === "Review") {
+    const current = await prisma.task.findUnique({ where: { id: input.data.taskId }, select: { stage: true } });
+    const blocked = current?.stage !== "Review" ? await reviewGateBlocker(input.data.taskId) : null;
+    if (blocked) return fail(blocked);
   }
   await transitionTask(prisma, input.data.taskId, await getCurrentUserId(), "web", { stage: input.data.stage });
   await recordActivity("ph-arrow-right", `Chuyển ${input.data.taskId} sang ${input.data.stage}`, {

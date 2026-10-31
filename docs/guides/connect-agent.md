@@ -38,6 +38,7 @@ Luồng làm một task (quy ước đầy đủ + CLAUDE.md mẫu cho repo: [`a
 ## 4. Luật governance (FR-AG)
 - Agent chỉ thấy / thao tác **dự án mình thuộc về** (Dev & AI agents → "Thêm thành viên").
 - `tasks_claim`: bị chặn nếu task Done, đang bị block, đang được người khác chạy, hoặc agent đã chạy đủ số task đồng thời.
+- Chuyển sang **Review** cần mọi acceptance criterion đạt (`criteria_check`) — còn thiếu thì bị chặn kèm danh sách tiêu chí.
 - Agent **không tự Done** — chuyển sang stage Review để người duyệt; "Đang chạy" chỉ qua `tasks_claim`; chỉ sửa task đang giao cho mình.
 - Người duyệt có thể **trả lại** task về Dev kèm lý do: `tasks_list` trả `lastReturn { reason, at }` — đọc lý do, sửa, rồi đẩy Review lại.
 - `docs_append` luôn thành revision "Chờ review" ở màn Docs; tech lead / người tạo dự án duyệt.
