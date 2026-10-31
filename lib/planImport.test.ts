@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { comparePhaseCodes, featureRefs, mapTaskStatus, parseFeatureMd, parsePhaseNames, taskRefs } from "./planImport";
+import { comparePhaseCodes, featureRefs, mapTaskStatus, parseDocMd, parseFeatureMd, parsePhaseNames, taskRefs } from "./planImport";
 
 const dir = join(__dirname, "..", "docs", "features");
 const files = readdirSync(dir).filter((f) => /^F\d{2}-.*\.md$/.test(f));
@@ -62,5 +62,17 @@ describe("hàm phụ", () => {
   it("phase: tên từ ROADMAP, thứ tự 7 < 7b < 8", () => {
     expect(parsePhaseNames("### Phase 7b — Kế hoạch Meridian trên web (ưu tiên 2)\n").get("7b")).toBe("Kế hoạch Meridian trên web");
     expect(["8", "7b", "10", "7"].sort(comparePhaseCodes)).toEqual(["7", "7b", "8", "10"]);
+  });
+});
+
+describe("parseDocMd (F28.3)", () => {
+  it("tiêu đề, tóm tắt đoạn đầu, slug theo đường dẫn", () => {
+    const doc = parseDocMd("architecture/decisions.md", "# Quyết định kiến trúc\n\nNhật ký ADR.\n\n## ADR-001\nNội dung", "meridian");
+    expect(doc).toEqual({ slug: "meridian-architecture-decisions", title: "Quyết định kiến trúc", summary: "Nhật ký ADR.", body: "Nhật ký ADR.\n\n## ADR-001\nNội dung" });
+  });
+  it("tài liệu thật đọc được", () => {
+    const req = parseDocMd("product/requirements.md", readFileSync(join(__dirname, "..", "docs", "product", "requirements.md"), "utf8"), "meridian");
+    expect(req.title.length).toBeGreaterThan(3);
+    expect(req.body).toContain("FR-PM-01");
   });
 });

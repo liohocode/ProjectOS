@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { comparePhaseCodes, type PlanFeature } from "@/lib/planImport";
+import { comparePhaseCodes, type PlanDoc, type PlanFeature } from "@/lib/planImport";
+import { markdownToSections } from "@/lib/markdownSections";
 import { parseTaskStatus } from "@/lib/taskFormat";
 
 // Ghi kế hoạch đã parse (lib/planImport.ts) vào một dự án (F28.2). Chạy lại nhiều lần không nhân đôi:
@@ -158,4 +159,34 @@ function shortReason(text: string): string {
   const head = text.replace(/\([^)]*\)/g, "").split("—")[0].trim();
   const short = head.length >= 4 ? head : text;
   return short.length > 40 ? `${short.slice(0, 39)}…` : short;
+}
+
+/**
+ * Import tài liệu kỹ thuật (F28.3) vào dự án — Doc id = slug ("meridian-architecture-decisions"); chạy lại thì ghi đè
+ * tiêu đề / tóm tắt / nội dung từ `.md` (`.md` là nguồn tới F28.6). Trả số tài liệu tạo mới / cập nhật.
+ */
+export async function importDocs(projectId: string, docs: PlanDoc[], authorId: string, dryRun = false): Promise<{ created: number; updated: number }> {
+  const result = { created: 0, updated: 0 };
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        for (const d of docs) {
+          const existing = await tx.doc.findUnique({ where: { id: d.slug }, select: { projectId: true } });
+          if (existing && existing.projectId !== projectId) throw new Error(`Tài liệu ${d.slug} đã thuộc dự án ${existing.projectId}`);
+          const data = { title: d.title, summary: d.summary, sections: markdownToSections(d.body) as never, updatedAt: new Date() };
+          await tx.doc.upsert({
+            where: { id: d.slug },
+            create: { id: d.slug, projectId, authorId, version: "v1.0", status: "Đang dùng", readBy: [], ...data },
+            update: data,
+          });
+          result[existing ? "updated" : "created"]++;
+        }
+        if (dryRun) throw new DryRun();
+      },
+      { timeout: 60_000, maxWait: 10_000 },
+    );
+  } catch (e) {
+    if (!(e instanceof DryRun)) throw e;
+  }
+  return result;
 }
