@@ -18,16 +18,19 @@ export interface ProjectQuality {
   byMember: QualityRow[];
 }
 
-export const getQualityByProject = cache(async (projectId: string): Promise<ProjectQuality> => {
+/** `sprintId` rỗng = mọi task; có giá trị = chỉ task của sprint đó (F22.7). */
+export const getQualityByProject = cache(async (projectId: string, sprintId = ""): Promise<ProjectQuality> => {
   const tasks = await prisma.task.findMany({
-    where: { feature: { projectId, status: "active", archivedAt: null }, archivedAt: null },
+    where: { feature: { projectId, status: "active", archivedAt: null }, archivedAt: null, ...(sprintId && { sprintId }) },
     select: {
       stage: true,
       assignee: { select: { id: true, name: true, kind: true } },
       transitions: { select: { fromStage: true, toStage: true, at: true, note: true } },
+      blocks: { select: { blockedAt: true, unblockedAt: true } },
     },
   });
-  const items = tasks.map((t) => ({ assignee: t.assignee, quality: taskQuality(t.stage, t.transitions) }));
+  const now = new Date();
+  const items = tasks.map((t) => ({ assignee: t.assignee, quality: taskQuality(t.stage, t.transitions, t.blocks, now) }));
 
   const byMember = new Map<string, { name: string; kind: MemberKind; items: typeof items }>();
   for (const item of items) {
@@ -40,7 +43,7 @@ export const getQualityByProject = cache(async (projectId: string): Promise<Proj
     byMember: [...byMember.entries()]
       .map(([memberId, e]) => ({ memberId, name: e.name, kind: e.kind, summary: summarize(e.items.map((i) => i.quality)) }))
       // Chỉ người / agent đã có task qua Review (có số liệu); nhiều số liệu trước.
-      .filter((r) => r.summary.reviewed > 0 || r.summary.measured > 0)
+      .filter((r) => r.summary.reviewed > 0 || r.summary.measured > 0 || r.summary.blockedTasks > 0)
       .sort((a, b) => b.summary.reviewed - a.summary.reviewed || a.name.localeCompare(b.name, "vi")),
   };
 });

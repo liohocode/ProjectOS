@@ -15,9 +15,21 @@ export interface TaskQuality {
   cycleMs: number | null;
   returns: number;
   reachedReview: boolean;
+  /** F22.7: tổng thời gian bị block (ms), tính tới `now` với lần block chưa gỡ */
+  blockedMs: number;
 }
 
-export function taskQuality(stage: string, transitions: readonly TransitionPoint[]): TaskQuality {
+export interface BlockSpan {
+  blockedAt: Date;
+  unblockedAt: Date | null;
+}
+
+/** Tổng thời gian bị block (F22.7). */
+export function blockedDuration(blocks: readonly BlockSpan[], now: Date): number {
+  return blocks.reduce((s, b) => s + Math.max(0, (b.unblockedAt ?? now).getTime() - b.blockedAt.getTime()), 0);
+}
+
+export function taskQuality(stage: string, transitions: readonly TransitionPoint[], blocks: readonly BlockSpan[] = [], now = new Date()): TaskQuality {
   const sorted = [...transitions].sort((a, b) => a.at.getTime() - b.at.getTime());
   const firstDev = sorted.find((t) => t.toStage === "Dev");
   const lastDone = stage === "Done" ? [...sorted].reverse().find((t) => t.toStage === "Done") : undefined;
@@ -25,6 +37,7 @@ export function taskQuality(stage: string, transitions: readonly TransitionPoint
     cycleMs: firstDev && lastDone && lastDone.at >= firstDev.at ? lastDone.at.getTime() - firstDev.at.getTime() : null,
     returns: sorted.filter((t) => t.fromStage === "Review" && t.toStage === "Dev" && t.note).length,
     reachedReview: sorted.some((t) => t.toStage === "Review"),
+    blockedMs: blockedDuration(blocks, now),
   };
 }
 
@@ -46,6 +59,9 @@ export interface QualitySummary {
   totalReturns: number;
   /** returnedTasks / reviewed, 0–1; null khi chưa task nào vào Review */
   returnRate: number | null;
+  /** F22.7: tổng thời gian bị block + số task từng bị block */
+  totalBlockedMs: number;
+  blockedTasks: number;
 }
 
 export function summarize(items: readonly TaskQuality[]): QualitySummary {
@@ -59,6 +75,8 @@ export function summarize(items: readonly TaskQuality[]): QualitySummary {
     returnedTasks,
     totalReturns: items.reduce((s, i) => s + i.returns, 0),
     returnRate: reviewed ? returnedTasks / reviewed : null,
+    totalBlockedMs: items.reduce((s, i) => s + i.blockedMs, 0),
+    blockedTasks: items.filter((i) => i.blockedMs > 0).length,
   };
 }
 

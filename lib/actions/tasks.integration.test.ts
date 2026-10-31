@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { getSessionMemberId } from "@/lib/auth/session";
+import { getQualityByProject } from "@/lib/data/quality";
 import { addTaskComment, assignTask, createTask, setTaskBlocked, updateTask, updateTaskStage, updateTaskStatus, type NewTaskInput } from "./tasks";
 
 // Task mẫu T-401 (rv-web). Lưu trạng thái seed để trả lại sau khi test ghi.
@@ -229,6 +230,42 @@ describe("addTaskComment (F21.5)", () => {
       expect(await addTaskComment(other.id, "IT người: x")).toEqual({ ok: false, error: "Không tìm thấy dự án" });
     } finally {
       vi.mocked(getSessionMemberId).mockResolvedValue("hieu");
+    }
+  });
+});
+
+describe("lịch sử block (F22.7)", () => {
+  afterAll(async () => {
+    await prisma.task.update({ where: { id: TASK_ID }, data: { blocked: null, blockedFull: null } });
+    await prisma.taskBlock.deleteMany({ where: { taskId: TASK_ID } });
+  });
+
+  it("đặt block mở một dòng, đổi lý do giữ dòng đó, gỡ thì đóng; chỉ số chất lượng tính thời gian bị block", async () => {
+    // Test block / gỡ block ở trên đã để lại lịch sử cho T-401 — bắt đầu sạch.
+    await prisma.taskBlock.deleteMany({ where: { taskId: TASK_ID } });
+    expect(await setTaskBlocked(TASK_ID, { short: "chờ API", full: "" })).toEqual({ ok: true });
+    expect(await setTaskBlocked(TASK_ID, { short: "chờ API v2", full: "" })).toEqual({ ok: true });
+    let rows = await prisma.taskBlock.findMany({ where: { taskId: TASK_ID } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ reason: "chờ API v2", unblockedAt: null });
+
+    expect(await setTaskBlocked(TASK_ID, null)).toEqual({ ok: true });
+    rows = await prisma.taskBlock.findMany({ where: { taskId: TASK_ID } });
+    expect(rows[0].unblockedAt).not.toBeNull();
+
+    const quality = await getQualityByProject("rv-web");
+    // Seed: T-402, T-418 đang block từ 1 ngày trước + T-401 vừa block / gỡ.
+    expect(quality.project.blockedTasks).toBeGreaterThanOrEqual(3);
+    expect(quality.project.totalBlockedMs).toBeGreaterThan(2 * 86_400_000 - 60_000);
+  });
+
+  it("lọc chỉ số theo sprint: sprint không có task → rỗng", async () => {
+    const other = await prisma.sprint.create({ data: { projectId: "rv-web", name: "IT trống", startDate: new Date("2026-12-01"), endDate: new Date("2026-12-10") } });
+    try {
+      const q = await getQualityByProject("rv-web", other.id);
+      expect(q.project).toMatchObject({ measured: 0, reviewed: 0, blockedTasks: 0 });
+    } finally {
+      await prisma.sprint.delete({ where: { id: other.id } });
     }
   });
 });

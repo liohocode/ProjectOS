@@ -336,6 +336,8 @@ model Task {
   comments    TaskComment[]
   transitions TaskTransition[]
   criteria    TaskCriterion[]
+  /// F22.7: lịch sử đặt / gỡ block
+  blocks      TaskBlock[]
   /// F21.8: task này phụ thuộc (chờ) các task kia / các task đang chờ task này
   dependsOn   TaskDependency[] @relation("DependentTask")
   blocking    TaskDependency[] @relation("PrerequisiteTask")
@@ -405,6 +407,20 @@ model TaskDependency {
   @@id([taskId, dependsOnId])
   @@index([dependsOnId])
   @@map("task_dependencies")
+}
+
+/// Lịch sử block của task (F22.7): mỗi lần đặt block mở một dòng, gỡ thì đóng (`unblockedAt`). Nền cho thời gian bị block (F22.5).
+model TaskBlock {
+  id          String    @id @default(cuid())
+  taskId      String
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reason      String
+  blockedAt   DateTime  @default(now())
+  /// null = đang bị block
+  unblockedAt DateTime?
+
+  @@index([taskId, blockedAt])
+  @@map("task_blocks")
 }
 
 /// Acceptance criteria của task (F21.6) — checklist người / agent tick; nền cho Definition of Done (F22.3).
