@@ -4,6 +4,7 @@ import type { AgentPrincipal } from "@/lib/auth/agentToken";
 import { revalidatePath } from "next/cache";
 import { appendDocForAgent, readDocForAgent, searchDocsForAgent } from "@/lib/domain/agentDocs";
 import { proposeFeature } from "@/lib/domain/features";
+import { getTaskContext } from "@/lib/domain/taskContext";
 import { AGENT_STAGES, AGENT_STATUSES, claimTask, commentOnTask, listTasksForMember, updateTaskByAgent } from "@/lib/domain/tasks";
 import { prisma } from "@/lib/prisma";
 import { recordToolCall, type ToolCallRecord } from "./audit";
@@ -51,6 +52,12 @@ async function logged(
   }
 }
 
+/** Ghi dòng nhật ký `docs.read` cho tài liệu gửi kèm context_get (không gắn token → không tính vào rate limit). */
+async function recordDocReads(agent: AgentPrincipal, docIds: string[]) {
+  if (docIds.length === 0) return;
+  await prisma.mcpLogEntry.createMany({ data: docIds.map((id) => ({ agentId: agent.memberId, tool: "docs.read", target: id, result: "OK" as const })) });
+}
+
 /** Dự án gắn phiên: `projectId` nếu agent thuộc dự án đó; không truyền mà agent chỉ thuộc một dự án → dự án đó. */
 async function sessionProject(agentId: string, projectId: string | undefined): Promise<string | null> {
   const memberships = await prisma.projectMember.findMany({ where: { memberId: agentId }, select: { projectId: true } });
@@ -65,7 +72,7 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
   const policy = () => (policyPromise ??= loadAgentPolicy(agent.memberId));
 
   const server = new McpServer(SERVER_INFO, {
-    instructions: `Meridian — quản lý dự án cho team người + AI agent. Bạn đang kết nối với vai trò agent "${agent.name}". Dùng tasks_list để xem task trong các dự án bạn thuộc về, tasks_claim để nhận task trước khi làm.`,
+    instructions: `Meridian — quản lý dự án cho team người + AI agent. Bạn đang kết nối với vai trò agent "${agent.name}". Dùng tasks_list để xem task trong các dự án bạn thuộc về, tasks_claim để nhận task, rồi context_get để lấy đủ ngữ cảnh (feature, tài liệu, bình luận, lý do bị trả lại) trước khi làm.`,
   });
 
   server.registerTool(
@@ -91,6 +98,33 @@ export function createMeridianMcpServer(agent: AgentPrincipal): McpServer {
         return {
           value: json({ count: tasks.length, tasks }),
           log: { target: [projectId ?? "mọi dự án", stage].filter(Boolean).join(" · "), result: "OK", projectId: await sessionProject(agent.memberId, projectId) },
+        };
+      }),
+  );
+
+  server.registerTool(
+    "context_get",
+    {
+      title: "Ngữ cảnh task",
+      description:
+        "Lấy đủ ngữ cảnh để làm một task trong một lệnh: task (kèm lần bị trả lại gần nhất), feature, tài liệu của feature (đầy đủ nội dung, tối đa 5 — còn lại đọc bằng docs_read), bình luận, lịch sử chuyển trạng thái.",
+      inputSchema: { taskId: z.string().trim().min(1).describe("Mã task, vd T-405") },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ taskId }) =>
+      logged(agent, policy, "context_get", async () => {
+        // Tài liệu chỉ kèm khi agent được cấu hình meridian-docs (governance F16.7).
+        const includeDocs = (await policy()).mcpServers.includes("meridian-docs");
+        const result = await getTaskContext(agent.memberId, taskId, { includeDocs });
+        if (result.ok) {
+          // Tài liệu đã gửi kèm tính là "đã đọc" trong phiên của task → drawer hiện "Context agent đã pull" (F17.4).
+          await recordDocReads(agent, result.context.docs.map((d) => d.id));
+        }
+        return {
+          value: result.ok
+            ? json({ ...result.context, ...(!includeDocs && { docsNote: "Agent chưa được cấu hình meridian-docs — không kèm tài liệu" }) })
+            : { ...json({ reason: result.reason }), isError: true },
+          log: { target: taskId, result: result.ok ? "OK" : "BiChan", projectId: result.ok ? result.projectId : null, taskId: result.ok ? taskId : null },
         };
       }),
   );

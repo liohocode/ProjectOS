@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 8 | F16, F21.6 | FR-AG-10…14 |
+| Đang làm | 8 | F16, F21.6 | FR-AG-10…14 |
 
 ## Mục tiêu
 Agent lấy đủ ngữ cảnh trong **một lệnh**, tự chia task / đề xuất tài liệu mới theo đúng governance, và có quy ước làm việc chuẩn để mọi repo của công ty dùng Meridian giống nhau.
@@ -14,7 +14,7 @@ Agent lấy đủ ngữ cảnh trong **một lệnh**, tự chia task / đề xu
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F24.1 | Tool `context_get(taskId)`: task + feature + acceptance criteria + tài liệu liên quan + bình luận + lý do trả lại | M | F21.6 | Chưa làm |
+| F24.1 | Tool `context_get(taskId)`: task + feature + acceptance criteria + tài liệu liên quan + bình luận + lý do trả lại | M | F21.6 | Xong — 2026-10-31 (chưa có acceptance criteria — thêm khi F21.6 xong) |
 | F24.2 | Tool `tasks_create` (TA agent chia task) — tạo task "đề xuất", lead duyệt như feature đề xuất | M | F21.1 | Chưa làm |
 | F24.3 | Tool `docs_create` — đề xuất tài liệu mới, lead duyệt mới xuất hiện | S | — | Chưa làm |
 | F24.4 | Template tài liệu (PRD, Tech spec, ADR, Runbook) khi tạo tài liệu — UI + MCP | S | — | Chưa làm |
@@ -23,10 +23,11 @@ Agent lấy đủ ngữ cảnh trong **một lệnh**, tự chia task / đề xu
 
 ### F24.1 — `context_get`
 **Hoàn thành khi**:
-- [ ] Agent gọi một lệnh nhận đủ thông tin để bắt đầu task (integration qua MCP client SDK); `docs.read` của tài liệu kèm theo được ghi để drawer hiện context (F17.4)
+- [x] Agent gọi một lệnh nhận đủ thông tin để bắt đầu task (integration qua MCP client SDK); `docs.read` của tài liệu kèm theo được ghi để drawer hiện context (F17.4) — `app/api/mcp/client.integration.test.ts`
 
 ### F24.5 — Quy ước làm việc cho agent
 **Hoàn thành khi**:
 - [ ] Một repo thử nghiệm dùng CLAUDE.md mẫu: agent tự claim, làm, báo PR, đẩy Review không cần nhắc
 
 ## Quyết định / ghi chú
+- **F24.1 (2026-10-31)**: làm trước F21.6 (không chờ acceptance criteria — thêm vào `context_get` khi F21.6 xong). `lib/domain/taskContext.ts`: task (kèm `lastReturn`), feature, tối đa 5 tài liệu của feature **đầy đủ nội dung** (mới sửa trước, còn lại liệt kê ở `moreDocs`), 30 bình luận gần nhất, toàn bộ lịch sử trạng thái. Tài liệu chỉ kèm khi agent có `meridian-docs` (governance F16.7). Mỗi tài liệu gửi kèm ghi một dòng nhật ký `docs.read` (không gắn token — không tính rate limit) → drawer "Context agent đã pull" (F17.4; cửa sổ ghép phiên nới 60 giây vì phiên bắt đầu ngay sau các dòng này).

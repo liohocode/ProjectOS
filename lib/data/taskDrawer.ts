@@ -68,7 +68,7 @@ const getContextDocsByProject = cache(async (projectId: string): Promise<Map<str
     select: { taskId: true, agentId: true, startedAt: true, endedAt: true },
   });
   if (sessions.length === 0) return new Map();
-  const since = new Date(Math.min(...sessions.map((s) => s.startedAt.getTime())));
+  const since = new Date(Math.min(...sessions.map((s) => s.startedAt.getTime())) - 60_000);
   const [reads, docs] = await Promise.all([
     prisma.mcpLogEntry.findMany({
       where: { tool: "docs.read", result: "OK", agentId: { in: [...new Set(sessions.map((s) => s.agentId))] }, at: { gte: since } },
@@ -81,7 +81,8 @@ const getContextDocsByProject = cache(async (projectId: string): Promise<Map<str
   for (const s of sessions) {
     // Phiên đang mở: chưa có mốc kết thúc.
     for (const r of reads) {
-      if (r.agentId !== s.agentId || r.at < s.startedAt || (s.endedAt && r.at > s.endedAt)) continue;
+      // Phiên bắt đầu ở lệnh đầu tiên; tài liệu gửi kèm context_get (F24.1) ghi ngay trước lệnh đó → nới 60 giây.
+      if (r.agentId !== s.agentId || r.at.getTime() < s.startedAt.getTime() - 60_000 || (s.endedAt && r.at > s.endedAt)) continue;
       const title = titles.get(r.target);
       const list = byTask.get(s.taskId!) ?? [];
       if (title && !list.includes(title)) byTask.set(s.taskId!, [...list, title]);
