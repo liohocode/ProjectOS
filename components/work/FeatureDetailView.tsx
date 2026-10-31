@@ -5,15 +5,27 @@ import { useState, useTransition, type FormEvent } from "react";
 import { useCan } from "@/components/auth/PermissionsProvider";
 import { Field } from "@/components/ui/Field";
 import { Markdown } from "@/components/ui/Markdown";
-import { setFeatureArchived, updateFeatureContent } from "@/lib/actions/features";
+import { setFeatureArchived, setFeatureDependency, setFeaturePhase, updateFeatureContent } from "@/lib/actions/features";
 import { moveTask } from "@/lib/actions/tasks";
 import type { ActionResult } from "@/lib/actions/result";
 import { MoveButtons } from "./MoveButtons";
 import type { FeatureDetail } from "@/lib/data/features";
+import type { FeatureRef, ProjectPhaseView } from "@/lib/types";
 import { initials, stageTagClass } from "./taskStyle";
 
 /** Trang chi tiết feature (F21.9). Nội dung markdown sửa được bởi tech lead / người tạo dự án (`feature.manage`). */
-export function FeatureDetailView({ projectId, detail }: { projectId: string; detail: FeatureDetail }) {
+export function FeatureDetailView({
+  projectId,
+  detail,
+  phases = [],
+  candidates = [],
+}: {
+  projectId: string;
+  detail: FeatureDetail;
+  /** F28.1: phase của kế hoạch + feature khác để chọn phụ thuộc */
+  phases?: ProjectPhaseView[];
+  candidates?: FeatureRef[];
+}) {
   const { feature, goal, scope, notes, docs } = detail;
   const canEdit = useCan("feature.manage");
   const canWrite = useCan("task.write");
@@ -108,6 +120,32 @@ export function FeatureDetailView({ projectId, detail }: { projectId: string; de
             Kế hoạch {feature.plannedStart} → {feature.plannedEnd}
           </span>
         )}
+        {/* F28.1: phase của kế hoạch */}
+        {canEdit && phases.length > 0 && !feature.archived ? (
+          <label className="feature-phase">
+            Phase
+            <select
+              className="input drawer-select"
+              aria-label="Phase của feature"
+              value={feature.phase?.id ?? ""}
+              disabled={isPending}
+              onChange={(e) => run(() => setFeaturePhase(feature.id, e.target.value || null))}
+            >
+              <option value="">Chưa xếp phase</option>
+              {phases.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.code} · {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          feature.phase && (
+            <span>
+              Phase {feature.phase.code} · {feature.phase.name}
+            </span>
+          )
+        )}
       </div>
 
       {editing ? (
@@ -166,6 +204,8 @@ export function FeatureDetailView({ projectId, detail }: { projectId: string; de
         )}
       </section>
 
+      <FeatureDeps feature={feature} candidates={candidates} canEdit={canEdit && !feature.archived} projectId={projectId} />
+
       <section className="feature-detail-section" aria-label="Tài liệu của feature">
         <h5>Tài liệu ({docs.length})</h5>
         {docs.length === 0 ? (
@@ -194,6 +234,83 @@ function ContentSection({ title, body }: { title: string; body: string | null })
     <section className="feature-detail-section" aria-label={title}>
       <h5>{title}</h5>
       {body ? <Markdown>{body}</Markdown> : <p className="text-muted feature-empty">Chưa có.</p>}
+    </section>
+  );
+}
+
+/** Phụ thuộc giữa feature (F28.1): feature cần xong trước / feature đang chờ feature này. */
+function FeatureDeps({ feature, candidates, canEdit, projectId }: { feature: FeatureDetail["feature"]; candidates: FeatureRef[]; canEdit: boolean; projectId: string }) {
+  const [picked, setPicked] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const existing = new Set(feature.dependsOn.map((d) => d.id));
+  const options = candidates.filter((c) => c.id !== feature.id && !existing.has(c.id));
+  if (feature.dependsOn.length === 0 && feature.blocking.length === 0 && !canEdit) return null;
+
+  const run = (dependsOnId: string, add: boolean) =>
+    startTransition(async () => {
+      setError(null);
+      const result = await setFeatureDependency(feature.id, dependsOnId, add);
+      if (!result.ok) setError(result.error);
+      else if (add) setPicked("");
+    });
+  const row = (d: FeatureRef, removable: boolean) => (
+    <li key={d.id} className={`dep-item${d.stage === "Done" ? " is-done" : ""}`}>
+      <Link href={`/${projectId}/work/features/${encodeURIComponent(d.id)}`} className="dep-link">
+        <span className="mono text-muted">{d.id}</span>
+        <span className={stageTagClass(d.stage)}>{d.stage}</span>
+        <span className="dep-title">{d.name}</span>
+      </Link>
+      {removable && canEdit && (
+        <button type="button" className="icon-btn" aria-label={`Bỏ phụ thuộc ${d.id}`} disabled={isPending} onClick={() => run(d.id, false)}>
+          <i className="ph ph-x" aria-hidden />
+        </button>
+      )}
+    </li>
+  );
+
+  return (
+    <section className="feature-detail-section" aria-label="Phụ thuộc feature">
+      <h5>Phụ thuộc</h5>
+      {feature.dependsOn.length > 0 && (
+        <>
+          <div className="dep-label">Cần các feature này xong trước</div>
+          <ul className="dep-list">{feature.dependsOn.map((d) => row(d, true))}</ul>
+        </>
+      )}
+      {feature.blocking.length > 0 && (
+        <>
+          <div className="dep-label">Đang chờ feature này</div>
+          <ul className="dep-list">{feature.blocking.map((d) => row(d, false))}</ul>
+        </>
+      )}
+      {feature.dependsOn.length === 0 && feature.blocking.length === 0 && <p className="text-muted feature-empty">Chưa có.</p>}
+      {canEdit && options.length > 0 && (
+        <form
+          className="criteria-add"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (picked) run(picked, true);
+          }}
+        >
+          <select className="input" aria-label="Thêm feature phụ thuộc" value={picked} onChange={(e) => setPicked(e.target.value)}>
+            <option value="">Chọn feature cần xong trước…</option>
+            {options.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.id} · {c.name}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="btn btn-secondary" disabled={isPending || !picked}>
+            Thêm
+          </button>
+        </form>
+      )}
+      {error && (
+        <span className="revision-error" role="alert">
+          <i className="ph ph-warning-circle" aria-hidden /> {error}
+        </span>
+      )}
     </section>
   );
 }

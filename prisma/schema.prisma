@@ -109,6 +109,8 @@ model Project {
   docs     Doc[]
   sessions McpSession[]
   sprints  Sprint[]        @relation("ProjectSprints")
+  /// F28.1: các giai đoạn của kế hoạch (vd "Phase 7 — Quản lý công việc")
+  phases   ProjectPhase[]
   events   ActivityEvent[]
 
   @@map("projects")
@@ -271,6 +273,11 @@ model Feature {
   /// F21.10: lưu trữ (ẩn feature + task của nó khỏi list / timeline / inbox / MCP) và thứ tự ưu tiên (nhỏ trước; null cuối, theo id)
   archivedAt     DateTime?
   position       Int?
+  /// F28.1: phase của kế hoạch + feature phụ thuộc / đang chờ
+  phaseId        String?
+  phase          ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  dependsOn      FeatureDependency[] @relation("DependentFeature")
+  blocking       FeatureDependency[] @relation("PrerequisiteFeature")
   /// F16.6: agent đề xuất (features_propose), mô tả / lý do đề xuất, lý do từ chối
   proposedById   String?
   proposedBy     Member?       @relation("FeatureProposer", fields: [proposedById], references: [id], onDelete: SetNull)
@@ -357,6 +364,34 @@ model TaskTransition {
 
   @@index([taskId, at])
   @@map("task_transitions")
+}
+
+/// Giai đoạn của kế hoạch dự án (F28.1) — ứng với các "Phase" trong ROADMAP. Thứ tự theo `position`.
+model ProjectPhase {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// Mã ngắn trong kế hoạch, vd "7", "7b" — duy nhất trong dự án (dùng cho import F28.2)
+  code      String
+  name      String
+  goal      String?
+  position  Int
+  features  Feature[]
+
+  @@unique([projectId, code])
+  @@map("project_phases")
+}
+
+/// Phụ thuộc giữa feature (F28.1) — cột "Phụ thuộc" của ROADMAP. Cùng dự án, không vòng.
+model FeatureDependency {
+  featureId   String
+  feature     Feature  @relation("DependentFeature", fields: [featureId], references: [id], onDelete: Cascade)
+  dependsOnId String
+  dependsOn   Feature  @relation("PrerequisiteFeature", fields: [dependsOnId], references: [id], onDelete: Cascade)
+
+  @@id([featureId, dependsOnId])
+  @@index([dependsOnId])
+  @@map("feature_dependencies")
 }
 
 /// Phụ thuộc giữa task (F21.8): `taskId` chỉ nên bắt đầu khi `dependsOnId` đã Done. Cùng dự án, không vòng.

@@ -12,7 +12,7 @@ Trả lời tiếng Việt, ngắn gọn. Bắt đầu với: <task hoặc "vi�
 ```
 
 ## 2. Trạng thái (cập nhật 2026-10-30)
-- **ROADMAP 119/168** — giai đoạn 1 (MVP) 94/103, **giai đoạn 2 lập + duyệt 2026-10-30** (F20–F27, F27 = skills hub, mục tiêu "data foundation", xem đầu `docs/ROADMAP.md`). Xong: F08–F14, F16, F17; F15 5/6 (F15.4 phân quyền, F15.5 token agent, F15.6 UI theo quyền — tech lead = `Member.isTechLead`; F15.2 đăng nhập Google chạy thật trên production, còn thử đăng xuất + email lạ); F19 8/9 (F19.8 chuyển sang F20.1; còn F19.9 tên miền tuỳ chọn).
+- **ROADMAP 120/168** — giai đoạn 1 (MVP) 94/103, **giai đoạn 2 lập + duyệt 2026-10-30** (F20–F27, F27 = skills hub, mục tiêu "data foundation", xem đầu `docs/ROADMAP.md`). Xong: F08–F14, F16, F17; F15 5/6 (F15.4 phân quyền, F15.5 token agent, F15.6 UI theo quyền — tech lead = `Member.isTechLead`; F15.2 đăng nhập Google chạy thật trên production, còn thử đăng xuất + email lạ); F19 8/9 (F19.8 chuyển sang F20.1; còn F19.9 tên miền tuỳ chọn).
 - **Production**: https://meridian-669737756643.asia-southeast1.run.app — Cloud Run (`pdos-513017`, `asia-southeast1`) + Neon Free (project `meridian`). Đăng nhập: `liohocompany@gmail.com` = Trung Hiếu (tech lead) trong **dữ liệu mẫu** (người dùng chọn giữ dữ liệu mẫu trên production).
 - **Deploy tự động**: merge vào `main` → CI xanh → workflow `Deploy` (`.github/workflows/deploy.yml`): build image → `prisma migrate deploy` lên Neon → `gcloud run deploy` → smoke `/login`. Chạy tay: GitHub → Actions → Deploy → Run workflow (agent chạy được bằng GitHub MCP `actions_run_trigger`).
 - Hạ tầng + giá trị cấu hình: `docs/guides/deploy-cloud-run.md` (mục 1–4). Secret Manager: `DATABASE_URL`, `DATABASE_URL_DIRECT`, `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.

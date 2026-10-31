@@ -15,6 +15,9 @@ const task = (id: string, over: Partial<Task> = {}): Task => ({
 });
 const feature = (id: string, tasks: Task[]): Feature => ({
   id,
+  phase: null,
+  dependsOn: [],
+  blocking: [],
   name: id,
   stage: "Dev",
   owner: "Nam",

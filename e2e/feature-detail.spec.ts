@@ -25,3 +25,15 @@ test("tech lead sửa nội dung → hiện markdown", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Mục tiêu" }).locator("strong")).toHaveText("dưới 300ms");
   await expect(page.getByRole("region", { name: "Quyết định / ghi chú" }).getByRole("listitem")).toHaveText("Cache ở Redis");
 });
+
+test("F28.1: trang chi tiết hiện phase + phụ thuộc; đổi phase", async ({ page }) => {
+  await page.goto("/rv-web/work/features/FEAT-120");
+  const deps = page.getByRole("region", { name: "Phụ thuộc feature" });
+  await expect(deps.getByRole("link", { name: /FEAT-118/ })).toBeVisible();
+  await page.getByLabel("Phase của feature").selectOption({ label: "1 · Đăng tin mới" });
+  await expect(page.getByLabel("Phase của feature")).toHaveValue(/.+/);
+  await page.reload();
+  await expect(page.getByLabel("Phase của feature").locator("option:checked")).toHaveText("1 · Đăng tin mới");
+  await page.getByLabel("Phase của feature").selectOption({ label: "2 · Tìm kiếm & agent" });
+  await expect(page.getByLabel("Phase của feature").locator("option:checked")).toHaveText("2 · Tìm kiếm & agent");
+});
