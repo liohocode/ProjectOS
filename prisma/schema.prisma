@@ -56,6 +56,12 @@ enum SessionResult {
   BiChan    @map("Bị chặn")
 }
 
+/// Kênh thực hiện chuyển trạng thái task (F22.1)
+enum TransitionVia {
+  web
+  mcp
+}
+
 /// Feature agent đề xuất (F16.6) chờ lead duyệt; list chính / timeline chỉ hiện `active`.
 enum FeatureStatus {
   proposed
@@ -157,6 +163,7 @@ model Member {
   taskComments      TaskComment[]    @relation("TaskCommentAuthor")
   proposedFeatures  Feature[]        @relation("FeatureProposer")
   activityEvents    ActivityEvent[]  @relation("ActivityActor")
+  taskTransitions   TaskTransition[] @relation("TransitionActor")
 
   @@map("members")
 }
@@ -285,11 +292,31 @@ model Task {
   /// Thời điểm agent/người bắt đầu chạy task; null = không chạy
   runningSince   DateTime?
 
-  sessions McpSession[]
-  comments TaskComment[]
+  sessions    McpSession[]
+  comments    TaskComment[]
+  transitions TaskTransition[]
 
   @@index([featureId])
   @@map("tasks")
+}
+
+/// Lịch sử chuyển stage / trạng thái task (F22.1) — nền cho cổng review (F22.2), chỉ số chất lượng (F22.5), effort (F23.5).
+/// Mỗi dòng là một lần đổi; from* null = task vừa tạo. Chỉ ghi phần thay đổi (stage hoặc status hoặc cả hai).
+model TaskTransition {
+  id         String        @id @default(cuid())
+  taskId     String
+  task       Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorId    String
+  actor      Member        @relation("TransitionActor", fields: [actorId], references: [id], onDelete: Cascade)
+  fromStage  TaskStage?
+  toStage    TaskStage?
+  fromStatus TaskStatus?
+  toStatus   TaskStatus?
+  via        TransitionVia
+  at         DateTime      @default(now())
+
+  @@index([taskId, at])
+  @@map("task_transitions")
 }
 
 /// Bình luận trên task (F16.4) — agent ghi qua MCP `tasks_comment`, hiện ở mục "Bình luận" của task drawer.

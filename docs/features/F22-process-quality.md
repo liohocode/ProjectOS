@@ -2,7 +2,7 @@
 
 | Trạng thái | Phase | Phụ thuộc | Yêu cầu |
 |---|---|---|---|
-| Chưa bắt đầu | 7 | F16.4, F21.6 | FR-QA-01…05 |
+| Đang làm | 7 | F16.4, F21.6 | FR-QA-01…05 |
 
 ## Mục tiêu
 Đảm bảo chất lượng khi agent làm việc: task không tự "xong" mà đi qua **cổng review của người**, có tiêu chí hoàn thành, gắn với PR thật, và có số liệu để biết quy trình đang tốt hay xấu.
@@ -14,7 +14,7 @@
 ## Tasks
 | Task | Tiêu đề | Cỡ | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| F22.1 | Lịch sử chuyển stage / trạng thái task (`TaskTransition`) — ghi từ UI + MCP | S | — | Chưa làm |
+| F22.1 | Lịch sử chuyển stage / trạng thái task (`TaskTransition`) — ghi từ UI + MCP | S | — | Xong — 2026-10-31 |
 | F22.2 | Cổng review: task ở Review → người duyệt (Done) hoặc trả lại (về Dev + lý do) | M | F22.1 | Chưa làm |
 | F22.3 | Definition of Done theo dự án: checklist áp khi chuyển sang Review / Done | M | F21.6 | Chưa làm |
 | F22.4 | Liên kết PR / branch / commit trên task (agent báo qua MCP, người nhập tay) | S | — | Chưa làm |
@@ -23,7 +23,7 @@
 ### F22.1 — Lịch sử chuyển trạng thái
 **Làm gì**: model `TaskTransition(taskId, actorId, from/to stage, from/to status, at, via: web|mcp)`; ghi ở mọi chỗ đổi stage/status (server action, `claimTask`, `updateTaskByAgent`). Nền cho F22.2, F22.5.
 **Hoàn thành khi**:
-- [ ] Mọi đường đổi stage đều có dòng transition (integration)
+- [x] Mọi đường đổi stage đều có dòng transition (integration `lib/domain/taskTransitions.integration.test.ts`)
 
 ### F22.2 — Cổng review
 **Làm gì**: khu "Chờ review" (màn work + inbox F25.3): task stage Review hiển thị nút Duyệt (→ Done) / Trả lại (lý do bắt buộc → stage Dev, bình luận tự động). Quyền `task.review` (tech lead / người tạo dự án / người được chỉ định review). MCP: agent thấy lý do trả lại qua `tasks_list` / F24.1.
@@ -46,3 +46,4 @@
 - [ ] Số liệu khớp dữ liệu transition mẫu (integration)
 
 ## Quyết định / ghi chú
+- **F22.1 (2026-10-31)**: migration chỉ thêm `task_transitions` + enum `TransitionVia` (`web` / `mcp`). `lib/domain/taskTransitions.ts`: `transitionTask(db, taskId, actorId, via, change, extra)` — mọi đường đổi stage / trạng thái dùng chung (server action `updateTaskStage` / `updateTaskStatus`, MCP `claimTask` / `updateTaskByAgent`), chạy được trong transaction; chỉ ghi khi giá trị thật sự đổi, chỉ ghi phần đổi (stage hoặc status). Tạo task ghi dòng đầu (`from*` null). **Không** dựng lịch sử cho task có sẵn (production, dữ liệu mẫu) — số liệu F22.5 tính từ lúc có bảng; task cũ thiếu dòng tạo được coi là bắt đầu tại lần chuyển đầu tiên.

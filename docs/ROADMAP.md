@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **99/148 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 4/45 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **100/148 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 5/45 (đã chốt F23.1, F25.1).
 
 ## Mục tiêu giai đoạn 2 (người dùng chốt 2026-10-30)
 Meridian là **data foundation cho các dự án của công ty**: quản lý tiến độ, công việc và coding agent; quy trình đảm bảo **chất lượng** và kiểm soát **effort / AI token**; người thật theo dõi trạng thái và review chi tiết; hỗ trợ coding agent làm việc qua MCP; tài liệu feature / task / kỹ thuật; người quản lý làm việc được trên **mobile**; Meridian **tạo, quản lý và cung cấp skills dùng chung đồng nhất** cho mọi coding agent.
@@ -45,7 +45,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
 | [F21](features/F21-work-management.md) | Feature CRUD, tiến độ tính từ task, sprint, lưu trữ task, bình luận, acceptance criteria | F11, F16.6 | Đang làm — % tiến độ tính từ task (F21.2) | 1/6 |
-| [F22](features/F22-process-quality.md) | Lịch sử trạng thái, cổng review của người, Definition of Done, liên kết PR, chỉ số chất lượng | F16.4, F21.6 | Chưa bắt đầu | 0/5 |
+| [F22](features/F22-process-quality.md) | Lịch sử trạng thái, cổng review của người, Definition of Done, liên kết PR, chỉ số chất lượng | F16.4, F21.6 | Đang làm — lịch sử chuyển trạng thái (F22.1) | 1/5 |
 
 ### Phase 8 — Agent & effort
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
@@ -74,7 +74,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ## Việc nên nhận tiếp theo
 | Task | Vì sao |
 |---|---|
-| [F22.1](features/F22-process-quality.md) Lịch sử chuyển trạng thái | Nền cho cổng review + chỉ số chất lượng + effort |
+| [F22.2](features/F22-process-quality.md) Cổng review của người | Lõi đảm bảo chất lượng việc agent làm |
 | [F21.1](features/F21-work-management.md) Feature CRUD | Lead tự quản lý feature |
 | [F20.2](features/F20-go-live.md) Quản trị thành viên / tech lead | Cần cho onboarding dự án thật |
 
