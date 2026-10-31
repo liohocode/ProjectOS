@@ -8,6 +8,7 @@ import { authorize } from "@/lib/auth/authorize";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { recordTaskCreated, transitionTask } from "@/lib/domain/taskTransitions";
 import { reviewTask, type ReviewDecision } from "@/lib/domain/taskReview";
+import { commentOnTask } from "@/lib/domain/tasks";
 import { parseTaskLinks } from "@/lib/taskLinks";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
@@ -269,6 +270,24 @@ async function review(taskId: string, decision: ReviewDecision): Promise<ActionR
     decision.approve ? `Duyệt ${id.data} — ${result.title}` : `Trả lại ${id.data}: ${decision.reason.trim()}`,
     { event: { projectId, type: "task", tone: decision.approve ? "ok" : "block", taskId: id.data } },
   );
+  revalidateTaskViews();
+  return ok();
+}
+
+/** Người bình luận trên task (F21.5) — dùng chung `TaskComment` + kiểm tra với agent (F16.4); thành viên dự án. */
+export async function addTaskComment(taskId: string, body: string): Promise<ActionResult> {
+  const id = taskIdSchema.safeParse(taskId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const projectId = await findTaskProject(id.data);
+  if (!projectId) return fail(`Không tìm thấy task ${id.data}`);
+  const denied = await authorize("task.write", projectId);
+  if (denied) return fail(denied);
+
+  const result = await commentOnTask(await getCurrentUserId(), id.data, String(body ?? ""));
+  if (!result.ok) return fail(result.reason);
+  await recordActivity("ph-chat-circle", `Bình luận ${id.data}`, {
+    event: { projectId, type: "task", tone: "ok", taskId: id.data },
+  });
   revalidateTaskViews();
   return ok();
 }

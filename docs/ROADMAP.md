@@ -2,7 +2,7 @@
 
 Bảng tổng tiến độ. Chi tiết từng task nằm trong file feature. **Cập nhật cột "Task xong" và "Trạng thái" mỗi khi đóng một task** (xem `docs/WORKFLOW.md`).
 
-Cập nhật lần cuối: 2026-10-30 · Tổng: **108/149 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 13/46 (đã chốt F23.1, F25.1).
+Cập nhật lần cuối: 2026-10-30 · Tổng: **109/149 task xong** · Giai đoạn 1 (MVP) gần xong 95/103 · Giai đoạn 2: 14/46 (đã chốt F23.1, F25.1).
 
 ## Mục tiêu giai đoạn 2 (người dùng chốt 2026-10-30)
 Meridian là **data foundation cho các dự án của công ty**: quản lý tiến độ, công việc và coding agent; quy trình đảm bảo **chất lượng** và kiểm soát **effort / AI token**; người thật theo dõi trạng thái và review chi tiết; hỗ trợ coding agent làm việc qua MCP; tài liệu feature / task / kỹ thuật; người quản lý làm việc được trên **mobile**; Meridian **tạo, quản lý và cung cấp skills dùng chung đồng nhất** cho mọi coding agent.
@@ -44,7 +44,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 ### Phase 7 — Quản lý công việc & chất lượng
 | Feature | Mục tiêu | Phụ thuộc | Trạng thái | Task xong |
 |---|---|---|---|---|
-| [F21](features/F21-work-management.md) | Feature CRUD, tiến độ tính từ task, sprint, lưu trữ task, bình luận, acceptance criteria | F11, F16.6 | Đang làm — tạo / sửa feature, % tiến độ tính từ task, sprint | 3/6 |
+| [F21](features/F21-work-management.md) | Feature CRUD, tiến độ tính từ task, sprint, lưu trữ task, bình luận, acceptance criteria | F11, F16.6 | Đang làm — tạo / sửa feature, % tiến độ tính từ task, sprint, người bình luận | 4/6 |
 | [F22](features/F22-process-quality.md) | Lịch sử trạng thái, cổng review của người, Definition of Done, liên kết PR, chỉ số chất lượng | F16.4, F21.6 | Đang làm — lịch sử chuyển trạng thái, cổng review của người, liên kết PR | 3/5 |
 
 ### Phase 8 — Agent & effort
@@ -75,7 +75,7 @@ Meridian là **data foundation cho các dự án của công ty**: quản lý ti
 | Task | Vì sao |
 |---|---|
 | [F24.7](features/F24-coding-agent-support.md) Thử CLAUDE.md mẫu trên repo thật | **Lio** chọn repo + tạo token agent; agent hỗ trợ chạy thử |
-| [F21.5](features/F21-work-management.md) Người bình luận trên task | Nhỏ; người và agent trao đổi ngay trên task |
+| [F21.6](features/F21-work-management.md) Acceptance criteria trên task | Nền cho Definition of Done (F22.3) và `context_get` |
 | [F20.3](features/F20-go-live.md) Hướng dẫn onboarding dự án thật | Lio bắt đầu dùng thật |
 | [F25.3](features/F25-mobile-manager.md) App shell responsive | Mở đường cho inbox / duyệt trên điện thoại |
 | [F27.1](features/F27-agent-skills.md) Model Skill + ADR định dạng | Bắt đầu skills hub (F24.5 thành skill ở F27.8) — mô hình dữ liệu mới, đề xuất ADR cho Lio duyệt trước |

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
 import { trapTab, useDismiss } from "@/components/ui/a11y";
-import { assignTask, setTaskBlocked, updateTask, updateTaskStage } from "@/lib/actions/tasks";
+import { addTaskComment, assignTask, setTaskBlocked, updateTask, updateTaskStage } from "@/lib/actions/tasks";
 import { Field } from "@/components/ui/Field";
 import { RunningTime } from "@/components/ui/RunningTime";
 import { useCan } from "@/components/auth/PermissionsProvider";
@@ -31,6 +31,7 @@ export function TaskDrawer({
   const [error, setError] = useState<string | null>(null);
   // Form phụ mở trong drawer: sửa nhanh (F11.6) hoặc đặt block (F11.5) — mỗi lúc một form.
   const [form, setForm] = useState<"edit" | "block" | null>(null);
+  const [comment, setComment] = useState("");
   const [isPending, startTransition] = useTransition();
   const canReview = useCan("task.review");
   const canWrite = useCan("task.write");
@@ -55,6 +56,11 @@ export function TaskDrawer({
       if (result.ok) onSuccess?.();
       else setError(result.error);
     });
+  }
+
+  function submitComment(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    run(() => addTaskComment(task.id, comment), () => setComment(""));
   }
 
   function submitBlock(e: FormEvent<HTMLFormElement>) {
@@ -204,8 +210,8 @@ export function TaskDrawer({
           </div>
         )}
 
-        {info && info.comments.length > 0 && (
-          <div className="drawer-section">
+        {info && (info.comments.length > 0 || canWrite) && (
+          <div className="drawer-section" aria-label="Bình luận" role="region">
             <div className="drawer-section-title">Bình luận</div>
             {info.comments.map((c) => (
               <div className="drawer-comment" key={c.id}>
@@ -221,6 +227,29 @@ export function TaskDrawer({
                 </div>
               </div>
             ))}
+            {/* F21.5: người bình luận — cùng luồng với bình luận agent gửi qua MCP */}
+            {canWrite && (
+              <form className="drawer-comment-form" onSubmit={submitComment}>
+                <label htmlFor={`comment-${task.id}`} className="sr-only">
+                  Viết bình luận
+                </label>
+                <textarea
+                  id={`comment-${task.id}`}
+                  className="input"
+                  rows={2}
+                  maxLength={4000}
+                  placeholder="Viết bình luận cho người / agent làm task…"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit();
+                  }}
+                />
+                <button type="submit" className="btn btn-secondary" disabled={isPending || !comment.trim()}>
+                  {isPending ? "Đang gửi…" : "Gửi"}
+                </button>
+              </form>
+            )}
           </div>
         )}
 
