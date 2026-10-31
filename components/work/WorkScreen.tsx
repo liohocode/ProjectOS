@@ -27,6 +27,7 @@ export function WorkScreen({
   projectMembers = [],
   sprints = [],
   archivedTask,
+  doneDefinition = [],
 }: {
   features: Feature[];
   /** Đang áp bộ lọc "Lọc" (F14.3) — features đã lọc ở server. */
@@ -43,6 +44,8 @@ export function WorkScreen({
   sprints?: SprintOption[];
   /** Task đã lưu trữ mở bằng deep link (F21.4) — không có trong `features` */
   archivedTask?: { task: Task; feature: Feature };
+  /** Definition of Done của dự án (F22.6) */
+  doneDefinition?: string[];
 }) {
   const canCreateFeature = useCan("feature.create");
   const { openHref: newFeatureHref } = useUrlDialog(NEW_FEATURE_PARAM);
@@ -172,6 +175,7 @@ export function WorkScreen({
           agents={projectAgents}
           sprints={sprints}
           projectTasks={allTasks.map(({ id, title, stage }) => ({ id, title, stage, done: stage === "Done" }))}
+          doneDefinition={doneDefinition}
           onClose={closeTask}
         />
       )}

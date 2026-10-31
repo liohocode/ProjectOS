@@ -101,6 +101,8 @@ model Project {
   /// Lưu trữ (F13.7): ẩn khỏi project switcher, hiện mờ ở portfolio. null = đang hoạt động
   archivedAt      DateTime?
   /// Người tạo (F15.4) — được duyệt/sửa tài liệu của dự án như tech lead. null = dự án mẫu / người tạo đã bị xoá
+  /// F22.6: Definition of Done của dự án — mỗi phần tử một mục; người duyệt tick đủ mới sang Done. Rỗng = không yêu cầu.
+  doneDefinition  String[]  @default([])
   createdById     String?
   createdBy       Member?   @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
 

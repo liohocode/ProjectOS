@@ -16,6 +16,7 @@ export function InboxScreen({
   proposals,
   blockedTasks,
   canReviewAnything,
+  doneDefinition = [],
 }: {
   projectId: string;
   revisions: InboxRevision[];
@@ -24,6 +25,8 @@ export function InboxScreen({
   blockedTasks: InboxTask[];
   /** Người dùng có ít nhất một quyền duyệt — không thì giải thích vì sao inbox chỉ có task bị block. */
   canReviewAnything: boolean;
+  /** Definition of Done của dự án (F22.6) */
+  doneDefinition?: string[];
 }) {
   const total = revisions.length + reviewTasks.length + proposals.length + blockedTasks.length;
   const taskHref = (id: string) => `/${projectId}/work?task=${id}`;
@@ -51,7 +54,7 @@ export function InboxScreen({
           {reviewTasks.map((t) => (
             <div className="inbox-item" key={t.id}>
               <TaskLine task={t} href={taskHref(t.id)} />
-              <TaskReviewBox taskId={t.id} compact />
+              <TaskReviewBox taskId={t.id} compact doneDefinition={doneDefinition} />
             </div>
           ))}
         </section>

@@ -1,12 +1,25 @@
 import Link from "next/link";
 import { phaseTitle, type PhaseProgress, type TaskPick } from "@/lib/roadmap";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { DodEditor } from "./DodEditor";
 import { stageTagClass } from "@/components/work/taskStyle";
 
 const pct = (done: number, total: number) => (total ? Math.round((done / total) * 100) : 0);
 
 /** Màn Roadmap (F28.4) — server component, chỉ đọc. Thay `docs/ROADMAP.md` khi kế hoạch đã lên DB (F28.5). */
-export function RoadmapScreen({ projectId, groups, decisions, next }: { projectId: string; groups: PhaseProgress[]; decisions: TaskPick[]; next: TaskPick[] }) {
+export function RoadmapScreen({
+  projectId,
+  groups,
+  decisions,
+  next,
+  doneDefinition = [],
+}: {
+  projectId: string;
+  groups: PhaseProgress[];
+  decisions: TaskPick[];
+  next: TaskPick[];
+  doneDefinition?: string[];
+}) {
   const done = groups.reduce((s, g) => s + g.done, 0);
   const total = groups.reduce((s, g) => s + g.total, 0);
   const taskHref = (id: string) => `/${projectId}/work?task=${id}`;
@@ -62,6 +75,7 @@ export function RoadmapScreen({ projectId, groups, decisions, next }: { projectI
           </h5>
           {pickList(decisions, "Không có quyết định nào đang chờ.")}
         </section>
+        <DodEditor projectId={projectId} items={doneDefinition} />
       </div>
 
       {groups.map((g) => (

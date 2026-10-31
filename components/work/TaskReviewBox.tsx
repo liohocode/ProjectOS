@@ -5,8 +5,11 @@ import { approveTaskReview, returnTaskReview } from "@/lib/actions/tasks";
 
 /** Cổng review trong drawer (F22.2): task ở Review → Duyệt (Done) hoặc Trả lại kèm lý do (về Dev).
  *  `compact`: chỉ nút + form, không tiêu đề / gợi ý — dùng trong inbox (F25.2). */
-export function TaskReviewBox({ taskId, compact = false }: { taskId: string; compact?: boolean }) {
+export function TaskReviewBox({ taskId, compact = false, doneDefinition = [] }: { taskId: string; compact?: boolean; doneDefinition?: string[] }) {
   const [returning, setReturning] = useState(false);
+  // F22.6: người duyệt tick đủ Definition of Done của dự án mới duyệt được.
+  const [checked, setChecked] = useState<string[]>([]);
+  const dodReady = doneDefinition.every((d) => checked.includes(d));
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -56,14 +59,37 @@ export function TaskReviewBox({ taskId, compact = false }: { taskId: string; com
           </div>
         </form>
       ) : (
+        <>
+        {doneDefinition.length > 0 && (
+          <fieldset className="review-dod">
+            <legend>Definition of Done</legend>
+            {doneDefinition.map((d) => (
+              <label key={d} className="filter-check">
+                <input
+                  type="checkbox"
+                  checked={checked.includes(d)}
+                  onChange={(e) => setChecked((c) => (e.target.checked ? [...c, d] : c.filter((x) => x !== d)))}
+                />
+                {d}
+              </label>
+            ))}
+          </fieldset>
+        )}
         <div className="review-box-actions">
           <button type="button" className="btn btn-secondary" onClick={() => setReturning(true)} disabled={isPending}>
             Trả lại
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => run(() => approveTaskReview(taskId))} disabled={isPending}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => run(() => approveTaskReview(taskId, checked))}
+            disabled={isPending || !dodReady}
+            title={dodReady ? undefined : "Tick đủ Definition of Done trước khi duyệt"}
+          >
             {isPending ? "Đang duyệt…" : "Duyệt → Done"}
           </button>
         </div>
+        </>
       )}
       {error && (
         <span className="revision-error" role="alert">

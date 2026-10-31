@@ -14,6 +14,7 @@ function toProject(row: ProjectRow): Project {
     desc: row.desc,
     sprint: row.currentSprint ? formatSprintLabel(row.currentSprint) : "Chưa có sprint",
     currentSprintId: row.currentSprintId,
+    doneDefinition: row.doneDefinition,
     archived: row.archivedAt !== null,
   };
 }

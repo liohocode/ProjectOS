@@ -8,6 +8,7 @@ import { PROJECT_CODE_PATTERN, PROJECT_ID_PATTERN, PROJECT_STATUSES, RESERVED_PR
 import { authorize } from "@/lib/auth/authorize";
 import { fail, ok, type ActionResult } from "./result";
 import { recordActivity } from "./_activity";
+import { parseDodInput } from "@/lib/doneDefinition";
 
 const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày không hợp lệ");
 
@@ -97,6 +98,20 @@ export async function setProjectArchived(projectId: string, archived: boolean): 
   await prisma.project.update({ where: { id: id.data }, data: { archivedAt: archived ? new Date() : null } });
   await recordActivity(archived ? "ph-archive" : "ph-arrow-counter-clockwise", `${archived ? "Lưu trữ" : "Khôi phục"} dự án ${project.name}`);
   // Portfolio + project switcher của mọi dự án.
+  revalidatePath("/[project]", "layout");
+  return ok();
+}
+
+/** Sửa Definition of Done của dự án (F22.6) — mỗi dòng một mục; tech lead / người tạo dự án (`feature.manage`). */
+export async function setDoneDefinition(projectId: string, text: string): Promise<ActionResult> {
+  const id = z.string().trim().min(1, "Thiếu dự án").safeParse(projectId);
+  if (!id.success) return fail(id.error.issues[0].message);
+  const denied = await authorize("feature.manage", id.data);
+  if (denied) return fail(denied);
+  const parsed = parseDodInput(String(text ?? ""));
+  if (!parsed.ok) return fail(parsed.error);
+  await prisma.project.update({ where: { id: id.data }, data: { doneDefinition: parsed.items } });
+  await recordActivity("ph-list-checks", `Sửa Definition of Done (${parsed.items.length} mục)`);
   revalidatePath("/[project]", "layout");
   return ok();
 }

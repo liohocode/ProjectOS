@@ -96,7 +96,7 @@ async function queryTasks(db: TaskDb, memberId: string, filter: TaskListFilter &
       dependsOn: { where: { dependsOn: { stage: { not: "Done" }, archivedAt: null } }, select: { dependsOnId: true }, orderBy: { dependsOnId: "asc" } },
       assignee: { select: { name: true } },
       feature: { select: { id: true, name: true, projectId: true } },
-      transitions: { where: { note: { not: null }, fromStage: "Review" }, orderBy: { at: "desc" }, take: 1, select: { note: true, at: true } },
+      transitions: { where: { note: { not: null }, fromStage: "Review", toStage: "Dev" }, orderBy: { at: "desc" }, take: 1, select: { note: true, at: true } },
     },
   });
   return rows.map((t) => ({
