@@ -31,9 +31,11 @@ afterAll(async () => {
 });
 
 describe("importPlan (F28.2)", () => {
-  it("dry-run không ghi gì", async () => {
+  it("dry-run không ghi gì (kể cả tài liệu khi dự án chưa có)", async () => {
     const s = await importPlan(features, { ...opts, dryRun: true });
     expect(s.tasksCreated).toBe(total);
+    const doc = parseDocMd("WORKFLOW.md", readFileSync(join(root, "docs", "WORKFLOW.md"), "utf8"), PROJECT);
+    expect(await importDocs(PROJECT, [doc], "hieu", true)).toEqual({ created: 1, updated: 0 });
     expect(await prisma.project.findUnique({ where: { id: PROJECT } })).toBeNull();
   });
 
